@@ -205,8 +205,8 @@ export default function Sidebar({ onAdd, onEdit }: SidebarProps) {
                           </span>
                           <span className="min-w-0 flex-1 truncate">{database}</span>
                         </button>
-                        {expanded ? (
-                          <div className="pl-4">
+{expanded ? (
+                              <div className="pl-6">
                             {collections === undefined || collections === 'loading' ? (
                               <p className="px-1 py-0.5 text-xs text-slate-500 dark:text-slate-400">
                                 Loading…
@@ -216,7 +216,8 @@ export default function Sidebar({ onAdd, onEdit }: SidebarProps) {
                                 No collections
                               </p>
                             ) : (
-                              collections.map((collection) => (
+collections.slice().sort().map((collection) =>
+(
                                 <button
                                   key={collection}
                                   type="button"
