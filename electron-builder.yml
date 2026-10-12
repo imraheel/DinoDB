@@ -1,0 +1,28 @@
+appId: com.nexdb.app
+productName: NexDB
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - "!src/**/*"
+  - "!docs/**/*"
+  - "!scripts/**/*"
+  - "!electron.vite.config.mts"
+  - "!tsconfig*.json"
+  - "!vitest.config.ts"
+asar: true
+asarUnpack:
+  - out/utility/**/*
+  - out/shared/**/*
+  - node_modules/better-sqlite3/**/*
+npmRebuild: true
+mac:
+  target: [dmg, zip]
+  category: public.app-category.developer-tools
+  identity: null
+win:
+  target: [nsis]
+linux:
+  target: [AppImage, deb]
+  category: Development

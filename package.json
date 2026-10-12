@@ -1,0 +1,50 @@
+{
+  "name": "nexdb",
+  "version": "0.1.0",
+  "description": "NexDB — a fast RoboMongo-style MongoDB client",
+  "private": true,
+  "main": "out/main/index.js",
+  "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "build:utility": "tsc -p tsconfig.utility.json && node -e \"const {rmSync,globSync}=require('node:fs');for(const f of globSync('out/**/*.test.js'))rmSync(f)\"",
+    "dev": "pnpm run build:utility && electron-vite dev",
+    "build": "pnpm run build:utility && electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.utility.json --noEmit",
+    "test": "node scripts/run-tests.mjs",
+    "package": "pnpm build && electron-builder --publish never",
+    "package:dir": "pnpm build && electron-builder --dir --publish never"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "mongodb": "^7.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.7.9",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.14",
+    "vitest": "^5.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "electron",
+      "electron-winstaller",
+      "keytar"
+    ]
+  }
+}
