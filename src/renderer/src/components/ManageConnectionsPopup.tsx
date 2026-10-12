@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useApp } from '../context/AppState';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
@@ -17,6 +18,7 @@ export default function ManageConnectionsPopup({
   onEdit
 }: ManageConnectionsPopupProps) {
   const { state, dispatch } = useApp();
+  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
 
   const allConnections = state.connections;
 
@@ -48,7 +50,8 @@ export default function ManageConnectionsPopup({
       const message = messageOf(err);
       dispatch({ type: 'session/errored', connectionId: connection.id, error: message });
     }
-    onClose();
+	onClose()
+	setDropdownOpen(null);
   }
 
   async function handleDisconnect(connection: ConnectionConfig) {
@@ -58,8 +61,8 @@ export default function ManageConnectionsPopup({
       // Error handling
     } finally {
       dispatch({ type: 'session/disconnected', connectionId: connection.id });
-	  onClose();
     }
+    setDropdownOpen(null);
   }
 
   async function handleDelete(connection: ConnectionConfig) {
@@ -70,7 +73,11 @@ export default function ManageConnectionsPopup({
     } catch (err) {
       // Error handling
     }
-    onClose();
+    setDropdownOpen(null);
+  }
+
+  function toggleDropdown(id: string) {
+    setDropdownOpen(dropdownOpen === id ? null : id);
   }
 
   return (
@@ -84,57 +91,90 @@ export default function ManageConnectionsPopup({
             </button>
           </div>
           <div>
-            <button type="button" onClick={() => onAdd()} className="w-full rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 mb-3" aria-label="Create new connection">
+            <button type="button" onClick={() => {onAdd(); setDropdownOpen(null);}} className="w-full rounded bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500" aria-label="Create new connection">
               New Connection
             </button>
           </div>
           {allConnections.length > 0 ? (
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Existing connections:</p>
-              {allConnections.map((connection: ConnectionConfig) => {
-                const session = state.sessions[connection.id] ?? emptySession();
-                const isConnected = session.status === 'connected';
-                const lastConnected = isConnected ? 'just now' : 'never';
-                const lastModified = formatTime(connection.updatedAt ?? connection.createdAt);
-                return (
-                  <div
-                    key={connection.id}
-                    className="flex items-center justify-between px-1 py-2 border-b border-slate-200 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
-                          {connection.name}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {connection.host}:{connection.port}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex text-xs gap-2">
-                      <span className="text-slate-400 dark:text-slate-500">Last connected: {lastConnected}</span>
-                      <span className="text-slate-400 dark:text-slate-500">Last modified: {lastModified}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      {isConnected ? (
-                        <button type="button" onClick={() => { handleDisconnect(connection); }} className="shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700" aria-label={`Disconnect ${connection.name}`}>
-                          Disconnect
-                        </button>
-                      ) : (
-                        <button type="button" onClick={() => handleConnect(connection)} className="shrink-0 rounded border border-emerald-300 px-1.5 py-0.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900" aria-label={`Connect to ${connection.name}`}>
-                          Connect
-                        </button>
-                      )}
-                      <button type="button" onClick={() => { onEdit(connection); }} className="shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700" aria-label={`Edit ${connection.name}`}>
-                        ✎
-                      </button>
-                      <button type="button" onClick={() => { handleDelete(connection); }} className="shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-100 dark:border-slate-700 dark:text-red-400 dark:hover:bg-red-900" aria-label={`Delete ${connection.name}`}>
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Name</th>
+                      <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Host:Port</th>
+                      <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Last connected</th>
+                      <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Last modified</th>
+                      <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400 w-16 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allConnections.map((connection: ConnectionConfig) => {
+                      const session = state.sessions[connection.id] ?? emptySession();
+                      const isConnected = session.status === 'connected';
+                      const lastConnected = isConnected ? 'just now' : 'never';
+                      const lastModified = formatTime(connection.updatedAt ?? connection.createdAt);
+                      const isDropdownOpen = dropdownOpen === connection.id;
+                      return (
+                        <tr key={connection.id} className="border-b border-slate-200 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900">
+                          <td className="px-2 py-2">
+                            <div className="font-medium text-slate-900 dark:text-slate-100">{connection.name}</div>
+                          </td>
+                          <td className="px-2 py-2 text-xs text-slate-500 dark:text-slate-400">{connection.host}:{connection.port}</td>
+                          <td className="px-2 py-2 text-xs text-slate-400 dark:text-slate-500">{isConnected ? 'just now' : 'never'}</td>
+                          <td className="px-2 py-2 text-xs text-slate-400 dark:text-slate-500">{formatTime(connection.updatedAt ?? connection.createdAt)}</td>
+                          <td className="px-2 py-2 text-right">
+                            <div className="relative inline-block">
+                              <button
+                                type="button"
+                                onClick={() => toggleDropdown(connection.id)}
+                                className="rounded p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800"
+                                aria-label="Actions"
+                                aria-expanded={isDropdownOpen}
+                              >
+                                ⋮
+                              </button>
+                              {isDropdownOpen && (
+                                <div className="absolute right-0 top-full mt-1 z-10 rounded bg-white shadow-lg border border-slate-200 dark:bg-slate-900 dark:border-slate-800 py-1 min-w-[120px]">
+                                  {isConnected ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDisconnect(connection)}
+                                      className="block w-full text-left px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                    >
+                                      Disconnect
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleConnect(connection)}
+                                      className="block w-full text-left px-3 py-1.5 text-sm text-emerald-600 hover:bg-slate-100 dark:text-emerald-400 dark:hover:bg-slate-800"
+                                    >
+                                      Connect
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => { onEdit(connection); setDropdownOpen(null); }}
+                                    className="block w-full text-left px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDelete(connection)}
+                                    className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-slate-100 dark:text-red-400 dark:hover:bg-slate-800"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">No saved connections</p>
