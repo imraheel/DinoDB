@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppState';
-import type { TabMeta } from '../context/reducer';
+import type { ResultCard as ResultCardData, TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
-import { parseShellFindQuery } from '../lib/shell-query';
+import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
+import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
 import DocumentModal from './DocumentModal';
 import QueryBar from './QueryBar';
+import ResultCard from './ResultCard';
 
 interface TabWorkspaceProps {
   tab: TabMeta;
@@ -18,6 +20,32 @@ function idTarget(document: unknown): unknown {
     return document;
   }
   return { _id: (document as Record<string, unknown>)._id };
+}
+
+function isReadOp(op: ParsedQuery['op']): boolean {
+  return op === 'find' || op === 'findOne' || op === 'countDocuments' || op === 'aggregate';
+}
+
+function hasOutputStage(pipeline: unknown[]): boolean {
+  return pipeline.some(
+    (stage) =>
+      stage !== null &&
+      typeof stage === 'object' &&
+      !Array.isArray(stage) &&
+      ('$out' in stage || '$merge' in stage)
+  );
+}
+
+function writeCard(op: string, result: WriteResult, inserted: number): ResultCardData {
+  return {
+    kind: 'write',
+    op,
+    matched: result.matched,
+    modified: result.modified,
+    deleted: result.deleted,
+    inserted,
+    insertedId: result.insertedId
+  };
 }
 
 function ErrorBanner({ error, onDismiss }: { error: string; onDismiss(): void }) {
@@ -43,10 +71,180 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   const [edit, setEdit] = useState<{ text: string; target: unknown } | null>(null);
   const ranRef = useRef<string | null>(null);
 
-  async function runFind() {
-    const query = data?.query;
-    if (!query) return;
-    const parsed = parseShellFindQuery(query.text);
+  async function runParsed(parsed: ParsedQuery, sourceText: string) {
+    if (!data) return;
+    dispatch({ type: 'tab/errorCleared', tabId: tab.id });
+    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
+    try {
+      switch (parsed.op) {
+        case 'find': {
+          const skip = Math.max(0, parsed.skip ?? (Number(data.query.skip) || 0));
+          const limit = Math.min(
+            1000,
+            Math.max(1, parsed.limit ?? (Number(data.query.limit) || 50))
+          );
+          const result = await window.api.executeTab<'find'>(tab.id, {
+            kind: 'find',
+            database: tab.database,
+            collection: tab.collection,
+            filter: parsed.filter,
+            projection: parsed.projection,
+            sort: parsed.sort,
+            skip,
+            limit
+          });
+          dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+          break;
+        }
+        case 'findOne': {
+          const result = await window.api.executeTab<'find'>(tab.id, {
+            kind: 'find',
+            database: tab.database,
+            collection: tab.collection,
+            filter: parsed.filter,
+            projection: parsed.projection,
+            sort: parsed.sort,
+            skip: 0,
+            limit: 1
+          });
+          dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+          break;
+        }
+        case 'countDocuments': {
+          const result = await window.api.executeTab<'countDocuments'>(tab.id, {
+            kind: 'countDocuments',
+            database: tab.database,
+            collection: tab.collection,
+            filter: parsed.filter
+          });
+          dispatch({
+            type: 'tab/card',
+            tabId: tab.id,
+            card: { kind: 'count', count: result.count }
+          });
+          break;
+        }
+        case 'aggregate': {
+          const limit = Math.min(1000, Math.max(1, Number(data.query.limit) || 50));
+          const result = await window.api.executeTab<'aggregate'>(tab.id, {
+            kind: 'aggregate',
+            database: tab.database,
+            collection: tab.collection,
+            pipeline: parsed.pipeline,
+            limit
+          });
+          if (hasOutputStage(parsed.pipeline)) {
+            dispatch({
+              type: 'tab/card',
+              tabId: tab.id,
+              card: {
+                kind: 'write',
+                op: 'aggregate',
+                matched: 0,
+                modified: 0,
+                deleted: 0,
+                inserted: 0,
+                insertedId: null,
+                message:
+                  'Pipeline wrote its output ($out/$merge) — run a find on the target collection to view it.'
+              }
+            });
+          } else {
+            dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+          }
+          break;
+        }
+        case 'updateOne':
+        case 'updateMany': {
+          const result = await window.api.executeTab<'updateOne' | 'updateMany'>(tab.id, {
+            kind: parsed.op,
+            database: tab.database,
+            collection: tab.collection,
+            filter: parsed.filter,
+            update: parsed.update,
+            upsert: parsed.upsert
+          });
+          dispatch({
+            type: 'tab/card',
+            tabId: tab.id,
+            card: writeCard(parsed.op, result, result.insertedId != null ? 1 : 0)
+          });
+          break;
+        }
+        case 'replaceOne': {
+          const result = await window.api.executeTab<'replaceOne'>(tab.id, {
+            kind: 'replaceOne',
+            database: tab.database,
+            collection: tab.collection,
+            target: parsed.filter,
+            document: parsed.replacement,
+            upsert: parsed.upsert
+          });
+          dispatch({
+            type: 'tab/card',
+            tabId: tab.id,
+            card: writeCard('replaceOne', result, result.insertedId != null ? 1 : 0)
+          });
+          break;
+        }
+        case 'deleteOne': {
+          const result = await window.api.executeTab<'deleteOne'>(tab.id, {
+            kind: 'deleteOne',
+            database: tab.database,
+            collection: tab.collection,
+            target: parsed.filter
+          });
+          dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('deleteOne', result, 0) });
+          break;
+        }
+        case 'deleteMany': {
+          const result = await window.api.executeTab<'deleteMany'>(tab.id, {
+            kind: 'deleteMany',
+            database: tab.database,
+            collection: tab.collection,
+            filter: parsed.filter
+          });
+          dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('deleteMany', result, 0) });
+          break;
+        }
+        case 'insertOne': {
+          const result = await window.api.executeTab<'insertOne'>(tab.id, {
+            kind: 'insertOne',
+            database: tab.database,
+            collection: tab.collection,
+            document: parsed.document
+          });
+          dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('insertOne', result, 1) });
+          break;
+        }
+        case 'insertMany': {
+          const result = await window.api.executeTab<'insertMany'>(tab.id, {
+            kind: 'insertMany',
+            database: tab.database,
+            collection: tab.collection,
+            documents: parsed.documents
+          });
+          dispatch({
+            type: 'tab/card',
+            tabId: tab.id,
+            card: writeCard('insertMany', result, parsed.documents.length)
+          });
+          break;
+        }
+      }
+      const recordsRead =
+        isReadOp(parsed.op) && !(parsed.op === 'aggregate' && hasOutputStage(parsed.pipeline));
+      if (recordsRead) dispatch({ type: 'tab/read', tabId: tab.id, text: sourceText });
+    } catch (err) {
+      dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
+    } finally {
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
+    }
+  }
+
+  async function runQuery() {
+    if (!data) return;
+    const parsed = parseShellQuery(data.query.text);
     if (!parsed.ok) {
       dispatch({
         type: 'tab/errored',
@@ -55,26 +253,21 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
       });
       return;
     }
-    const skip = Math.max(0, parsed.value.skip ?? (Number(query.skip) || 0));
-    const limit = Math.min(1000, Math.max(1, parsed.value.limit ?? (Number(query.limit) || 50)));
-    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
-    try {
-      const result = await window.api.executeTab<'find'>(tab.id, {
-        kind: 'find',
-        database: tab.database,
-        collection: tab.collection,
-        filter: parsed.value.filter,
-        projection: parsed.value.projection,
-        sort: parsed.value.sort,
-        skip,
-        limit
-      });
-      dispatch({ type: 'tab/results', tabId: tab.id, results: result });
-    } catch (err) {
-      dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
-    } finally {
-      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
+    await runParsed(parsed.value, data.query.text);
+  }
+
+  function refresh() {
+    if (!data) return;
+    if (data.lastRead !== undefined) {
+      const parsed = parseShellQuery(data.lastRead);
+      if (parsed.ok && isReadOp(parsed.value.op)) {
+        void runParsed(parsed.value, data.lastRead);
+        return;
+      }
     }
+    const parsed = parseShellQuery(data.query.text);
+    if (parsed.ok && !isReadOp(parsed.value.op)) return;
+    void runQuery();
   }
 
   async function insertDocument(text: string) {
@@ -87,7 +280,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         document: parsed
       });
       setInsertText(null);
-      await runFind();
+      refresh();
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
     }
@@ -104,7 +297,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         document: parsed
       });
       setEdit(null);
-      await runFind();
+      refresh();
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
     }
@@ -119,7 +312,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         collection: tab.collection,
         target
       });
-      await runFind();
+      refresh();
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
     }
@@ -128,7 +321,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   useEffect(() => {
     if (ranRef.current === tab.id) return;
     ranRef.current = tab.id;
-    void runFind();
+    refresh();
   }, [tab.id]);
 
   useEffect(() => {
@@ -141,10 +334,6 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   }, [state.settings.theme]);
 
   if (!data) return null;
-
-  function refresh() {
-    void runFind();
-  }
 
   const banner =
     data.error !== undefined ? (
@@ -180,25 +369,29 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         tabId={tab.id}
         query={data.query}
         loading={data.loading}
-        onRun={() => void runFind()}
+        onRun={() => void runQuery()}
       />
       {banner}
       <div className="flex min-h-0 flex-1 flex-col p-3">
-        <DataTable
-          fields={data.fields}
-          documents={data.findResults?.documents ?? []}
-          truncated={data.findResults?.truncated ?? false}
-          loading={data.loading}
-          readOnly={false}
-          onInsert={() => setInsertText('{}')}
-          onEdit={(document) =>
-            setEdit({
-              text: JSON.stringify(document, null, 2),
-              target: idTarget(document)
-            })
-          }
-          onDelete={(document) => void deleteDocument(idTarget(document))}
-        />
+        {data.card !== undefined ? (
+          <ResultCard
+            card={data.card}
+            onShowResults={data.lastRead !== undefined ? refresh : null}
+          />
+        ) : (
+          <DataTable
+            fields={data.fields}
+            documents={data.findResults?.documents ?? []}
+            truncated={data.findResults?.truncated ?? false}
+            loading={data.loading}
+            readOnly={false}
+            onInsert={() => setInsertText('{}')}
+            onEdit={(document) =>
+              setEdit({ text: JSON.stringify(document, null, 2), target: idTarget(document) })
+            }
+            onDelete={(document) => void deleteDocument(idTarget(document))}
+          />
+        )}
       </div>
 
       {insertText !== null ? (
