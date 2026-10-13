@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useApp } from '../context/AppState';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
@@ -22,6 +22,32 @@ export default function Sidebar({
 }: SidebarProps) {
   const { state, dispatch } = useApp();
   const [error, setError] = useState<string | null>(null);
+  const [width, setWidth] = useState(256);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragRef.current = { startX: event.clientX, startWidth: width };
+    setDragging(true);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const drag = dragRef.current;
+      if (drag === null) return;
+      const next = drag.startWidth + (moveEvent.clientX - drag.startX);
+      setWidth(Math.min(480, Math.max(160, next)));
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+      setDragging(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
 
   const allConnections = state.connections;
   const connectedConnections = allConnections.filter(
@@ -98,7 +124,17 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+    <aside
+      style={{ width }}
+      className={`relative flex h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900${dragging ? ' select-none' : ''}`}
+    >
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        onMouseDown={handleResizeMouseDown}
+        className="absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-emerald-500/40"
+      />
       <div className="flex h-9 shrink-0 items-center justify-between border-b border-slate-200 px-3 dark:border-slate-800">
         <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           NexDB

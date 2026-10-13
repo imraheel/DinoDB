@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import * as monaco from 'monaco-editor';
 import { messageOf } from '../lib/errors';
 import { isMonacoDark } from '../lib/monaco';
@@ -33,7 +33,45 @@ export default function DocumentModal({
 }: DocumentModalProps) {
   const [text, setText] = useState(initialText);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 512, height: 480 });
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(
+    null
+  );
   const error = validate(text);
+
+  function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    dragRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: size.width,
+      startHeight: size.height
+    };
+    setDragging(true);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const drag = dragRef.current;
+      if (drag === null) return;
+      const nextWidth = drag.startWidth + (moveEvent.clientX - drag.startX);
+      const nextHeight = drag.startHeight + (moveEvent.clientY - drag.startY);
+      setSize({
+        width: Math.min(1024, Math.max(320, nextWidth)),
+        height: Math.min(800, Math.max(280, nextHeight))
+      });
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+      setDragging(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -61,12 +99,10 @@ export default function DocumentModal({
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div
-        className="flex w-full max-w-lg flex-col rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900"
+        style={{ width: size.width, height: size.height }}
+        className={`relative flex w-full flex-col rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900${dragging ? ' select-none' : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -84,7 +120,7 @@ export default function DocumentModal({
         </div>
         <div
           ref={containerRef}
-          className="h-80 w-full overflow-hidden rounded border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+          className="min-h-0 w-full flex-1 overflow-hidden rounded border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
         />
         {error !== null ? (
           <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
@@ -105,6 +141,14 @@ export default function DocumentModal({
           >
             {saving === true ? 'Saving…' : 'Save'}
           </button>
+        </div>
+        <div
+          role="separator"
+          aria-label="Resize dialog"
+          onMouseDown={handleResizeMouseDown}
+          className="absolute bottom-0 right-0 z-10 h-3 w-3 cursor-nwse-resize"
+        >
+          <div className="absolute bottom-0.5 right-0.5 h-2 w-2 border-b-2 border-r-2 border-slate-300 dark:border-slate-600" />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import * as monaco from 'monaco-editor';
 import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
@@ -25,6 +25,32 @@ export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) 
     dispatch({ type: 'tab/query', tabId: tab.id, patch: { text } });
   const runRef = useRef(onRun);
   runRef.current = onRun;
+  const [editorHeight, setEditorHeight] = useState(192);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    dragRef.current = { startY: event.clientY, startHeight: editorHeight };
+    setDragging(true);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const drag = dragRef.current;
+      if (drag === null) return;
+      const next = drag.startHeight + (moveEvent.clientY - drag.startY);
+      setEditorHeight(Math.min(600, Math.max(96, next)));
+    };
+
+    const handleMouseUp = () => {
+      dragRef.current = null;
+      setDragging(false);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
 
   function patch(partial: Partial<QueryInput>) {
     dispatch({ type: 'tab/query', tabId: tab.id, patch: partial });
@@ -74,7 +100,7 @@ export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) 
   }, [query.text]);
 
   return (
-    <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
+    <div className="relative flex flex-col gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
       <div className="flex flex-wrap items-center gap-2" onKeyDown={handleKeyDown}>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -117,7 +143,15 @@ export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) 
       </div>
       <div
         ref={containerRef}
-        className="h-48 min-h-[192px] w-full overflow-hidden rounded border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800"
+        style={{ height: editorHeight }}
+        className={`w-full overflow-hidden rounded border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800${dragging ? ' select-none' : ''}`}
+      />
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize query editor"
+        onMouseDown={handleResizeMouseDown}
+        className="absolute inset-x-0 bottom-0 z-10 h-1 cursor-row-resize hover:bg-emerald-500/40"
       />
     </div>
   );
