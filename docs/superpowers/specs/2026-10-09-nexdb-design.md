@@ -28,7 +28,7 @@ A RoboMongo-style desktop MongoDB client built with Electron + React.
 | Connection storage | SQLite via `better-sqlite3` (synchronous) |
 | Secrets | Stored **unencrypted** in SQLite (master-password encryption deferred) |
 | Schema inference | Sample first **50** documents per collection |
-| Aggregation / count | Deferred — to return as QueryBar functionality (`countDocuments` + aggregation pipelines); Monaco `mongodb` language + completions kept for it |
+| Aggregation / count | Implemented as QueryBar functionality (`countDocuments` + `aggregate` pipelines from the shell query editor); Monaco `mongodb` language + completions kept |
 | Data view | Table view only (tree/JSON views V2) |
 | Auth | Full mechanism support: default SCRAM (username/password), `MONGODB-X509`, `MONGODB-AWS`, `GSSAPI` (Kerberos), `PLAIN` (LDAP) — expressed via `authMechanism`, `authSource`, `authMechanismProperties`, plus free-form `extraOptions` URI params |
 | Themes | Light / Dark / System toggle, persisted in SQLite settings |
@@ -84,12 +84,12 @@ Key rules:
 - Per-tab state (query text, results, errors) lives in the renderer reducer and survives tab switches.
 
 ### Query & CRUD
-- QueryBar: Monaco editor for a shell-style query (`db.getCollection("c").find(filter, projection).sort(...).skip(...).limit(...)`, with `ObjectId`/`ISODate`/`Date` stubs → Extended JSON) + skip + limit inputs (limit clamped 1..1000; chained `.skip()`/`.limit()` override the inputs), `Cmd/Ctrl+Enter` runs.
+- QueryBar: Monaco editor for shell-style queries — supported methods: find, findOne, countDocuments, updateOne, updateMany, replaceOne, deleteOne, deleteMany, insertOne, insertMany, aggregate (all under `db.getCollection("c")…`; `ObjectId`/`ISODate`/`Date` stubs → Extended JSON; `find` supports `.sort(...).skip(...).limit(...)` chains) + skip + limit inputs (limit clamped 1..1000; chained `.skip()`/`.limit()` override the inputs), `Cmd/Ctrl+Enter` runs. Count/write results render as a result card; Refresh re-runs the last read, never the current editor text.
 - Table: columns = union of schema top-level fields and result keys; cells render relaxed EJSON in human form (`$oid` → hex, `$date` → ISO); row actions Edit / Delete; toolbar Insert Document.
 - Document editor modal: Monaco, JSON-validated; writes go through `insertOne` / `replaceOne` (target = original `_id`) / `deleteOne`; results refresh via re-run.
 
 ### Aggregation (planned)
-- Not exposed in the UI currently; will return as QueryBar functionality (`countDocuments` + aggregation pipelines).
+- Exposed via QueryBar: `countDocuments` and aggregation pipelines execute from the query editor; document results render in the table, count/write results in a result card. Pipelines with `$out`/`$merge` run without the `$limit` guard, report a result card instead of rows, and are not re-run by Refresh.
 - The Monaco `mongodb` language (Monarch tokenizer) and its completion provider (pipeline stages, operators, inferred field paths) are kept in `lib/monaco.ts` for that return.
 
 ### Settings & theme
