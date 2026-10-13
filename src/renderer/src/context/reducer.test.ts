@@ -129,6 +129,53 @@ describe('reducer tab actions', () => {
     state = reducer(state, { type: 'tab/errorCleared', tabId: 't1' });
     expect(state.tabData.t1.error).toBeUndefined();
   });
+
+  it('tab/card stores a card, tab/results clears it, and tab/read records the last read text', () => {
+    let state = stateWithTabs([makeTab('t1')]);
+    expect(state.tabData.t1.card).toBeUndefined();
+    expect(state.tabData.t1.lastRead).toBeUndefined();
+
+    state = reducer(state, { type: 'tab/card', tabId: 't1', card: { kind: 'count', count: 7 } });
+    expect(state.tabData.t1.card).toEqual({ kind: 'count', count: 7 });
+
+    state = reducer(state, {
+      type: 'tab/card',
+      tabId: 't1',
+      card: {
+        kind: 'write',
+        op: 'updateMany',
+        matched: 3,
+        modified: 3,
+        deleted: 0,
+        inserted: 0,
+        insertedId: null
+      }
+    });
+    expect(state.tabData.t1.card).toMatchObject({ kind: 'write', op: 'updateMany', matched: 3 });
+
+    state = reducer(state, {
+      type: 'tab/read',
+      tabId: 't1',
+      text: 'db.getCollection("coll").find({})'
+    });
+    expect(state.tabData.t1.lastRead).toBe('db.getCollection("coll").find({})');
+
+    const results: FindResult = { documents: [{ a: 1 }], truncated: false };
+    state = reducer(state, { type: 'tab/results', tabId: 't1', results });
+    expect(state.tabData.t1.findResults).toEqual(results);
+    expect(state.tabData.t1.card).toBeUndefined();
+    expect(state.tabData.t1.lastRead).toBe('db.getCollection("coll").find({})');
+  });
+
+  it('tab/errored keeps the card and lastRead intact', () => {
+    let state = stateWithTabs([makeTab('t1')]);
+    state = reducer(state, { type: 'tab/card', tabId: 't1', card: { kind: 'count', count: 2 } });
+    state = reducer(state, { type: 'tab/read', tabId: 't1', text: 'countDocuments()' });
+    state = reducer(state, { type: 'tab/errored', tabId: 't1', error: 'boom' });
+    expect(state.tabData.t1.error).toBe('boom');
+    expect(state.tabData.t1.card).toEqual({ kind: 'count', count: 2 });
+    expect(state.tabData.t1.lastRead).toBe('countDocuments()');
+  });
 });
 
 describe('reducer connection actions', () => {
