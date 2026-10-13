@@ -9,6 +9,7 @@ interface DocumentModalProps {
   onSave(text: string): void;
   onClose(): void;
   saving?: boolean;
+  viewOnly?: boolean;
 }
 
 function validate(text: string): string | null {
@@ -29,7 +30,8 @@ export default function DocumentModal({
   initialText,
   onSave,
   onClose,
-  saving
+  saving,
+  viewOnly = false
 }: DocumentModalProps) {
   const [text, setText] = useState(initialText);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,6 +88,7 @@ export default function DocumentModal({
       detectIndentation: false,
       automaticLayout: true,
       scrollBeyondLastLine: false,
+      readOnly: viewOnly,
       theme: isMonacoDark() ? 'vs-dark' : 'vs'
     });
     const subscription = editor.onDidChangeModelContent(() => {
@@ -122,25 +125,37 @@ export default function DocumentModal({
           ref={containerRef}
           className="min-h-0 w-full flex-1 overflow-hidden rounded border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
         />
-        {error !== null ? (
+        {viewOnly ? null : error !== null ? (
           <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
         ) : null}
         <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave(text)}
-            disabled={error !== null || saving === true}
-            className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {saving === true ? 'Saving…' : 'Save'}
-          </button>
+          {viewOnly ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Close
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => onSave(text)}
+                disabled={error !== null || saving === true}
+                className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {saving === true ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          )}
         </div>
         <div
           role="separator"

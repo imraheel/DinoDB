@@ -69,6 +69,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   const data = state.tabData[tab.id];
   const [insertText, setInsertText] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ text: string; target: unknown } | null>(null);
+  const [viewText, setViewText] = useState<string | null>(null);
   const ranRef = useRef<string | null>(null);
 
   async function runParsed(parsed: ParsedQuery, sourceText: string) {
@@ -366,10 +367,12 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
             loading={data.loading}
             readOnly={false}
             onInsert={() => setInsertText('{}')}
+            onView={(document) => setViewText(JSON.stringify(document, null, 2))}
             onEdit={(document) =>
               setEdit({ text: JSON.stringify(document, null, 2), target: idTarget(document) })
             }
             onDelete={(document) => void deleteDocument(idTarget(document))}
+            onRefresh={refresh}
           />
         )}
       </div>
@@ -388,6 +391,15 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
           initialText={edit.text}
           onSave={(text) => void replaceDocument(edit.target, text)}
           onClose={() => setEdit(null)}
+        />
+      ) : null}
+      {viewText !== null ? (
+        <DocumentModal
+          title={`Document in ${tab.collection}`}
+          initialText={viewText}
+          onSave={() => {}}
+          onClose={() => setViewText(null)}
+          viewOnly
         />
       ) : null}
     </div>
