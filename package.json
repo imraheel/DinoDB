@@ -1,7 +1,7 @@
 {
   "name": "nexdb",
-  "version": "0.1.0",
-  "description": "NexDB — a fast RoboMongo-style MongoDB client",
+  "version": "0.1.1",
+  "description": "NexDB — a fast MongoDB client",
   "private": true,
   "main": "out/main/index.js",
   "scripts": {

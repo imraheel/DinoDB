@@ -1,14 +1,10 @@
-import { app, utilityProcess } from 'electron';
+import { utilityProcess } from 'electron';
 import * as path from 'node:path';
 import type { ForkedProcess, UtilityClientDeps } from './utility-client';
 
 export function createUtilityDeps(): UtilityClientDeps {
   return {
-    resolveScriptPath: () => {
-      const scriptPath = path.join(__dirname, '..', 'utility', 'index.js');
-      if (!app.isPackaged) return scriptPath;
-      return scriptPath.replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
-    },
+    resolveScriptPath: () => path.join(__dirname, '..', 'utility', 'index.js'),
     fork: (scriptPath: string): ForkedProcess => {
       const options = { name: 'nexdb-worker', serviceName: 'nexdb-worker' };
       const child = utilityProcess.fork(scriptPath, [], options);

@@ -13,8 +13,6 @@ files:
   - "!vitest.config.ts"
 asar: true
 asarUnpack:
-  - out/utility/**/*
-  - out/shared/**/*
   - node_modules/better-sqlite3/**/*
 npmRebuild: true
 mac:

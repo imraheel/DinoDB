@@ -1,6 +1,6 @@
 # NexDB
 
-A fast, RoboMongo-style MongoDB desktop client built with Electron + React + Tailwind. Multiple saved connections, multi-tab collection browsing, full CRUD, and a shell-style query editor — with hard process isolation so one slow query can never freeze the app.
+A fast, MongoDB desktop client built with Electron + React + Tailwind. Multiple saved connections, multi-tab collection browsing, full CRUD, and a shell-style query editor — with hard process isolation so one slow query can never freeze the app.
 
 > Screenshot placeholder — `pnpm dev`, connect to a MongoDB instance, and open a couple of collection tabs.
 
