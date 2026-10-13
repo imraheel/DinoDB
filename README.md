@@ -1,6 +1,6 @@
 # NexDB
 
-A fast, RoboMongo-style MongoDB desktop client built with Electron + React + Tailwind. Multiple saved connections, multi-tab collection browsing, full CRUD, and aggregation with autocompletion — with hard process isolation so one slow query can never freeze the app.
+A fast, RoboMongo-style MongoDB desktop client built with Electron + React + Tailwind. Multiple saved connections, multi-tab collection browsing, full CRUD, and a shell-style query editor — with hard process isolation so one slow query can never freeze the app.
 
 > Screenshot placeholder — `pnpm dev`, connect to a MongoDB instance, and open a couple of collection tabs.
 
@@ -20,7 +20,7 @@ NexDB forks **one Electron `UtilityProcess` per collection tab** (plus one sessi
                      ▼                    ▼                   ▼                ▼
                ┌──────────┐        ┌──────────┐        ┌──────────┐     ┌──────────┐
                │ session  │        │ tab #1   │        │ tab #2   │     │ tab #N   │
-               │ (sidebar)│        │ find()   │        │ aggregate│     │ find()   │
+               │ (sidebar)│        │ find()   │        │ find()   │     │ find()   │
                └──────────┘        └──────────┘        └──────────┘     └──────────┘
 ```
 
@@ -44,9 +44,8 @@ The renderer never touches MongoDB, SQLite, or Node APIs — only a typed `windo
 - **Connection test** — ping + server version before saving.
 - **Sidebar tree** — databases → collections, lazy-loaded per connection, one shared session process per connection.
 - **Multi-tab workspace** — each opened collection gets its own tab and its own isolated worker process; results, query drafts, and errors are preserved per tab.
-- **Query bar** — filter / projection / sort / skip / limit (JSON), `Cmd/Ctrl+Enter` to run, 1000-row clamp, truncation hinting.
+- **Query bar** — Monaco editor for shell-style queries (`db.getCollection("c").find(filter, projection).sort(...).skip(...).limit(...)` with `ObjectId`/`ISODate` stubs → Extended JSON), skip/limit inputs, `Cmd/Ctrl+Enter` to run, 1000-row clamp, truncation hinting.
 - **CRUD** — insert, edit (replace), delete documents with Monaco JSON editing and live validation.
-- **Aggregation editor** — Monaco with a custom `mongodb` language: syntax highlighting plus autocompletion for pipeline stages, query/aggregation operators, and the current collection's inferred field paths.
 - **Schema-aware table** — column set inferred from a 50-document sample plus live keys; Extended JSON (`$oid`, `$date`, `$binary`, …) rendered readably.
 - **Settings** — theme (Light / Dark / System with live OS-follow), query timeout, default row limit.
 

@@ -1,6 +1,6 @@
 import { BSONRegExp, ObjectId } from 'mongodb';
 import { describe, expect, it } from 'vitest';
-import { buildFindOptions, buildPipeline, fromWire, toWire } from './operations';
+import { buildFindOptions, fromWire, toWire } from './operations';
 
 describe('toWire / fromWire', () => {
   it('roundtrips ObjectId and Date values', () => {
@@ -70,38 +70,5 @@ describe('buildFindOptions', () => {
   it('includes skip only when greater than 0', () => {
     expect(buildFindOptions({ limit: 10, skip: 0 })).toEqual({ limit: 10 });
     expect(buildFindOptions({ limit: 10, skip: 7 })).toEqual({ limit: 10, skip: 7 });
-  });
-});
-
-describe('buildPipeline', () => {
-  it('appends a clamped $limit stage', () => {
-    expect(buildPipeline([{ $match: { a: 1 } }], 10)).toEqual([
-      { $match: { a: 1 } },
-      { $limit: 10 }
-    ]);
-    expect(buildPipeline([], 0)).toEqual([{ $limit: 1 }]);
-    expect(buildPipeline([], 99999)).toEqual([{ $limit: 1000 }]);
-  });
-
-  it('skips the $limit guard when a stage has $out or $merge', () => {
-    expect(buildPipeline([{ $match: { a: 1 } }, { $out: 'archive' }], 10)).toEqual([
-      { $match: { a: 1 } },
-      { $out: 'archive' }
-    ]);
-    expect(buildPipeline([{ $merge: { into: 'copy' } }], 10)).toEqual([
-      { $merge: { into: 'copy' } }
-    ]);
-  });
-
-  it('deserializes $oid values inside stage filters to ObjectId', () => {
-    const id = new ObjectId('65f000000000000000000001');
-    const stages = buildPipeline(
-      [{ $match: { _id: { $oid: '65f000000000000000000001' } } }],
-      5
-    );
-    const match = (stages[0] as { $match: { _id: unknown } }).$match;
-    expect(match._id).toBeInstanceOf(ObjectId);
-    expect((match._id as ObjectId).toHexString()).toBe(id.toHexString());
-    expect(stages[1]).toEqual({ $limit: 5 });
   });
 });

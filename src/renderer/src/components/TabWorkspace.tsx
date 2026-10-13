@@ -5,31 +5,12 @@ import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
 import { parseShellFindQuery } from '../lib/shell-query';
-import AggregationEditor from './AggregationEditor';
 import DataTable from './DataTable';
 import DocumentModal from './DocumentModal';
 import QueryBar from './QueryBar';
 
 interface TabWorkspaceProps {
   tab: TabMeta;
-}
-
-interface ParseOk {
-  ok: true;
-  value: unknown;
-}
-
-interface ParseFail {
-  ok: false;
-  message: string;
-}
-
-function tryParse(text: string): ParseOk | ParseFail {
-  try {
-    return { ok: true, value: JSON.parse(text) };
-  } catch (err) {
-    return { ok: false, message: messageOf(err) };
-  }
 }
 
 function idTarget(document: unknown): unknown {
@@ -88,42 +69,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         skip,
         limit
       });
-      dispatch({ type: 'tab/results', tabId: tab.id, source: 'find', results: result });
-    } catch (err) {
-      dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
-    } finally {
-      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
-    }
-  }
-
-  async function runAggregate() {
-    const pipelineText = data?.pipeline;
-    if (pipelineText === undefined) return;
-    const parsed = tryParse(pipelineText);
-    if (!parsed.ok) {
-      dispatch({
-        type: 'tab/errored',
-        tabId: tab.id,
-        error: `Pipeline must be valid JSON: ${parsed.message}`
-      });
-      return;
-    }
-    if (!Array.isArray(parsed.value)) {
-      dispatch({ type: 'tab/errored', tabId: tab.id, error: 'Pipeline must be a JSON array' });
-      return;
-    }
-    const pipeline = parsed.value as unknown[];
-    const limit = Math.min(1000, Math.max(1, Number(data?.query.limit) || 50));
-    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
-    try {
-      const result = await window.api.executeTab<'aggregate'>(tab.id, {
-        kind: 'aggregate',
-        database: tab.database,
-        collection: tab.collection,
-        pipeline,
-        limit
-      });
-      dispatch({ type: 'tab/results', tabId: tab.id, source: 'aggregate', results: result });
+      dispatch({ type: 'tab/results', tabId: tab.id, results: result });
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
     } finally {
@@ -197,8 +143,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   if (!data) return null;
 
   function refresh() {
-    if (data.mode === 'aggregate') void runAggregate();
-    else void runFind();
+    void runFind();
   }
 
   const banner =
@@ -208,11 +153,6 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         onDismiss={() => dispatch({ type: 'tab/errorCleared', tabId: tab.id })}
       />
     ) : null;
-
-  const modeButtonClass = (active: boolean) =>
-    active
-      ? 'bg-slate-900 px-3 py-1 text-xs text-white dark:bg-slate-100 dark:text-slate-900'
-      : 'px-3 py-1 text-xs text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-slate-800/60';
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -226,22 +166,6 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <div className="flex overflow-hidden rounded border border-slate-300 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'tab/mode', tabId: tab.id, mode: 'browse' })}
-              className={modeButtonClass(data.mode === 'browse')}
-            >
-              Browse
-            </button>
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'tab/mode', tabId: tab.id, mode: 'aggregate' })}
-              className={modeButtonClass(data.mode === 'aggregate')}
-            >
-              Aggregation
-            </button>
-          </div>
           <button
             type="button"
             onClick={refresh}
@@ -252,56 +176,30 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
         </div>
       </div>
 
-      {data.mode === 'browse' ? (
-        <>
-          <QueryBar
-            tabId={tab.id}
-            query={data.query}
-            loading={data.loading}
-            onRun={() => void runFind()}
-          />
-          {banner}
-          <div className="flex min-h-0 flex-1 flex-col p-3">
-            <DataTable
-              fields={data.fields}
-              documents={data.findResults?.documents ?? []}
-              truncated={data.findResults?.truncated ?? false}
-              loading={data.loading}
-              readOnly={false}
-              onInsert={() => setInsertText('{}')}
-              onEdit={(document) =>
-                setEdit({
-                  text: JSON.stringify(document, null, 2),
-                  target: idTarget(document)
-                })
-              }
-              onDelete={(document) => void deleteDocument(idTarget(document))}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <AggregationEditor
-            value={data.pipeline}
-            onChange={(text) =>
-              dispatch({ type: 'tab/pipeline', tabId: tab.id, pipeline: text })
-            }
-            onRun={() => void runAggregate()}
-            loading={data.loading}
-            fields={data.fields}
-          />
-          {banner}
-          <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-2">
-            <DataTable
-              fields={data.fields}
-              documents={data.aggResults?.documents ?? []}
-              truncated={data.aggResults?.truncated ?? false}
-              loading={data.loading}
-              readOnly
-            />
-          </div>
-        </>
-      )}
+      <QueryBar
+        tabId={tab.id}
+        query={data.query}
+        loading={data.loading}
+        onRun={() => void runFind()}
+      />
+      {banner}
+      <div className="flex min-h-0 flex-1 flex-col p-3">
+        <DataTable
+          fields={data.fields}
+          documents={data.findResults?.documents ?? []}
+          truncated={data.findResults?.truncated ?? false}
+          loading={data.loading}
+          readOnly={false}
+          onInsert={() => setInsertText('{}')}
+          onEdit={(document) =>
+            setEdit({
+              text: JSON.stringify(document, null, 2),
+              target: idTarget(document)
+            })
+          }
+          onDelete={(document) => void deleteDocument(idTarget(document))}
+        />
+      </div>
 
       {insertText !== null ? (
         <DocumentModal

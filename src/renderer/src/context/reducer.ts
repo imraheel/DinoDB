@@ -20,13 +20,10 @@ export interface TabMeta {
 }
 
 export interface TabData {
-  mode: 'browse' | 'aggregate';
   query: QueryInput;
-  pipeline: string;
   fields: SchemaField[];
   loading: boolean;
   findResults?: FindResult;
-  aggResults?: FindResult;
   error?: string;
 }
 
@@ -55,10 +52,8 @@ export type AppAction =
   | { type: 'tab/removed'; tabId: string }
   | { type: 'tab/activated'; tabId: string }
   | { type: 'tab/query'; tabId: string; patch: Partial<QueryInput> }
-  | { type: 'tab/mode'; tabId: string; mode: TabData['mode'] }
-  | { type: 'tab/pipeline'; tabId: string; pipeline: string }
   | { type: 'tab/loading'; tabId: string; loading: boolean }
-  | { type: 'tab/results'; tabId: string; source: 'find' | 'aggregate'; results: FindResult }
+  | { type: 'tab/results'; tabId: string; results: FindResult }
   | { type: 'tab/errored'; tabId: string; error: string }
   | { type: 'tab/errorCleared'; tabId: string };
 
@@ -72,10 +67,6 @@ export function createDefaultQuery(defaultLimit: number, collection: string): Qu
     skip: '0',
     limit: String(defaultLimit)
   };
-}
-
-export function createDefaultPipeline(defaultLimit: number): string {
-  return '[\n  {\n    "$match": {}\n  }\n]';
 }
 
 export const initialState: AppStateState = {
@@ -188,9 +179,7 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
       const tabData: Record<string, TabData> = {
         ...state.tabData,
         [action.tab.id]: {
-          mode: 'browse',
           query: createDefaultQuery(state.settings.defaultLimit, action.tab.collection),
-          pipeline: createDefaultPipeline(state.settings.defaultLimit),
           fields: action.fields,
           loading: false
         }
@@ -219,18 +208,6 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
       const next: TabData = { ...data, query: { ...data.query, ...action.patch } };
       return { ...state, tabData: { ...state.tabData, [action.tabId]: next } };
     }
-    case 'tab/mode': {
-      const data = state.tabData[action.tabId];
-      if (!data) return state;
-      const next: TabData = { ...data, mode: action.mode };
-      return { ...state, tabData: { ...state.tabData, [action.tabId]: next } };
-    }
-    case 'tab/pipeline': {
-      const data = state.tabData[action.tabId];
-      if (!data) return state;
-      const next: TabData = { ...data, pipeline: action.pipeline };
-      return { ...state, tabData: { ...state.tabData, [action.tabId]: next } };
-    }
     case 'tab/loading': {
       const data = state.tabData[action.tabId];
       if (!data) return state;
@@ -240,10 +217,7 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
     case 'tab/results': {
       const data = state.tabData[action.tabId];
       if (!data) return state;
-      const next: TabData =
-        action.source === 'find'
-          ? { ...data, findResults: action.results }
-          : { ...data, aggResults: action.results };
+      const next: TabData = { ...data, findResults: action.results };
       return { ...state, tabData: { ...state.tabData, [action.tabId]: next } };
     }
     case 'tab/errored': {

@@ -24,7 +24,6 @@ export interface UtilityResponses {
   listDatabases: { databases: string[] };
   listCollections: { collections: string[] };
   find: FindResult;
-  aggregate: FindResult;
   insertOne: WriteResult;
   replaceOne: WriteResult;
   deleteOne: WriteResult;
@@ -36,7 +35,6 @@ export type UtilityRequest =
   | { kind: 'listDatabases' }
   | { kind: 'listCollections'; database: string }
   | { kind: 'find'; database: string; collection: string; filter: unknown; projection?: unknown; sort?: unknown; skip?: number; limit: number }
-  | { kind: 'aggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
   | { kind: 'insertOne'; database: string; collection: string; document: unknown }
   | { kind: 'replaceOne'; database: string; collection: string; target: unknown; document: unknown }
   | { kind: 'deleteOne'; database: string; collection: string; target: unknown }

@@ -35,23 +35,6 @@ export function buildFindOptions(input: FindOptionsInput): FindOptions {
   return options;
 }
 
-function hasOutputStage(stages: Document[]): boolean {
-  return stages.some(
-    (stage) =>
-      typeof stage === 'object' &&
-      stage !== null &&
-      ('$out' in stage || '$merge' in stage)
-  );
-}
-
-export function buildPipeline(pipeline: unknown[], limit: number): Document[] {
-  const stages = pipeline.map((stage) => fromWire(stage) as Document);
-  if (!hasOutputStage(stages)) {
-    stages.push({ $limit: clampLimit(limit) });
-  }
-  return stages;
-}
-
 function assertNever(value: never): never {
   throw new Error(`Unexpected request kind: ${JSON.stringify(value)}`);
 }
@@ -103,19 +86,6 @@ export async function executeRequest(
         .collection(request.collection)
         .find(fromWire(request.filter) as Document, options)
         .limit(limit)
-        .toArray();
-      return {
-        documents: documents.map((doc) => toWire(doc)),
-        truncated: documents.length >= limit
-      };
-    }
-    case 'aggregate': {
-      const limit = clampLimit(request.limit);
-      const pipeline = buildPipeline(request.pipeline, request.limit);
-      const documents = await ctx.client
-        .db(request.database)
-        .collection(request.collection)
-        .aggregate(pipeline, { maxTimeMS: maxTimeMs })
         .toArray();
       return {
         documents: documents.map((doc) => toWire(doc)),

@@ -11,7 +11,7 @@ A RoboMongo-style desktop MongoDB client built with Electron + React.
 - Store and manage multiple MongoDB connections in a local SQLite database.
 - Open multiple collections in multiple tabs, RoboMongo-style.
 - Full isolation: every tab's MongoDB work runs in its own Electron `UtilityProcess`, so a stuck query/tab never blocks other tabs or the main process.
-- Full CRUD, Aggregation Pipeline execution (Monaco code editor with autocomplete), schema inference.
+- Full CRUD, a shell-style query editor, schema inference.
 - Cross-platform (macOS, Windows, Linux).
 - pnpm, minimal dependencies.
 
@@ -21,14 +21,14 @@ A RoboMongo-style desktop MongoDB client built with Electron + React.
 |---|---|
 | Platform | macOS, Windows, Linux |
 | Tab isolation | `utilityProcess.fork()` — one utility process per open tab (plus one per connection session for the sidebar tree) |
-| MongoDB features (v1) | Full CRUD + aggregation execution + schema inference |
+| MongoDB features (v1) | Full CRUD + schema inference |
 | Index Manager, Explain Plan | Deferred to **V2** |
 | UI | React + Tailwind CSS (no component library) |
 | State management | React Context + `useReducer` (no state library) |
 | Connection storage | SQLite via `better-sqlite3` (synchronous) |
 | Secrets | Stored **unencrypted** in SQLite (master-password encryption deferred) |
 | Schema inference | Sample first **50** documents per collection |
-| Aggregation editor | Monaco editor with custom `mongodb` language + completions (stages, operators, inferred field paths) |
+| Aggregation / count | Deferred — to return as QueryBar functionality (`countDocuments` + aggregation pipelines); Monaco `mongodb` language + completions kept for it |
 | Data view | Table view only (tree/JSON views V2) |
 | Auth | Full mechanism support: default SCRAM (username/password), `MONGODB-X509`, `MONGODB-AWS`, `GSSAPI` (Kerberos), `PLAIN` (LDAP) — expressed via `authMechanism`, `authSource`, `authMechanismProperties`, plus free-form `extraOptions` URI params |
 | Themes | Light / Dark / System toggle, persisted in SQLite settings |
@@ -48,11 +48,11 @@ A RoboMongo-style desktop MongoDB client built with Electron + React.
 │ Utility process (session) │        │ Renderer (React, single window) │
 │  mongodb driver:          │        │  Sidebar: connections + tree    │
 │  listDatabases/           │        │  TabBar + TabWorkspace:         │
-│  listCollections          │        │  QueryBar, DataTable,           │
-└───────────────────────────┘        │  AggregationEditor (Monaco),    │
+│  listCollections          │        │  QueryBar (Monaco), DataTable,  │
+└───────────────────────────┘        │  DocumentModal (Monaco),        │
 ┌───────────────────────────┐        │  ConnectionModal, SettingsModal │
 │ Utility process (tab #N)  │        │  Context + useReducer state     │
-│  find/aggregate/insert/   │◄──────►│  preload contextBridge API      │
+│  find/insert/             │◄──────►│  preload contextBridge API      │
 │  replace/delete/inferSchema│       └─────────────────────────────────┘
 └───────────────────────────┘
 ```
@@ -81,17 +81,16 @@ Key rules:
 ### Tab system
 - Clicking a collection in the tree calls `tabs:create` → main forks a utility process, connects, runs schema inference (50 docs), returns `{ tabId, fields }`.
 - Tab strip: titles `db.collection`, close buttons, active-tab tracking, neighbor selection on close.
-- Per-tab state (query text, results, mode, pipeline, errors) lives in the renderer reducer and survives tab switches.
+- Per-tab state (query text, results, errors) lives in the renderer reducer and survives tab switches.
 
 ### Query & CRUD
 - QueryBar: Monaco editor for a shell-style query (`db.getCollection("c").find(filter, projection).sort(...).skip(...).limit(...)`, with `ObjectId`/`ISODate`/`Date` stubs → Extended JSON) + skip + limit inputs (limit clamped 1..1000; chained `.skip()`/`.limit()` override the inputs), `Cmd/Ctrl+Enter` runs.
 - Table: columns = union of schema top-level fields and result keys; cells render relaxed EJSON in human form (`$oid` → hex, `$date` → ISO); row actions Edit / Delete; toolbar Insert Document.
 - Document editor modal: Monaco, JSON-validated; writes go through `insertOne` / `replaceOne` (target = original `_id`) / `deleteOne`; results refresh via re-run.
 
-### Aggregation
-- Per-tab mode toggle: Browse | Aggregation.
-- Monaco with custom `mongodb` language (Monarch tokenizer), completion provider: pipeline stages, aggregation/query operators, inferred field paths from the tab's schema.
-- Pipeline is strict JSON array text; executed with an appended `{ $limit }` guard (unless the pipeline ends in `$out`/`$merge`), results shown read-only in the table.
+### Aggregation (planned)
+- Not exposed in the UI currently; will return as QueryBar functionality (`countDocuments` + aggregation pipelines).
+- The Monaco `mongodb` language (Monarch tokenizer) and its completion provider (pipeline stages, operators, inferred field paths) are kept in `lib/monaco.ts` for that return.
 
 ### Settings & theme
 - SQLite `settings` key/value table: `theme` (light/dark/system), `maxTimeMs` (default 30000), `defaultLimit` (default 50).

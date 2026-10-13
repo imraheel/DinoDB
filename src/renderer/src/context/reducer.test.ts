@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  createDefaultPipeline,
   createDefaultQuery,
   emptySession,
   initialState,
@@ -40,14 +39,13 @@ function stateWithTabs(tabs: TabMeta[]): AppStateState {
 }
 
 describe('reducer tab actions', () => {
-  it('tab/added seeds default query, pipeline and fields and activates the tab', () => {
+  it('tab/added seeds default query and fields and activates the tab', () => {
     const fields = [{ path: 'name', type: 'string' }];
     const state = reducer(initialState, { type: 'tab/added', tab: makeTab('t1'), fields });
     expect(state.tabs).toEqual([makeTab('t1')]);
     expect(state.activeTabId).toBe('t1');
     const data = state.tabData.t1;
     expect(data).toBeDefined();
-    expect(data.mode).toBe('browse');
     expect(data.loading).toBe(false);
     expect(data.fields).toEqual(fields);
     expect(data.query).toEqual(createDefaultQuery(DEFAULT_SETTINGS.defaultLimit, 'coll'));
@@ -56,9 +54,7 @@ describe('reducer tab actions', () => {
       skip: '0',
       limit: '50'
     });
-    expect(data.pipeline).toBe(createDefaultPipeline(DEFAULT_SETTINGS.defaultLimit));
     expect(data.findResults).toBeUndefined();
-    expect(data.aggResults).toBeUndefined();
   });
 
   it('tab/added uses the settings defaultLimit', () => {
@@ -110,28 +106,22 @@ describe('reducer tab actions', () => {
     expect(next.activeTabId).toBe('b');
   });
 
-  it('tab/results routes results by source', () => {
+  it('tab/results stores find results', () => {
     const find: FindResult = { documents: [{ a: 1 }], truncated: false };
-    const agg: FindResult = { documents: [{ b: 2 }], truncated: true };
     let state = stateWithTabs([makeTab('t1')]);
-    state = reducer(state, { type: 'tab/results', tabId: 't1', source: 'find', results: find });
+    state = reducer(state, { type: 'tab/results', tabId: 't1', results: find });
     expect(state.tabData.t1.findResults).toEqual(find);
-    expect(state.tabData.t1.aggResults).toBeUndefined();
-    state = reducer(state, { type: 'tab/results', tabId: 't1', source: 'aggregate', results: agg });
-    expect(state.tabData.t1.findResults).toEqual(find);
-    expect(state.tabData.t1.aggResults).toEqual(agg);
+    const next: FindResult = { documents: [{ b: 2 }], truncated: true };
+    state = reducer(state, { type: 'tab/results', tabId: 't1', results: next });
+    expect(state.tabData.t1.findResults).toEqual(next);
   });
 
-  it('tab/query patches the query and tab/mode, tab/pipeline, tab/loading, tab/errored, tab/errorCleared update the tab data', () => {
+  it('tab/query patches the query and tab/loading, tab/errored, tab/errorCleared update the tab data', () => {
     let state = stateWithTabs([makeTab('t1')]);
     state = reducer(state, { type: 'tab/query', tabId: 't1', patch: { text: 'find({a: 1})', limit: '5' } });
     expect(state.tabData.t1.query.text).toBe('find({a: 1})');
     expect(state.tabData.t1.query.limit).toBe('5');
     expect(state.tabData.t1.query.skip).toBe('0');
-    state = reducer(state, { type: 'tab/mode', tabId: 't1', mode: 'aggregate' });
-    expect(state.tabData.t1.mode).toBe('aggregate');
-    state = reducer(state, { type: 'tab/pipeline', tabId: 't1', pipeline: '[]' });
-    expect(state.tabData.t1.pipeline).toBe('[]');
     state = reducer(state, { type: 'tab/loading', tabId: 't1', loading: true });
     expect(state.tabData.t1.loading).toBe(true);
     state = reducer(state, { type: 'tab/errored', tabId: 't1', error: 'boom' });
