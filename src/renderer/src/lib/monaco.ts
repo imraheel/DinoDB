@@ -1,6 +1,7 @@
 import * as monaco from 'monaco-editor';
 import '../../../../node_modules/monaco-editor/min/vs/editor/editor.main.css';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
+import { QUERY_METHODS } from './shell-query';
 
 const STAGES: string[] = [
   '$match',
@@ -134,12 +135,37 @@ function init(): void {
   });
 
   monaco.languages.registerCompletionItemProvider('mongodb', {
-    triggerCharacters: ['$', '"'],
+    triggerCharacters: ['$', '"', '.'],
     provideCompletionItems(
       model: monaco.editor.ITextModel,
       position: monaco.Position
     ): monaco.languages.CompletionList {
       const range = wordRange(model, position);
+      const line = model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      });
+      const inMethodPosition =
+        /(?:^|[^A-Za-z0-9_$])(?:db|getCollection\s*\([^)]*\))(?:\s*\.\s*[A-Za-z_$][\w$]*)*\s*\.\s*[A-Za-z_$\w]*$/.test(
+          line
+        );
+      if (inMethodPosition) {
+        const methodSuggestions: monaco.languages.CompletionItem[] = QUERY_METHODS.map(
+          (method) => ({
+            label: method,
+            kind: monaco.languages.CompletionItemKind.Method,
+            detail: 'Query method',
+            insertText: `${method}($0)`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            sortText: `0_${method}`,
+            range
+          })
+        );
+        return { suggestions: methodSuggestions };
+      }
+
       const suggestions: monaco.languages.CompletionItem[] = [];
 
       for (const stage of STAGES) {
