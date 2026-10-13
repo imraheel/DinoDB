@@ -1,6 +1,6 @@
 import { BSONRegExp, ObjectId } from 'mongodb';
 import { describe, expect, it } from 'vitest';
-import { buildFindOptions, fromWire, toWire } from './operations';
+import { buildFindOptions, buildPipeline, fromWire, hasOutputStage, toWire } from './operations';
 
 describe('toWire / fromWire', () => {
   it('roundtrips ObjectId and Date values', () => {
@@ -70,5 +70,36 @@ describe('buildFindOptions', () => {
   it('includes skip only when greater than 0', () => {
     expect(buildFindOptions({ limit: 10, skip: 0 })).toEqual({ limit: 10 });
     expect(buildFindOptions({ limit: 10, skip: 7 })).toEqual({ limit: 10, skip: 7 });
+  });
+});
+
+describe('hasOutputStage', () => {
+  it('detects $out and $merge stages', () => {
+    expect(hasOutputStage([{ $match: {} }])).toBe(false);
+    expect(hasOutputStage([{ $match: {} }, { $out: 'dest' }])).toBe(true);
+    expect(hasOutputStage([{ $merge: { into: 'dest' } }])).toBe(true);
+    expect(hasOutputStage('nope')).toBe(false);
+  });
+});
+
+describe('buildPipeline', () => {
+  it('appends a clamped $limit guard when there is no output stage', () => {
+    expect(buildPipeline([{ $match: { a: 1 } }], 50)).toEqual([{ $match: { a: 1 } }, { $limit: 50 }]);
+    expect(buildPipeline([], 0)).toEqual([{ $limit: 1 }]);
+    expect(buildPipeline([], 99999)).toEqual([{ $limit: 1000 }]);
+  });
+
+  it('does not append a guard when the pipeline writes output', () => {
+    expect(buildPipeline([{ $match: {} }, { $out: 'dest' }], 50)).toEqual([
+      { $match: {} },
+      { $out: 'dest' }
+    ]);
+  });
+
+  it('deserializes stages through fromWire', () => {
+    expect(buildPipeline([{ $match: { _id: { $oid: '65f000000000000000000001' } } }], 10)).toEqual([
+      { $match: { _id: expect.any(ObjectId) } },
+      { $limit: 10 }
+    ]);
   });
 });

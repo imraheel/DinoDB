@@ -14,6 +14,25 @@ export function clampLimit(limit: number): number {
   return Math.min(1000, Math.max(1, limit));
 }
 
+export function hasOutputStage(pipeline: unknown): boolean {
+  if (!Array.isArray(pipeline)) return false;
+  return pipeline.some(
+    (stage) =>
+      stage !== null &&
+      typeof stage === 'object' &&
+      !Array.isArray(stage) &&
+      ('$out' in stage || '$merge' in stage)
+  );
+}
+
+export function buildPipeline(pipeline: unknown, limit: number): Document[] {
+  const stages = (Array.isArray(pipeline) ? pipeline : []).map(
+    (stage) => fromWire(stage) as Document
+  );
+  if (!hasOutputStage(pipeline)) stages.push({ $limit: clampLimit(limit) });
+  return stages;
+}
+
 export interface FindOptionsInput {
   projection?: unknown;
   sort?: unknown;
@@ -111,13 +130,13 @@ export async function executeRequest(
         .replaceOne(
           fromWire(request.target) as Document,
           fromWire(request.document) as Document,
-          { upsert: false, maxTimeMS: maxTimeMs }
+          { upsert: request.upsert ?? false, maxTimeMS: maxTimeMs }
         );
       return {
         matched: result.matchedCount,
         modified: result.modifiedCount,
         deleted: 0,
-        insertedId: null
+        insertedId: result.upsertedId != null ? toWire(result.upsertedId) : null
       };
     }
     case 'deleteOne': {
@@ -126,6 +145,60 @@ export async function executeRequest(
         .collection(request.collection)
         .deleteOne(fromWire(request.target) as Document, { maxTimeMS: maxTimeMs });
       return { matched: 0, modified: 0, deleted: result.deletedCount, insertedId: null };
+    }
+    case 'insertMany': {
+      const result = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .insertMany(
+          request.documents.map((doc) => fromWire(doc) as Document),
+          { maxTimeMS: maxTimeMs }
+        );
+      const first = result.insertedIds[0];
+      return { matched: 0, modified: 0, deleted: 0, insertedId: first != null ? toWire(first) : null };
+    }
+    case 'deleteMany': {
+      const result = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .deleteMany(fromWire(request.filter) as Document, { maxTimeMS: maxTimeMs });
+      return { matched: 0, modified: 0, deleted: result.deletedCount, insertedId: null };
+    }
+    case 'updateOne':
+    case 'updateMany': {
+      const collection = ctx.client.db(request.database).collection(request.collection);
+      const filter = fromWire(request.filter) as Document;
+      const update = fromWire(request.update) as Document;
+      const options = { upsert: request.upsert, maxTimeMS: maxTimeMs };
+      const result =
+        request.kind === 'updateOne'
+          ? await collection.updateOne(filter, update, options)
+          : await collection.updateMany(filter, update, options);
+      return {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+        deleted: 0,
+        insertedId: result.upsertedId != null ? toWire(result.upsertedId) : null
+      };
+    }
+    case 'countDocuments': {
+      const count = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .countDocuments(fromWire(request.filter) as Document, { maxTimeMS: maxTimeMs });
+      return { count };
+    }
+    case 'aggregate': {
+      const guarded = !hasOutputStage(request.pipeline);
+      const documents = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .aggregate(buildPipeline(request.pipeline, request.limit), { maxTimeMS: maxTimeMs })
+        .toArray();
+      return {
+        documents: documents.map((doc) => toWire(doc)),
+        truncated: guarded && documents.length >= clampLimit(request.limit)
+      };
     }
     case 'inferSchema': {
       const limit = clampLimit(request.sampleSize);

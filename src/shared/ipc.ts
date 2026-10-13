@@ -25,8 +25,14 @@ export interface UtilityResponses {
   listCollections: { collections: string[] };
   find: FindResult;
   insertOne: WriteResult;
+  insertMany: WriteResult;
   replaceOne: WriteResult;
   deleteOne: WriteResult;
+  deleteMany: WriteResult;
+  updateOne: WriteResult;
+  updateMany: WriteResult;
+  countDocuments: { count: number };
+  aggregate: FindResult;
   inferSchema: { fields: SchemaField[] };
 }
 
@@ -36,8 +42,14 @@ export type UtilityRequest =
   | { kind: 'listCollections'; database: string }
   | { kind: 'find'; database: string; collection: string; filter: unknown; projection?: unknown; sort?: unknown; skip?: number; limit: number }
   | { kind: 'insertOne'; database: string; collection: string; document: unknown }
-  | { kind: 'replaceOne'; database: string; collection: string; target: unknown; document: unknown }
+  | { kind: 'insertMany'; database: string; collection: string; documents: unknown[] }
+  | { kind: 'replaceOne'; database: string; collection: string; target: unknown; document: unknown; upsert?: boolean }
   | { kind: 'deleteOne'; database: string; collection: string; target: unknown }
+  | { kind: 'deleteMany'; database: string; collection: string; filter: unknown }
+  | { kind: 'updateOne'; database: string; collection: string; filter: unknown; update: unknown; upsert: boolean }
+  | { kind: 'updateMany'; database: string; collection: string; filter: unknown; update: unknown; upsert: boolean }
+  | { kind: 'countDocuments'; database: string; collection: string; filter: unknown }
+  | { kind: 'aggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
   | { kind: 'inferSchema'; database: string; collection: string; sampleSize: number };
 
 export type MainToUtility =
