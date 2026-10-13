@@ -893,7 +893,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function readObject(expr: string, label: string): unknown {
+function readObject(expr: string, label: string): Record<string, unknown> | undefined {
   const raw = expr.trim();
   if (raw === '') return undefined;
   const value = toEjson(evaluate(raw));
