@@ -6,6 +6,7 @@ import { registerAllIpc } from './ipc';
 import { createUtilityDeps } from './services/fork';
 import { SessionManager } from './services/sessions-manager';
 import { TabManager } from './services/tabs-manager';
+import { createApplicationMenu } from './menu';
 import { createMainWindow } from './window';
 
 app.whenReady().then(() => {
@@ -15,6 +16,7 @@ app.whenReady().then(() => {
   const tabs = new TabManager(utilityDeps);
   registerAllIpc({ db: () => db, sessions, tabs, utilityDeps });
   createMainWindow();
+  createApplicationMenu();
 
   app.on('will-quit', () => {
     tabs.disposeAll();

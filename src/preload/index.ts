@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
-import type { MongoExplorerApi, UtilityRequest } from '../shared/ipc';
+import type { MenuAction, MongoExplorerApi, UtilityRequest } from '../shared/ipc';
 
 const api: MongoExplorerApi = {
   listConnections: () => ipcRenderer.invoke(IPC.connectionsList),
@@ -16,7 +16,12 @@ const api: MongoExplorerApi = {
     ipcRenderer.invoke(IPC.tabsExecute, { tabId, request })) as MongoExplorerApi['executeTab'],
   closeTab: (id) => ipcRenderer.invoke(IPC.tabsClose, id),
   getSettings: () => ipcRenderer.invoke(IPC.settingsGet),
-  saveSettings: (patch) => ipcRenderer.invoke(IPC.settingsSave, patch)
+  saveSettings: (patch) => ipcRenderer.invoke(IPC.settingsSave, patch),
+  onMenuAction: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, action: MenuAction) => callback(action);
+    ipcRenderer.on(IPC.menuAction, handler);
+    return () => ipcRenderer.removeListener(IPC.menuAction, handler);
+  }
 };
 
 contextBridge.exposeInMainWorld('api', api);

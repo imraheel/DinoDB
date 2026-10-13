@@ -16,6 +16,7 @@ export default function AppShell() {
     editing: null
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -30,6 +31,15 @@ export default function AppShell() {
       active = false;
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    const unsubscribe = window.api.onMenuAction((action) => {
+      if (action === 'open-preferences') setSettingsOpen(true);
+      else if (action === 'open-connections') setConnectionsOpen(true);
+      else if (action === 'new-connection') setModal({ open: true, editing: null });
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     applyTheme(state.settings.theme);
@@ -54,18 +64,11 @@ export default function AppShell() {
       <Sidebar
         onAdd={() => setModal({ open: true, editing: null })}
         onEdit={(connection) => setModal({ open: true, editing: connection })}
+        manageOpen={connectionsOpen}
+        onManageOpen={() => setConnectionsOpen(true)}
+        onManageClose={() => setConnectionsOpen(false)}
       />
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 items-center justify-end border-b border-slate-200 px-2 py-1 dark:border-slate-800">
-          <button
-            type="button"
-            aria-label="Settings"
-            onClick={() => setSettingsOpen(true)}
-            className="rounded px-2 py-1 text-sm text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
-          >
-            ⚙
-          </button>
-        </div>
         <TabBar />
         {activeTab !== null ? (
           <TabWorkspace key={activeTab.id} tab={activeTab} />

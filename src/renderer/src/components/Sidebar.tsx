@@ -8,11 +8,19 @@ import ManageConnectionsPopup from './ManageConnectionsPopup';
 interface SidebarProps {
   onAdd: () => void;
   onEdit: (connection: ConnectionConfig) => void;
+  manageOpen: boolean;
+  onManageOpen: () => void;
+  onManageClose: () => void;
 }
 
-export default function Sidebar({ onAdd, onEdit }: SidebarProps) {
+export default function Sidebar({
+  onAdd,
+  onEdit,
+  manageOpen,
+  onManageOpen,
+  onManageClose
+}: SidebarProps) {
   const { state, dispatch } = useApp();
-  const [showManagePopup, setShowManagePopup] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const allConnections = state.connections;
@@ -91,13 +99,13 @@ export default function Sidebar({ onAdd, onEdit }: SidebarProps) {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+      <div className="flex h-9 shrink-0 items-center justify-between border-b border-slate-200 px-3 dark:border-slate-800">
         <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           NexDB
         </span>
         <button
           type="button"
-          onClick={() => setShowManagePopup(true)}
+          onClick={onManageOpen}
           className="rounded bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500"
           aria-label="Manage connections"
         >
@@ -105,8 +113,8 @@ export default function Sidebar({ onAdd, onEdit }: SidebarProps) {
         </button>
       </div>
       <ManageConnectionsPopup
-        open={showManagePopup}
-        onClose={() => setShowManagePopup(false)}
+        open={manageOpen}
+        onClose={onManageClose}
         onAdd={onAdd}
         onEdit={onEdit}
       />

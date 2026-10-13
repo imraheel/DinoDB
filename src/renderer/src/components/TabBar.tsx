@@ -6,7 +6,7 @@ export default function TabBar() {
   if (state.tabs.length === 0) return null;
 
   return (
-    <div className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-slate-200 bg-slate-100 px-2 pt-1 dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex h-9 shrink-0 items-end gap-1 overflow-x-auto border-b border-slate-200 bg-slate-100 px-2 pt-1 dark:border-slate-800 dark:bg-slate-900">
       {state.tabs.map((tab) => {
         const active = tab.id === state.activeTabId;
         return (

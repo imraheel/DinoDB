@@ -12,8 +12,11 @@ export const IPC = {
   tabsExecute: 'tabs:execute',
   tabsClose: 'tabs:close',
   settingsGet: 'settings:get',
-  settingsSave: 'settings:save'
+  settingsSave: 'settings:save',
+  menuAction: 'menu:action'
 } as const;
+
+export type MenuAction = 'open-preferences' | 'open-connections' | 'new-connection';
 
 export interface InitMessage { role: 'session' | 'tab'; connection: ConnectionConfig; database?: string; collection?: string }
 export interface FindResult { documents: unknown[]; truncated: boolean }
@@ -82,4 +85,5 @@ export interface MongoExplorerApi {
   closeTab(tabId: string): Promise<void>;
   getSettings(): Promise<AppSettings>;
   saveSettings(patch: Partial<AppSettings>): Promise<AppSettings>;
+  onMenuAction(callback: (action: MenuAction) => void): () => void;
 }
