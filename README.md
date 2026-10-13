@@ -44,7 +44,7 @@ The renderer never touches MongoDB, SQLite, or Node APIs — only a typed `windo
 - **Connection test** — ping + server version before saving.
 - **Sidebar tree** — databases → collections, lazy-loaded per connection, one shared session process per connection.
 - **Multi-tab workspace** — each opened collection gets its own tab and its own isolated worker process; results, query drafts, and errors are preserved per tab.
-- **Query bar** — Monaco editor for shell-style queries: `find`, `findOne`, `countDocuments`, `updateOne`, `updateMany`, `replaceOne`, `deleteOne`, `deleteMany`, `insertOne`, `insertMany`, `aggregate` (under `db.getCollection("c")…`, with `ObjectId`/`ISODate` stubs → Extended JSON), skip/limit inputs, `Cmd/Ctrl+Enter` to run, 1000-row clamp, truncation hinting; count/write results show in a result card, and `Refresh` re-runs the last read.
+- **Query bar** — Monaco editor for shell-style queries: `find`, `findOne`, `countDocuments`, `updateOne`, `updateMany`, `replaceOne`, `deleteOne`, `deleteMany`, `insertOne`, `insertMany`, `aggregate` (under `db.getCollection("c")…`, with `ObjectId`/`ISODate` stubs → Extended JSON), skip/limit inputs, `Cmd/Ctrl+Enter` to run, 1000-row clamp, truncation hinting; count/write results show in a simple results table, and `Refresh` re-runs the last read.
 - **CRUD** — insert, edit (replace), delete documents with Monaco JSON editing and live validation.
 - **Schema-aware table** — column set inferred from a 50-document sample plus live keys; Extended JSON (`$oid`, `$date`, `$binary`, …) rendered readably.
 - **Settings** — theme (Light / Dark / System with live OS-follow), query timeout, default row limit.
