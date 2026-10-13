@@ -41,7 +41,7 @@ export default function QueryBar({ tabId, query, loading, onRun }: QueryBarProps
     if (container === null) return;
     const editor = monaco.editor.create(container, {
       value: query.text,
-      language: 'javascript',
+      language: 'mongodb',
       fontSize: 13,
       minimap: { enabled: false },
       wordWrap: 'on',
