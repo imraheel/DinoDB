@@ -1,5 +1,16 @@
-import { BrowserWindow } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import * as path from 'node:path';
+
+function windowIconPath(): string | undefined {
+  if (process.platform === 'darwin') {
+    return undefined; // macOS uses the bundled .icns
+  }
+  const iconFile = 'build/icon.png';
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar.unpacked', iconFile);
+  }
+  return path.join(app.getAppPath(), iconFile);
+}
 
 export function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -8,6 +19,7 @@ export function createMainWindow(): BrowserWindow {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#0f172a',
+    icon: windowIconPath(),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
