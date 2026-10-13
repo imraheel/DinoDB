@@ -1,11 +1,12 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import * as monaco from 'monaco-editor';
 import { useApp } from '../context/AppState';
+import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
 import { isMonacoDark } from '../lib/monaco';
 
 interface QueryBarProps {
-  tabId: string;
+  tab: TabMeta;
   query: QueryInput;
   loading: boolean;
   onRun(): void;
@@ -15,17 +16,18 @@ const NUMBER_INPUT_CLASS =
   'w-20 rounded border border-slate-300 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 const LABEL_CLASS = 'text-xs text-slate-500 dark:text-slate-400';
 
-export default function QueryBar({ tabId, query, loading, onRun }: QueryBarProps) {
+export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) {
   const { dispatch } = useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const changeRef = useRef<(text: string) => void>(() => {});
-  changeRef.current = (text: string) => dispatch({ type: 'tab/query', tabId, patch: { text } });
+  changeRef.current = (text: string) =>
+    dispatch({ type: 'tab/query', tabId: tab.id, patch: { text } });
   const runRef = useRef(onRun);
   runRef.current = onRun;
 
   function patch(partial: Partial<QueryInput>) {
-    dispatch({ type: 'tab/query', tabId, patch: partial });
+    dispatch({ type: 'tab/query', tabId: tab.id, patch: partial });
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -74,7 +76,15 @@ export default function QueryBar({ tabId, query, loading, onRun }: QueryBarProps
   return (
     <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
       <div className="flex flex-wrap items-center gap-2" onKeyDown={handleKeyDown}>
-        <label className="flex items-center gap-1">
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+            {tab.title}
+          </h2>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            {tab.connectionName} · {tab.database}.{tab.collection}
+          </p>
+        </div>
+        <label className="flex shrink-0 items-center gap-1">
           <span className={LABEL_CLASS}>Skip</span>
           <input
             aria-label="Skip"
@@ -85,7 +95,7 @@ export default function QueryBar({ tabId, query, loading, onRun }: QueryBarProps
             className={NUMBER_INPUT_CLASS}
           />
         </label>
-        <label className="flex items-center gap-1">
+        <label className="flex shrink-0 items-center gap-1">
           <span className={LABEL_CLASS}>Limit</span>
           <input
             aria-label="Limit"
@@ -100,7 +110,7 @@ export default function QueryBar({ tabId, query, loading, onRun }: QueryBarProps
           type="button"
           onClick={onRun}
           disabled={loading}
-          className="ms-auto shrink-0 rounded bg-emerald-600 px-4 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="shrink-0 rounded bg-emerald-600 px-4 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
         >
           {loading ? 'Running…' : 'Run'}
         </button>

@@ -345,28 +345,8 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-            {tab.title}
-          </h2>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-            {tab.connectionName} · {tab.database}.{tab.collection}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={refresh}
-            className="rounded border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
       <QueryBar
-        tabId={tab.id}
+        tab={tab}
         query={data.query}
         loading={data.loading}
         onRun={() => void runQuery()}
