@@ -66,8 +66,12 @@ export function emptySession(): SessionState {
   return { status: 'idle', databases: [], expanded: {}, collections: {} };
 }
 
-export function createDefaultQuery(defaultLimit: number): QueryInput {
-  return { filter: '', projection: '', sort: '', skip: '0', limit: String(defaultLimit) };
+export function createDefaultQuery(defaultLimit: number, collection: string): QueryInput {
+  return {
+    text: `db.getCollection(${JSON.stringify(collection)}).find({\n  \n})`,
+    skip: '0',
+    limit: String(defaultLimit)
+  };
 }
 
 export function createDefaultPipeline(defaultLimit: number): string {
@@ -185,7 +189,7 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
         ...state.tabData,
         [action.tab.id]: {
           mode: 'browse',
-          query: createDefaultQuery(state.settings.defaultLimit),
+          query: createDefaultQuery(state.settings.defaultLimit, action.tab.collection),
           pipeline: createDefaultPipeline(state.settings.defaultLimit),
           fields: action.fields,
           loading: false

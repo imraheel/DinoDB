@@ -84,7 +84,7 @@ Key rules:
 - Per-tab state (query text, results, mode, pipeline, errors) lives in the renderer reducer and survives tab switches.
 
 ### Query & CRUD
-- QueryBar: JSON filter / projection / sort + skip + limit (clamped 1..1000), `Cmd/Ctrl+Enter` runs.
+- QueryBar: Monaco editor for a shell-style query (`db.getCollection("c").find(filter, projection).sort(...).skip(...).limit(...)`, with `ObjectId`/`ISODate`/`Date` stubs → Extended JSON) + skip + limit inputs (limit clamped 1..1000; chained `.skip()`/`.limit()` override the inputs), `Cmd/Ctrl+Enter` runs.
 - Table: columns = union of schema top-level fields and result keys; cells render relaxed EJSON in human form (`$oid` → hex, `$date` → ISO); row actions Edit / Delete; toolbar Insert Document.
 - Document editor modal: Monaco, JSON-validated; writes go through `insertOne` / `replaceOne` (target = original `_id`) / `deleteOne`; results refresh via re-run.
 

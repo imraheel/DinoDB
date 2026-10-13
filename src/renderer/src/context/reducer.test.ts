@@ -50,8 +50,12 @@ describe('reducer tab actions', () => {
     expect(data.mode).toBe('browse');
     expect(data.loading).toBe(false);
     expect(data.fields).toEqual(fields);
-    expect(data.query).toEqual(createDefaultQuery(DEFAULT_SETTINGS.defaultLimit));
-    expect(data.query).toEqual({ filter: '', projection: '', sort: '', skip: '0', limit: '50' });
+    expect(data.query).toEqual(createDefaultQuery(DEFAULT_SETTINGS.defaultLimit, 'coll'));
+    expect(data.query).toEqual({
+      text: 'db.getCollection("coll").find({\n  \n})',
+      skip: '0',
+      limit: '50'
+    });
     expect(data.pipeline).toBe(createDefaultPipeline(DEFAULT_SETTINGS.defaultLimit));
     expect(data.findResults).toBeUndefined();
     expect(data.aggResults).toBeUndefined();
@@ -120,8 +124,8 @@ describe('reducer tab actions', () => {
 
   it('tab/query patches the query and tab/mode, tab/pipeline, tab/loading, tab/errored, tab/errorCleared update the tab data', () => {
     let state = stateWithTabs([makeTab('t1')]);
-    state = reducer(state, { type: 'tab/query', tabId: 't1', patch: { filter: '{"a":1}', limit: '5' } });
-    expect(state.tabData.t1.query.filter).toBe('{"a":1}');
+    state = reducer(state, { type: 'tab/query', tabId: 't1', patch: { text: 'find({a: 1})', limit: '5' } });
+    expect(state.tabData.t1.query.text).toBe('find({a: 1})');
     expect(state.tabData.t1.query.limit).toBe('5');
     expect(state.tabData.t1.query.skip).toBe('0');
     state = reducer(state, { type: 'tab/mode', tabId: 't1', mode: 'aggregate' });

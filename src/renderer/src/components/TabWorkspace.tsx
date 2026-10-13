@@ -4,6 +4,7 @@ import type { TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
+import { parseShellFindQuery } from '../lib/shell-query';
 import AggregationEditor from './AggregationEditor';
 import DataTable from './DataTable';
 import DocumentModal from './DocumentModal';
@@ -64,47 +65,26 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   async function runFind() {
     const query = data?.query;
     if (!query) return;
-    const filter: ParseOk | ParseFail =
-      query.filter.trim() === '' ? { ok: true, value: {} } : tryParse(query.filter);
-    if (!filter.ok) {
+    const parsed = parseShellFindQuery(query.text);
+    if (!parsed.ok) {
       dispatch({
         type: 'tab/errored',
         tabId: tab.id,
-        error: `Filter must be valid JSON: ${filter.message}`
+        error: `Query failed to parse: ${parsed.message}`
       });
       return;
     }
-    const projection: ParseOk | ParseFail =
-      query.projection.trim() === '' ? { ok: true, value: undefined } : tryParse(query.projection);
-    if (!projection.ok) {
-      dispatch({
-        type: 'tab/errored',
-        tabId: tab.id,
-        error: `Projection must be valid JSON: ${projection.message}`
-      });
-      return;
-    }
-    const sort: ParseOk | ParseFail =
-      query.sort.trim() === '' ? { ok: true, value: undefined } : tryParse(query.sort);
-    if (!sort.ok) {
-      dispatch({
-        type: 'tab/errored',
-        tabId: tab.id,
-        error: `Sort must be valid JSON: ${sort.message}`
-      });
-      return;
-    }
-    const skip = Math.max(0, Number(query.skip) || 0);
-    const limit = Math.min(1000, Math.max(1, Number(query.limit) || 50));
+    const skip = Math.max(0, parsed.value.skip ?? (Number(query.skip) || 0));
+    const limit = Math.min(1000, Math.max(1, parsed.value.limit ?? (Number(query.limit) || 50)));
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
     try {
       const result = await window.api.executeTab<'find'>(tab.id, {
         kind: 'find',
         database: tab.database,
         collection: tab.collection,
-        filter: filter.value,
-        projection: projection.value,
-        sort: sort.value,
+        filter: parsed.value.filter,
+        projection: parsed.value.projection,
+        sort: parsed.value.sort,
         skip,
         limit
       });
