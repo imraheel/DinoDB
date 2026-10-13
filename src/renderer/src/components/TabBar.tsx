@@ -10,14 +10,21 @@ export default function TabBar() {
       {state.tabs.map((tab) => {
         const active = tab.id === state.activeTabId;
         return (
-          <div key={tab.id} className="flex shrink-0 items-center gap-0.5">
+          <div
+            key={tab.id}
+            className={
+              active
+                ? 'flex max-w-52 shrink-0 items-center rounded-t-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+                : 'flex max-w-52 shrink-0 items-center rounded-t-lg hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
+            }
+          >
             <button
               type="button"
               onClick={() => dispatch({ type: 'tab/activated', tabId: tab.id })}
               className={
                 active
-                  ? 'max-w-52 truncate rounded-t-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
-                  : 'max-w-52 truncate rounded-t-lg px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:bg-slate-800/60'
+                  ? 'min-w-0 flex-1 truncate py-1.5 pl-3 text-left text-xs text-slate-900 dark:text-slate-100'
+                  : 'min-w-0 flex-1 truncate py-1.5 pl-3 text-left text-xs text-slate-500 dark:text-slate-400'
               }
             >
               {tab.title}
@@ -30,7 +37,7 @@ export default function TabBar() {
                 dispatch({ type: 'tab/removed', tabId: tab.id });
                 void window.api.closeTab(tab.id).catch(() => {});
               }}
-              className="px-1 text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
+              className="shrink-0 px-1.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
             >
               ✕
             </button>
