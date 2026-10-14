@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import * as monaco from 'monaco-editor';
 import { messageOf } from '../lib/errors';
 import { isMonacoDark } from '../lib/monaco';
+import { parseShellJson } from '../lib/shell-json';
 
 interface DocumentModalProps {
   title: string;
@@ -15,7 +16,7 @@ interface DocumentModalProps {
 function validate(text: string): string | null {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = parseShellJson(text);
   } catch (err) {
     return `Invalid JSON: ${messageOf(err)}`;
   }

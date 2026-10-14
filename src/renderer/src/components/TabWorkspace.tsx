@@ -5,6 +5,7 @@ import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
 import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
+import { parseShellJson, toShellJson } from '../lib/shell-json';
 import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
 import ConfirmDialog from './ConfirmDialog';
@@ -276,7 +277,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   async function insertDocument(text: string) {
     try {
-      const parsed: unknown = JSON.parse(text);
+      const parsed: unknown = parseShellJson(text);
       await window.api.executeTab<'insertOne'>(tab.id, {
         kind: 'insertOne',
         database: tab.database,
@@ -292,7 +293,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   async function replaceDocument(target: unknown, text: string) {
     try {
-      const parsed: unknown = JSON.parse(text);
+      const parsed: unknown = parseShellJson(text);
       await window.api.executeTab<'replaceOne'>(tab.id, {
         kind: 'replaceOne',
         database: tab.database,
@@ -371,9 +372,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             readOnly={false}
             active={active}
             onInsert={() => setInsertText('{}')}
-            onView={(document) => setViewText(JSON.stringify(document, null, 2))}
+            onView={(document) => setViewText(toShellJson(document))}
             onEdit={(document) =>
-              setEdit({ text: JSON.stringify(document, null, 2), target: idTarget(document) })
+              setEdit({ text: toShellJson(document), target: idTarget(document) })
             }
             onDelete={(document) => setPendingDelete({ target: idTarget(document) })}
             onRefresh={refresh}
