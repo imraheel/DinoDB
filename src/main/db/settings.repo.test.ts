@@ -24,16 +24,21 @@ describe('settings.repo', () => {
   it('roundtrips a partial save and preserves earlier values', () => {
     const db = makeDb();
     const first = saveSettings(db, { theme: 'dark' });
-    expect(first).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 50 });
+    expect(first).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 50, vibrancy: true });
     const second = saveSettings(db, { defaultLimit: 200 });
-    expect(second).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 200 });
+    expect(second).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 200, vibrancy: true });
     expect(getSettings(db)).toEqual(second);
   });
 
   it('roundtrips a full save', () => {
     const db = makeDb();
-    const saved = saveSettings(db, { theme: 'light', maxTimeMs: 5000, defaultLimit: 100 });
-    expect(saved).toEqual({ theme: 'light', maxTimeMs: 5000, defaultLimit: 100 });
+    const saved = saveSettings(db, {
+      theme: 'light',
+      maxTimeMs: 5000,
+      defaultLimit: 100,
+      vibrancy: false
+    });
+    expect(saved).toEqual({ theme: 'light', maxTimeMs: 5000, defaultLimit: 100, vibrancy: false });
     expect(getSettings(db)).toEqual(saved);
   });
 
@@ -58,7 +63,19 @@ describe('settings.repo', () => {
     seed(db, 'theme', JSON.stringify('dark'));
     seed(db, 'maxTimeMs', JSON.stringify(0));
     seed(db, 'defaultLimit', JSON.stringify(25));
-    expect(getSettings(db)).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 25 });
+    seed(db, 'vibrancy', JSON.stringify(false));
+    expect(getSettings(db)).toEqual({
+      theme: 'dark',
+      maxTimeMs: 30000,
+      defaultLimit: 25,
+      vibrancy: false
+    });
+  });
+
+  it('falls back vibrancy to default for non-boolean stored values', () => {
+    const db = makeDb();
+    seed(db, 'vibrancy', JSON.stringify('yes'));
+    expect(getSettings(db).vibrancy).toBe(true);
   });
 
   it('overwrites an existing key on save', () => {
@@ -67,6 +84,6 @@ describe('settings.repo', () => {
     saveSettings(db, { maxTimeMs: 15000 });
     expect(getSettings(db).maxTimeMs).toBe(15000);
     const row = db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM settings').get();
-    expect(row?.count).toBe(3);
+    expect(row?.count).toBe(4);
   });
 });

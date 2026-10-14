@@ -3,6 +3,9 @@ import { useApp } from '../context/AppState';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
+import Banner from './ui/Banner';
+import Button from './ui/Button';
+import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
 import ConfirmDialog from './ConfirmDialog';
 import ManageConnectionsPopup from './ManageConnectionsPopup';
 import PromptDialog from './PromptDialog';
@@ -30,13 +33,7 @@ type SidebarMenu =
       collection: string;
     };
 
-const MENU_ITEM_CLASS =
-  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
-const MENU_DANGER_CLASS =
-  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950';
-const MENU_SEPARATOR_CLASS = 'my-1 h-px bg-slate-200 dark:bg-slate-700';
-const SELECTED_CLASS =
-  'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-100';
+const SELECTED_CLASS = 'bg-accent text-white';
 
 type SidebarPrompt = {
   title: string;
@@ -69,7 +66,6 @@ export default function Sidebar({
   const [menu, setMenu] = useState<SidebarMenu | null>(null);
   const [prompt, setPrompt] = useState<SidebarPrompt | null>(null);
   const [confirm, setConfirm] = useState<SidebarConfirm | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -96,39 +92,20 @@ export default function Sidebar({
 
   useEffect(() => {
     if (menu === null) return;
-    const handlePointerDown = (event: MouseEvent) => {
-      if (menuRef.current !== null && menuRef.current.contains(event.target as Node)) return;
-      setMenu(null);
-    };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setMenu(null);
         setSelection(null);
       }
     };
-    window.addEventListener('mousedown', handlePointerDown);
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [menu]);
 
   const allConnections = state.connections;
   const connectedConnections = allConnections.filter(
     (c: ConnectionConfig) => state.sessions[c.id]?.status === 'connected'
   );
-
-  async function handleDelete(connection: ConnectionConfig) {
-    if (!window.confirm('Delete connection "' + connection.name + '"?')) return;
-    try {
-      await window.api.deleteConnection(connection.id);
-      dispatch({ type: 'connections/removed', id: connection.id });
-      setError(null);
-    } catch (err) {
-      setError(messageOf(err));
-    }
-  }
 
   async function handleConnect(connection: ConnectionConfig) {
     dispatch({ type: 'session/connecting', connectionId: connection.id });
@@ -383,27 +360,26 @@ export default function Sidebar({
   return (
     <aside
       style={{ width }}
-      className={`relative flex h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900${dragging ? ' select-none' : ''}`}
+      className={`relative flex h-full shrink-0 flex-col border-r border-border bg-sidebar${dragging ? ' select-none' : ''}`}
     >
       <div
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize sidebar"
         onMouseDown={handleResizeMouseDown}
-        className="absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-emerald-500/40"
+        className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
       />
-      <div className="flex h-9 shrink-0 items-center justify-between border-b border-slate-200 px-3 dark:border-slate-800">
-        <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-          NexDB
-        </span>
-        <button
-          type="button"
+      <div className="traffic-gutter window-drag flex h-9 shrink-0 items-center justify-between border-b border-border pr-2">
+        <span className="text-[13px] font-semibold tracking-tight text-label">NexDB</span>
+        <Button
+          variant="quiet"
+          size="sm"
+          className="window-no-drag font-medium text-accent"
           onClick={onManageOpen}
-          className="rounded bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500"
           aria-label="Manage connections"
         >
           Connect
-        </button>
+        </Button>
       </div>
       <ManageConnectionsPopup
         open={manageOpen}
@@ -412,22 +388,14 @@ export default function Sidebar({
         onEdit={onEdit}
       />
       {error !== null ? (
-        <div className="flex items-start gap-2 border-b border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
-          <span className="min-w-0 flex-1 break-words">{error}</span>
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            aria-label="Dismiss error"
-            className="shrink-0 font-bold hover:text-red-800 dark:hover:text-red-300"
-          >
-            ✕
-          </button>
-        </div>
+        <Banner onDismiss={() => setError(null)} className="border-b border-border">
+          {error}
+        </Banner>
       ) : null}
       <div className="flex-1 overflow-y-auto py-1">
         {connectedConnections.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
-            No connections yet. Use "Connect" to add one.
+          <p className="px-3 py-2 text-xs text-label-tertiary">
+            No connections yet. Use &quot;Connect&quot; to add one.
           </p>
         ) : null}
         {connectedConnections.map((connection: ConnectionConfig) => {
@@ -435,26 +403,31 @@ export default function Sidebar({
           return (
             <div
               key={connection.id}
-              className="group px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="group px-2 py-1 hover:bg-sidebar-hover"
             >
-              <div className="flex items-center">
-                <span className="min-w-0 flex-1 truncate text-sm text-slate-900 dark:text-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
+                  }`}
+                />
+                <span className="min-w-0 flex-1 truncate text-[13px] text-label">
                   {connection.name}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 flex-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                <span className="min-w-0 flex-1 truncate pl-[13px] text-caption text-label-tertiary">
                   {connection.host}:{connection.port}
                 </span>
                 {session.status === 'connected' ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="quiet"
+                    size="sm"
                     onClick={() => void handleDisconnect(connection)}
-                    className="shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
                     aria-label={`Disconnect ${connection.name}`}
                   >
                     Disconnect
-                  </button>
+                  </Button>
                 ) : null}
               </div>
               {session.status === 'connected' ? (
@@ -469,44 +442,28 @@ export default function Sidebar({
                       selection.database === database;
                     return (
                       <div key={database}>
-                        <div className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${dbSelected ? ` ${SELECTED_CLASS}` : ''}`}>
+                        <div
+                          className={`flex w-full items-center gap-0.5 rounded-[5px] pr-1 pl-0.5 text-left text-[13px]${
+                            dbSelected
+                              ? ` ${SELECTED_CLASS}`
+                              : ' text-label-secondary hover:bg-sidebar-hover'
+                          }`}
+                        >
                         <button
                           type="button"
                           onClick={() => void handleToggle(connection.id, database, session)}
-                          className="shrink-0 text-slate-400 dark:text-slate-500"
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center ${
+                            dbSelected ? 'text-white/80' : 'text-label-tertiary'
+                          }`}
                           aria-label={expanded ? `Collapse ${database}` : `Expand ${database}`}
                         >
-                          {expanded ? (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          ) : (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="m9 18 6-6-6-6" />
-                            </svg>
-                          )}
+                          <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+                            {expanded ? (
+                              <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
+                            ) : (
+                              <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
+                            )}
+                          </svg>
                         </button>
                         <button
                           type="button"
@@ -523,11 +480,11 @@ export default function Sidebar({
                         {expanded ? (
                           <div>
                             {collections === undefined || collections === 'loading' ? (
-                              <p className="px-1 py-0.5 text-xs text-slate-500 dark:text-slate-400">
+                              <p className="px-1 py-0.5 text-caption text-label-tertiary">
                                 Loading…
                               </p>
                             ) : collections.length === 0 ? (
-                              <p className="px-1 py-0.5 text-xs text-slate-500 dark:text-slate-400">
+                              <p className="px-1 py-0.5 text-caption text-label-tertiary">
                                 No collections
                               </p>
                             ) : (
@@ -556,7 +513,11 @@ export default function Sidebar({
                                     onContextMenu={(event) =>
                                       openCollectionMenu(event, connection, database, collection)
                                     }
-                                    className={`block pl-8 w-full truncate rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${collectionSelected ? ` ${SELECTED_CLASS}` : ''}`}
+                                    className={`block w-full truncate rounded-[5px] py-[3px] pr-1 pl-7 text-left text-[13px]${
+                                      collectionSelected
+                                        ? ` ${SELECTED_CLASS}`
+                                        : ' text-label-secondary hover:bg-sidebar-hover'
+                                    }`}
                                   >
                                     {collection}
                                   </button>
@@ -575,16 +536,10 @@ export default function Sidebar({
         })}
       </div>
       {menu !== null ? (
-        <div
-          ref={menuRef}
-          style={{ left: menu.x, top: menu.y }}
-          className="fixed z-50 min-w-44 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
-        >
+        <Menu x={menu.x} y={menu.y} onClose={closeMenu}>
           {menu.kind === 'database' ? (
             <>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+              <MenuItem
                 onClick={() => {
                   void handleToggle(
                     menu.connection.id,
@@ -594,110 +549,92 @@ export default function Sidebar({
                   closeMenu();
                 }}
               >
-                <span>
-                  {state.sessions[menu.connection.id]?.expanded[menu.database] ?? false
-                    ? 'Collapse'
-                    : 'Expand'}
-                </span>
-              </button>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                {state.sessions[menu.connection.id]?.expanded[menu.database] ?? false
+                  ? 'Collapse'
+                  : 'Expand'}
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   copyName(menu.database);
                   closeMenu();
                 }}
               >
-                <span>Copy name</span>
-              </button>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                Copy name
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   promptAddCollection(menu.connection, menu.database);
                   closeMenu();
                 }}
               >
-                <span>Add collection…</span>
-              </button>
-              <div className={MENU_SEPARATOR_CLASS} />
-              <button
-                type="button"
-                className={MENU_DANGER_CLASS}
+                Add collection…
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
+                danger
                 onClick={() => {
                   confirmDropDatabase(menu.connection, menu.database);
                   closeMenu();
                 }}
               >
-                <span>Drop database…</span>
-              </button>
+                Drop database…
+              </MenuItem>
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+              <MenuItem
                 onClick={() => {
                   void handleOpenCollection(menu.connection, menu.database, menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Open</span>
-              </button>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                Open
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   copyName(menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Copy name</span>
-              </button>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                Copy name
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   promptRenameCollection(menu.connection, menu.database, menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Rename collection…</span>
-              </button>
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                Rename collection…
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   promptDuplicateCollection(menu.connection, menu.database, menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Duplicate collection…</span>
-              </button>
-              <div className={MENU_SEPARATOR_CLASS} />
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
+                Duplicate collection…
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
                 onClick={() => {
                   confirmClearCollection(menu.connection, menu.database, menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Clear collection…</span>
-              </button>
-              <button
-                type="button"
-                className={MENU_DANGER_CLASS}
+                Clear collection…
+              </MenuItem>
+              <MenuItem
+                danger
                 onClick={() => {
                   confirmDropCollection(menu.connection, menu.database, menu.collection);
                   closeMenu();
                 }}
               >
-                <span>Drop collection…</span>
-              </button>
+                Drop collection…
+              </MenuItem>
             </>
           )}
-        </div>
+        </Menu>
       ) : null}
       <PromptDialog
         open={prompt !== null}

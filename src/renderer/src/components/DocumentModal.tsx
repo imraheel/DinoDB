@@ -3,6 +3,9 @@ import * as monaco from 'monaco-editor';
 import { messageOf } from '../lib/errors';
 import { isMonacoDark } from '../lib/monaco';
 import { parseShellJson } from '../lib/shell-json';
+import Button from './ui/Button';
+import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
+import { FRAME_CLASS } from './ui/Input';
 
 interface DocumentModalProps {
   title: string;
@@ -90,7 +93,7 @@ export default function DocumentModal({
       automaticLayout: true,
       scrollBeyondLastLine: false,
       readOnly: viewOnly,
-      theme: isMonacoDark() ? 'vs-dark' : 'vs'
+      theme: isMonacoDark() ? 'nexdb-dark' : 'nexdb-light'
     });
     const subscription = editor.onDidChangeModelContent(() => {
       setText(editor.getValue());
@@ -103,70 +106,50 @@ export default function DocumentModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div
-        style={{ width: size.width, height: size.height }}
-        className={`relative flex w-full flex-col rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900${dragging ? ' select-none' : ''}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="px-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-          >
-            ✕
-          </button>
-        </div>
-        <div
-          ref={containerRef}
-          className="min-h-0 w-full flex-1 overflow-hidden rounded border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
-        />
+    <Modal
+      open
+      onClose={onClose}
+      dismissOnOverlay={false}
+      className={dragging ? 'select-none' : ''}
+      style={{ width: size.width, height: size.height }}
+      aria-label={title}
+    >
+      <ModalHeader title={title} onClose={onClose} />
+      <div className="flex min-h-0 flex-1 flex-col px-5 pb-2 pt-3">
+        <div ref={containerRef} className={`min-h-0 w-full flex-1 ${FRAME_CLASS}`} />
         {viewOnly ? null : error !== null ? (
-          <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+          <p className="pt-2 text-xs text-danger">{error}</p>
         ) : null}
-        <div className="mt-4 flex justify-end gap-2">
-          {viewOnly ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Close
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => onSave(text)}
-                disabled={error !== null || saving === true}
-                className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-              >
-                {saving === true ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          )}
-        </div>
-        <div
-          role="separator"
-          aria-label="Resize dialog"
-          onMouseDown={handleResizeMouseDown}
-          className="absolute bottom-0 right-0 z-10 h-3 w-3 cursor-nwse-resize"
-        >
-          <div className="absolute bottom-0.5 right-0.5 h-2 w-2 border-b-2 border-r-2 border-slate-300 dark:border-slate-600" />
-        </div>
       </div>
-    </div>
+      <ModalFooter>
+        {viewOnly ? (
+          <Button size="md" onClick={onClose}>
+            Close
+          </Button>
+        ) : (
+          <>
+            <Button size="md" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => onSave(text)}
+              disabled={error !== null || saving === true}
+            >
+              {saving === true ? 'Saving…' : 'Save'}
+            </Button>
+          </>
+        )}
+      </ModalFooter>
+      <div
+        role="separator"
+        aria-label="Resize dialog"
+        onMouseDown={handleResizeMouseDown}
+        className="absolute right-0 bottom-0 z-10 h-3 w-3 cursor-nwse-resize"
+      >
+        <div className="absolute right-0.5 bottom-0.5 h-2 w-2 border-r-2 border-b-2 border-border-strong" />
+      </div>
+    </Modal>
   );
 }

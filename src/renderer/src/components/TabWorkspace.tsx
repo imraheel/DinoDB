@@ -8,6 +8,7 @@ import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
 import { parseShellJson, toShellJson } from '../lib/shell-json';
 import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
+import Banner from './ui/Banner';
 import ConfirmDialog from './ConfirmDialog';
 import DocumentModal from './DocumentModal';
 import QueryBar from './QueryBar';
@@ -49,22 +50,6 @@ function writeCard(op: string, result: WriteResult, inserted: number): ResultCar
     inserted,
     insertedId: result.insertedId
   };
-}
-
-function ErrorBanner({ error, onDismiss }: { error: string; onDismiss(): void }) {
-  return (
-    <div className="flex items-start gap-2 border-b border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
-      <span className="min-w-0 flex-1 break-words">{error}</span>
-      <button
-        type="button"
-        onClick={onDismiss}
-        aria-label="Dismiss error"
-        className="shrink-0 font-bold hover:text-red-800 dark:hover:text-red-300"
-      >
-        ✕
-      </button>
-    </div>
-  );
 }
 
 export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
@@ -341,10 +326,12 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   const banner =
     data.error !== undefined ? (
-      <ErrorBanner
-        error={data.error}
+      <Banner
         onDismiss={() => dispatch({ type: 'tab/errorCleared', tabId: tab.id })}
-      />
+        className="border-b border-border"
+      >
+        {data.error}
+      </Banner>
     ) : null;
 
   return (

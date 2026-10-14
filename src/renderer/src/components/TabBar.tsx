@@ -3,29 +3,25 @@ import { useApp } from '../context/AppState';
 export default function TabBar() {
   const { state, dispatch } = useApp();
 
-  if (state.tabs.length === 0) return null;
-
   return (
-    <div className="flex h-9 shrink-0 items-end gap-1 overflow-x-auto border-b border-slate-200 bg-slate-100 px-2 pt-1 dark:border-slate-800 dark:bg-slate-900">
+    <div className="window-drag flex h-9 shrink-0 items-end gap-1 overflow-x-auto border-b border-border bg-chrome px-2 pt-1 select-none">
       {state.tabs.map((tab) => {
         const active = tab.id === state.activeTabId;
         return (
           <div
             key={tab.id}
-            className={
+            className={`window-no-drag group flex max-w-52 shrink-0 items-center rounded-t-[6px] ${
               active
-                ? 'flex max-w-52 shrink-0 items-center rounded-t-md border border-b-0 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
-                : 'flex max-w-52 shrink-0 items-center rounded-t-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
-            }
+                ? 'bg-surface shadow-[0_-1px_2px_rgba(0,0,0,0.04)]'
+                : 'hover:bg-sidebar-hover'
+            }`}
           >
             <button
               type="button"
               onClick={() => dispatch({ type: 'tab/activated', tabId: tab.id })}
-              className={
-                active
-                  ? 'min-w-0 flex-1 truncate py-1.5 pl-3 text-left text-xs text-slate-900 dark:text-slate-100'
-                  : 'min-w-0 flex-1 truncate py-1.5 pl-3 text-left text-xs text-slate-500 dark:text-slate-400'
-              }
+              className={`min-w-0 flex-1 truncate py-1.5 pl-3 text-left text-xs ${
+                active ? 'font-medium text-label' : 'text-label-secondary'
+              }`}
             >
               {tab.title}
             </button>
@@ -37,9 +33,19 @@ export default function TabBar() {
                 dispatch({ type: 'tab/removed', tabId: tab.id });
                 void window.api.closeTab(tab.id).catch(() => {});
               }}
-              className="shrink-0 rounded-full px-1.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
+              className={`mr-1.5 ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-label-tertiary transition-opacity duration-100 hover:bg-well hover:text-label ${
+                active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
             >
-              ✕
+              <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true">
+                <path
+                  d="M1.5 1.5l7 7M8.5 1.5l-7 7"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
             </button>
           </div>
         );

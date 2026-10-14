@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { formatCell, getColumns } from '../lib/format';
 import type { SchemaField } from '../../../shared/types';
+import Button from './ui/Button';
+import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
 
 interface DataTableProps {
   fields: SchemaField[];
@@ -76,13 +78,6 @@ function cellColorClass(value: unknown): string {
   return '';
 }
 
-const MENU_ITEM_CLASS =
-  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
-const MENU_DANGER_CLASS =
-  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950';
-const MENU_SEPARATOR_CLASS = 'my-1 h-px bg-slate-200 dark:bg-slate-700';
-const SHORTCUT_CLASS = 'shrink-0 text-[10px] text-slate-400 dark:text-slate-500';
-
 const IS_MAC = /Mac/i.test(navigator.userAgent);
 const MOD_KEY = IS_MAC ? '⌘' : 'Ctrl';
 
@@ -107,7 +102,6 @@ export default function DataTable({
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const selectedDoc =
     selectedKey === null
@@ -208,21 +202,11 @@ export default function DataTable({
 
   useEffect(() => {
     if (menu === null) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (menuRef.current !== null && menuRef.current.contains(event.target as Node)) return;
-      setMenu(null);
-    };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMenu(null);
     };
-
-    window.addEventListener('mousedown', handlePointerDown);
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [menu]);
 
   function openRowMenu(event: ReactMouseEvent, document: unknown, index: number) {
@@ -262,41 +246,40 @@ export default function DataTable({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center gap-2 pb-1.5">
-        <span className="text-xs text-slate-600 dark:text-slate-300">
-          {documents.length} documents
-        </span>
+        <span className="text-xs text-label-secondary">{documents.length} documents</span>
         {truncated ? (
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-caption text-label-tertiary">
             Showing first {documents.length} — narrow your query
           </span>
         ) : null}
         <span className="flex-1" />
         {canMutate && onInsert !== undefined ? (
-          <button
-            type="button"
+          <Button
+            variant="quiet"
+            size="sm"
+            className="border border-accent font-medium text-accent"
             onClick={onInsert}
-            className="shrink-0 rounded border border-emerald-600 px-2 py-0.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50 dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-950"
           >
             Insert document
-          </button>
+          </Button>
         ) : null}
       </div>
       <div
-        className="flex min-h-0 flex-1 flex-col overflow-auto rounded border border-slate-200 dark:border-slate-800"
+        className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border"
         onContextMenu={openBackgroundMenu}
       >
         {documents.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="px-3 py-6 text-center text-[13px] text-label-tertiary">
             {loading ? 'Loading…' : 'No documents match this query.'}
           </p>
         ) : (
-          <table className="w-full text-sm font-mono">
-            <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-slate-800">
+          <table className="w-full font-mono text-xs">
+            <thead className="sticky top-0 z-10 bg-chrome">
               <tr className="text-left">
                 {columns.map((column) => (
                   <th
                     key={column}
-                    className="border-b border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                    className="border-b border-border px-3 py-1.5 text-caption font-semibold text-label-secondary"
                   >
                     {column}
                   </th>
@@ -313,8 +296,8 @@ export default function DataTable({
                     onContextMenu={(event) => openRowMenu(event, document, index)}
                     className={
                       selected
-                        ? 'cursor-default bg-emerald-50 dark:bg-emerald-950/40'
-                        : 'cursor-default hover:bg-slate-50 dark:hover:bg-slate-900'
+                        ? 'cursor-default bg-accent text-white'
+                        : 'cursor-default text-label hover:bg-well'
                     }
                   >
                     {columns.map((column) => {
@@ -324,9 +307,9 @@ export default function DataTable({
                         selectedCell !== null &&
                         selectedCell.key === key &&
                         selectedCell.column === column;
-                      const colorClass = cellColorClass(raw);
+                      const colorClass = selected ? '' : cellColorClass(raw);
                       const baseClass =
-                        'max-w-72 cursor-default truncate border-b border-slate-100 px-3 py-1.5 dark:border-slate-800';
+                        'max-w-72 cursor-default truncate border-b border-border px-3 py-1.5';
                       return (
                         <td
                           key={column}
@@ -339,7 +322,7 @@ export default function DataTable({
                           }}
                           className={
                             cellSelected
-                              ? `${baseClass} outline outline-1 -outline-offset-1 outline-emerald-500 dark:outline-emerald-400${colorClass !== '' ? ` ${colorClass}` : ''}`
+                              ? `${baseClass} outline outline-1 -outline-offset-1 ${selected ? 'outline-white/70' : 'outline-accent'}${colorClass !== '' ? ` ${colorClass}` : ''}`
                               : `${baseClass}${colorClass !== '' ? ` ${colorClass}` : ''}`
                           }
                         >
@@ -354,102 +337,81 @@ export default function DataTable({
           </table>
         )}
         {loading && documents.length > 0 ? (
-          <p className="px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400">Refreshing…</p>
+          <p className="px-3 py-1.5 text-xs text-label-tertiary">Refreshing…</p>
         ) : null}
       </div>
       {menu !== null ? (
-        <div
-          ref={menuRef}
-          style={{ left: menu.x, top: menu.y }}
-          className="fixed z-50 min-w-44 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
-        >
+        <Menu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
           {canMutate && onInsert !== undefined ? (
-            <button type="button" className={MENU_ITEM_CLASS} onClick={handleMenuItem(onInsert)}>
-              <span>Insert document</span>
-              <span className={SHORTCUT_CLASS}>{shortcutLabel(MOD_KEY, 'D')}</span>
-            </button>
+            <MenuItem shortcut={shortcutLabel(MOD_KEY, 'D')} onClick={handleMenuItem(onInsert)}>
+              Insert document
+            </MenuItem>
           ) : null}
-          {menuDoc !== null && (canMutate || onView !== undefined) ? (
-            <div className={MENU_SEPARATOR_CLASS} />
-          ) : null}
+          {menuDoc !== null && (canMutate || onView !== undefined) ? <MenuSeparator /> : null}
           {menuDoc !== null && onView !== undefined ? (
-            <button
-              type="button"
-              className={MENU_ITEM_CLASS}
-              onClick={handleMenuItem(() => onView(menuDoc))}
-            >
-              <span>View document</span>
-              <span className={SHORTCUT_CLASS}>F3</span>
-            </button>
+            <MenuItem shortcut="F3" onClick={handleMenuItem(() => onView(menuDoc))}>
+              View document
+            </MenuItem>
           ) : null}
           {menuDoc !== null && canMutate && onEdit !== undefined ? (
-            <button
-              type="button"
-              className={MENU_ITEM_CLASS}
+            <MenuItem
+              shortcut={shortcutLabel(MOD_KEY, 'J')}
               onClick={handleMenuItem(() => onEdit(menuDoc))}
             >
-              <span>Edit document</span>
-              <span className={SHORTCUT_CLASS}>{shortcutLabel(MOD_KEY, 'J')}</span>
-            </button>
+              Edit document
+            </MenuItem>
           ) : null}
           {menuDoc !== null && canMutate && onDelete !== undefined ? (
-            <button
-              type="button"
-              className={MENU_DANGER_CLASS}
+            <MenuItem
+              danger
+              shortcut="⇧⌫"
               onClick={handleMenuItem(() => onDelete(menuDoc))}
             >
-              <span>Delete document</span>
-              <span className={SHORTCUT_CLASS}>⇧⌫</span>
-            </button>
+              Delete document
+            </MenuItem>
           ) : null}
           {menuDoc !== null ? (
             <>
-              <div className={MENU_SEPARATOR_CLASS} />
-              <button
-                type="button"
-                className={MENU_ITEM_CLASS}
-                onClick={handleMenuItem(() =>
-                  copyToClipboard(JSON.stringify(menuDoc, null, 2))
-                )}
+              <MenuSeparator />
+              <MenuItem
+                shortcut={shortcutLabel(MOD_KEY, '⇧', 'C')}
+                onClick={handleMenuItem(() => copyToClipboard(JSON.stringify(menuDoc, null, 2)))}
               >
-                <span>Copy document</span>
-                <span className={SHORTCUT_CLASS}>{shortcutLabel(MOD_KEY, '⇧', 'C')}</span>
-              </button>
+                Copy document
+              </MenuItem>
               {menuColumn !== null ? (
                 <>
-                  <button
-                    type="button"
-                    className={MENU_ITEM_CLASS}
+                  <MenuItem
                     onClick={handleMenuItem(() =>
                       copyToClipboard(JSON.stringify(cellRawValue(menuDoc, menuColumn)))
                     )}
                   >
-                    <span>Copy value</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={MENU_ITEM_CLASS}
+                    Copy value
+                  </MenuItem>
+                  <MenuItem
+                    shortcut={shortcutLabel(MOD_KEY, 'C')}
                     onClick={handleMenuItem(() =>
                       copyToClipboard(formatCell(cellRawValue(menuDoc, menuColumn)))
                     )}
                   >
-                    <span>Copy value as text</span>
-                    <span className={SHORTCUT_CLASS}>{shortcutLabel(MOD_KEY, 'C')}</span>
-                  </button>
+                    Copy value as text
+                  </MenuItem>
                 </>
               ) : null}
             </>
           ) : null}
           {onRefresh !== undefined ? (
             <>
-              <div className={MENU_SEPARATOR_CLASS} />
-              <button type="button" className={MENU_ITEM_CLASS} onClick={handleMenuItem(onRefresh)}>
-                <span>Refresh</span>
-                <span className={SHORTCUT_CLASS}>{shortcutLabel(MOD_KEY, 'R')}</span>
-              </button>
+              <MenuSeparator />
+              <MenuItem
+                shortcut={shortcutLabel(MOD_KEY, 'R')}
+                onClick={handleMenuItem(onRefresh)}
+              >
+                Refresh
+              </MenuItem>
             </>
           ) : null}
-        </div>
+        </Menu>
       ) : null}
     </div>
   );

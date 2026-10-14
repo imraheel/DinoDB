@@ -1,3 +1,6 @@
+import Modal from './ui/Modal';
+import Button from './ui/Button';
+
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
@@ -17,46 +20,38 @@ export default function ConfirmDialog({
   onConfirm,
   onClose
 }: ConfirmDialogProps) {
-  if (!open) return null;
-
   function handleConfirm() {
     void onConfirm();
     onClose();
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onMouseDown={onClose}
+    <Modal
+      open={open}
+      onClose={onClose}
+      style={{ width: 280, maxWidth: '90vw' }}
+      aria-label={title}
     >
-      <div
-        className="w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-        <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{message}</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
+      <div className="flex flex-col gap-3 p-4">
+        <div className="text-center">
+          <h2 className="text-[13px] font-semibold text-label">{title}</h2>
+          <p className="mt-1.5 text-xs leading-relaxed text-label-secondary">{message}</p>
+        </div>
+        <div className="mt-1 flex gap-2">
+          <Button size="md" className="flex-1" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
+          </Button>
+          <Button
+            variant={danger ? 'destructive' : 'primary'}
+            size="md"
             autoFocus
-            className={
-              danger
-                ? 'rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700'
-                : 'rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700'
-            }
+            className="flex-1"
+            onClick={handleConfirm}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

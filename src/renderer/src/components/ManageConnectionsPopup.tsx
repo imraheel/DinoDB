@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useApp } from '../context/AppState';
 import { emptySession } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
+import Banner from './ui/Banner';
+import Button from './ui/Button';
+import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
+import Modal, { ModalBody, ModalFooter, ModalHeader } from './ui/Modal';
+import ConfirmDialog from './ConfirmDialog';
 
 interface ManageConnectionsPopupProps {
   open: boolean;
@@ -19,13 +24,8 @@ interface RowMenuState {
 }
 
 const ICON_BUTTON_CLASS =
-  'flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800';
-const ICON_LABEL_CLASS = 'text-[11px] font-medium';
-const MENU_ITEM_CLASS =
-  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
-const MENU_DANGER_CLASS =
-  'flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950';
-const MENU_SEPARATOR_CLASS = 'my-1 h-px bg-slate-200 dark:bg-slate-700';
+  'flex flex-col items-center gap-1 rounded-control px-3 py-2 text-label-secondary transition-colors duration-100 hover:bg-well disabled:cursor-not-allowed disabled:opacity-40';
+const ICON_LABEL_CLASS = 'text-caption font-medium';
 
 interface IconProps {
   size?: number;
@@ -170,7 +170,7 @@ export default function ManageConnectionsPopup({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<ConnectionConfig | null>(null);
 
   const allConnections = state.connections;
   const selected =
@@ -178,26 +178,10 @@ export default function ManageConnectionsPopup({
   const selectedConnected =
     selected !== null && state.sessions[selected.id]?.status === 'connected';
 
-  useEffect(() => {
-    if (rowMenu === null) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (menuRef.current !== null && menuRef.current.contains(event.target as Node)) return;
-      setRowMenu(null);
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setRowMenu(null);
-    };
-
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('mousedown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [rowMenu]);
-
-  if (!open) return null;
+  function closeAndReset() {
+    onClose();
+    setSelectedId(null);
+  }
 
   function openRowMenu(
     event: ReactMouseEvent,
@@ -261,7 +245,6 @@ export default function ManageConnectionsPopup({
   }
 
   async function handleDelete(connection: ConnectionConfig) {
-    if (!window.confirm('Delete connection "' + connection.name + '"?')) return;
     try {
       await window.api.deleteConnection(connection.id);
       dispatch({ type: 'connections/removed', id: connection.id });
@@ -288,24 +271,11 @@ export default function ManageConnectionsPopup({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => {onClose(); setSelectedId(null);}}>
-      <div
-        className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3">
-          <h3 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            Connection Manager
-          </h3>
-        </div>
-
-        <div className="mb-4 flex items-start gap-2">
-          <button
-            type="button"
-            onClick={onAdd}
-            className={ICON_BUTTON_CLASS}
-            aria-label="New connection"
-          >
+    <Modal open={open} onClose={closeAndReset} className="max-w-3xl" aria-label="Connection Manager">
+      <ModalHeader title="Connection Manager" />
+      <ModalBody className="flex flex-col gap-3">
+        <div className="flex items-start gap-2">
+          <button type="button" onClick={onAdd} className={ICON_BUTTON_CLASS} aria-label="New connection">
             <PlusIcon />
             <span className={ICON_LABEL_CLASS}>New</span>
           </button>
@@ -336,7 +306,7 @@ export default function ManageConnectionsPopup({
           <button
             type="button"
             onClick={() => {
-              if (selected !== null) void handleDelete(selected);
+              if (selected !== null) setPendingDelete(selected);
             }}
             disabled={selected === null}
             className={ICON_BUTTON_CLASS}
@@ -348,20 +318,26 @@ export default function ManageConnectionsPopup({
         </div>
 
         {error !== null ? (
-          <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+          <Banner tone="error" className="rounded-field border border-border">
             {error}
-          </div>
+          </Banner>
         ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {allConnections.length > 0 ? (
-            <table className="w-full border-collapse text-left text-sm">
+            <table className="w-full border-collapse text-left text-[13px]">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Name</th>
-                  <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Host:Port</th>
-                  <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Last connected</th>
-                  <th className="px-2 py-1.5 font-medium text-slate-500 dark:text-slate-400">Last modified</th>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">Name</th>
+                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">
+                    Host:Port
+                  </th>
+                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">
+                    Last connected
+                  </th>
+                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">
+                    Last modified
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -379,8 +355,8 @@ export default function ManageConnectionsPopup({
                       onContextMenu={(event) => openRowMenu(event, connection, isConnected)}
                       className={
                         isSelected
-                          ? 'cursor-default border-b border-slate-200 bg-emerald-50 dark:border-slate-800 dark:bg-emerald-950/40'
-                          : 'cursor-default border-b border-slate-200 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900'
+                          ? 'cursor-default border-b border-border bg-accent-soft text-label'
+                          : 'cursor-default border-b border-border text-label last:border-0 hover:bg-well'
                       }
                     >
                       <td className="px-2 py-2">
@@ -388,25 +364,23 @@ export default function ManageConnectionsPopup({
                           <span
                             className={
                               isConnected
-                                ? 'h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500'
-                                : 'h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 dark:bg-slate-600'
+                                ? 'h-1.5 w-1.5 shrink-0 rounded-full bg-success'
+                                : 'h-1.5 w-1.5 shrink-0 rounded-full bg-label-tertiary/40'
                             }
                             aria-label={isConnected ? 'Connected' : 'Disconnected'}
                           />
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {connection.name}
-                          </span>
+                          <span className="font-medium">{connection.name}</span>
                         </div>
                       </td>
-                      <td className="px-2 py-2 text-xs text-slate-500 dark:text-slate-400">
+                      <td className="px-2 py-2 text-xs text-label-secondary">
                         {connection.host}:{connection.port}
                       </td>
-                      <td className="px-2 py-2 text-xs text-slate-400 dark:text-slate-500">
+                      <td className="px-2 py-2 text-xs text-label-tertiary">
                         {connection.lastConnectedAt === null
                           ? 'never'
                           : formatTime(connection.lastConnectedAt)}
                       </td>
-                      <td className="px-2 py-2 text-xs text-slate-400 dark:text-slate-500">
+                      <td className="px-2 py-2 text-xs text-label-tertiary">
                         {formatTime(connection.updatedAt ?? connection.createdAt)}
                       </td>
                     </tr>
@@ -415,81 +389,81 @@ export default function ManageConnectionsPopup({
               </tbody>
             </table>
           ) : (
-            <p className="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-              No saved connections
-            </p>
+            <p className="py-6 text-center text-xs text-label-tertiary">No saved connections</p>
           )}
         </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button size="md" onClick={closeAndReset}>
+          Close
+        </Button>
+        <Button
+          variant="primary"
+          size="md"
+          className="px-4"
+          disabled={selected === null}
+          onClick={() => {
+            if (selected === null) return;
+            if (selectedConnected) void handleDisconnect(selected);
+            else void handleConnect(selected);
+          }}
+        >
+          {selectedConnected ? 'Disconnect' : 'Connect'}
+        </Button>
+      </ModalFooter>
 
-        <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {onClose(); setSelectedId(null);}}
-              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (selected === null) return;
-                if (selectedConnected) void handleDisconnect(selected);
-                else void handleConnect(selected);
-              }}
-              disabled={selected === null}
-              className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {selectedConnected ? 'Disconnect' : 'Connect'}
-            </button>
-          </div>
-        </div>
-
-        {rowMenu !== null ? (
-          <div
-            ref={menuRef}
-            style={{ left: rowMenu.x, top: rowMenu.y }}
-            className="fixed z-50 min-w-40 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+      {rowMenu !== null ? (
+        <Menu x={rowMenu.x} y={rowMenu.y} onClose={() => setRowMenu(null)}>
+          <MenuItem
+            icon={
+              rowMenu.connected ? <DatabaseXIcon size={14} /> : <DatabaseCheckIcon size={14} />
+            }
+            onClick={handleMenuItem(() => {
+              if (rowMenu.connected) void handleDisconnect(rowMenu.connection);
+              else void handleConnect(rowMenu.connection);
+            })}
           >
-            <button
-              type="button"
-              className={MENU_ITEM_CLASS}
-              onClick={handleMenuItem(() => {
-                if (rowMenu.connected) void handleDisconnect(rowMenu.connection);
-                else void handleConnect(rowMenu.connection);
-              })}
-            >
-              {rowMenu.connected ? <DatabaseXIcon size={14} /> : <DatabaseCheckIcon size={14} />}
-              <span>{rowMenu.connected ? 'Disconnect' : 'Connect'}</span>
-            </button>
-            <button
-              type="button"
-              className={MENU_ITEM_CLASS}
-              onClick={handleMenuItem(() => onEdit(rowMenu.connection))}
-            >
-              <PencilIcon size={14} />
-              <span>Edit</span>
-            </button>
-            <button
-              type="button"
-              className={MENU_ITEM_CLASS}
-              onClick={handleMenuItem(() => void handleDuplicate(rowMenu.connection))}
-            >
-              <DuplicateIcon size={14} />
-              <span>Duplicate</span>
-            </button>
-            <div className={MENU_SEPARATOR_CLASS} />
-            <button
-              type="button"
-              className={MENU_DANGER_CLASS}
-              onClick={handleMenuItem(() => void handleDelete(rowMenu.connection))}
-            >
-              <TrashIcon size={14} />
-              <span>Delete</span>
-            </button>
-          </div>
-        ) : null}
-      </div>
-    </div>
+            {rowMenu.connected ? 'Disconnect' : 'Connect'}
+          </MenuItem>
+          <MenuItem
+            icon={<PencilIcon size={14} />}
+            onClick={handleMenuItem(() => onEdit(rowMenu.connection))}
+          >
+            Edit
+          </MenuItem>
+          <MenuItem
+            icon={<DuplicateIcon size={14} />}
+            onClick={handleMenuItem(() => void handleDuplicate(rowMenu.connection))}
+          >
+            Duplicate
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            danger
+            icon={<TrashIcon size={14} />}
+            onClick={handleMenuItem(() => setPendingDelete(rowMenu.connection))}
+          >
+            Delete
+          </MenuItem>
+        </Menu>
+      ) : null}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete connection"
+        message={
+          pendingDelete === null
+            ? ''
+            : `Delete connection "${pendingDelete.name}"? This cannot be undone.`
+        }
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          if (pendingDelete === null) return;
+          void handleDelete(pendingDelete);
+        }}
+        onClose={() => setPendingDelete(null)}
+      />
+    </Modal>
   );
 }

@@ -7,7 +7,7 @@ import TabWorkspace from './components/TabWorkspace';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
 import { setMonacoTheme } from './lib/monaco';
-import { applyTheme, resolveTheme } from './lib/theme';
+import { applyPlatform, applyTheme, resolveTheme } from './lib/theme';
 import type { ConnectionConfig } from '../../shared/types';
 
 export default function AppShell() {
@@ -44,8 +44,9 @@ export default function AppShell() {
 
   useEffect(() => {
     applyTheme(state.settings.theme);
+    applyPlatform(state.settings.vibrancy);
     setMonacoTheme(resolveTheme(state.settings.theme) === 'dark');
-  }, [state.settings.theme]);
+  }, [state.settings.theme, state.settings.vibrancy]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -59,7 +60,7 @@ export default function AppShell() {
   }, [state.settings.theme]);
 
   return (
-    <div className="flex h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex h-screen">
       <Sidebar
         onAdd={() => setModal({ open: true, editing: null })}
         onEdit={(connection) => setModal({ open: true, editing: connection })}
@@ -67,7 +68,7 @@ export default function AppShell() {
         onManageOpen={() => setConnectionsOpen(true)}
         onManageClose={() => setConnectionsOpen(false)}
       />
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
         <TabBar />
         {state.tabs.length === 0 ? (
           <WelcomeScreen

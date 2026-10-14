@@ -4,6 +4,8 @@ import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
 import { isMonacoDark } from '../lib/monaco';
+import Button from './ui/Button';
+import { BASE_INPUT_CLASS, FRAME_CLASS } from './ui/Input';
 
 interface QueryBarProps {
   tab: TabMeta;
@@ -13,9 +15,8 @@ interface QueryBarProps {
   onRun(): void;
 }
 
-const NUMBER_INPUT_CLASS =
-  'w-20 rounded border border-slate-300 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-const LABEL_CLASS = 'text-xs text-slate-500 dark:text-slate-400';
+const NUMBER_INPUT_CLASS = `${BASE_INPUT_CLASS} w-20 font-mono text-xs`;
+const LABEL_CLASS = 'text-xs text-label-secondary';
 
 export default function QueryBar({ tab, query, loading, active, onRun }: QueryBarProps) {
   const { dispatch } = useApp();
@@ -80,7 +81,7 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
       automaticLayout: true,
       scrollBeyondLastLine: false,
       ariaLabel: 'Find query',
-      theme: isMonacoDark() ? 'vs-dark' : 'vs'
+      theme: isMonacoDark() ? 'nexdb-dark' : 'nexdb-light'
     });
     editorRef.current = editor;
     const subscription = editor.onDidChangeModelContent(() => {
@@ -107,17 +108,15 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
   }, [active]);
 
   return (
-    <div className="relative flex flex-col gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-800">
+    <div className="relative flex flex-col gap-2.5 border-b border-border px-3 py-3">
       <div className="flex flex-wrap items-center gap-2" onKeyDown={handleKeyDown}>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-            {tab.title}
-          </h2>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+          <h2 className="truncate text-[13px] font-medium text-label">{tab.title}</h2>
+          <p className="truncate text-caption text-label-tertiary">
             {tab.connectionName} · {tab.database}.{tab.collection}
           </p>
         </div>
-        <label className="flex shrink-0 items-center gap-1">
+        <label className="flex shrink-0 items-center gap-1.5">
           <span className={LABEL_CLASS}>Skip</span>
           <input
             aria-label="Skip"
@@ -128,7 +127,7 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
             className={NUMBER_INPUT_CLASS}
           />
         </label>
-        <label className="flex shrink-0 items-center gap-1">
+        <label className="flex shrink-0 items-center gap-1.5">
           <span className={LABEL_CLASS}>Limit</span>
           <input
             aria-label="Limit"
@@ -139,26 +138,17 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
             className={NUMBER_INPUT_CLASS}
           />
         </label>
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={loading}
-          className="shrink-0 rounded bg-emerald-600 px-4 py-1 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-        >
+        <Button variant="primary" size="md" pill onClick={onRun} disabled={loading} className="px-4">
           {loading ? 'Running…' : 'Run'}
-        </button>
+        </Button>
       </div>
-      <div
-        ref={containerRef}
-        style={{ height: editorHeight }}
-        className={`w-full overflow-hidden rounded border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800${dragging ? ' select-none' : ''}`}
-      />
+      <div ref={containerRef} style={{ height: editorHeight }} className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`} />
       <div
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize query editor"
         onMouseDown={handleResizeMouseDown}
-        className="absolute inset-x-0 bottom-0 z-10 h-1 cursor-row-resize hover:bg-emerald-500/40"
+        className="absolute inset-x-0 bottom-0 z-10 h-1 cursor-row-resize hover:bg-accent/40"
       />
     </div>
   );

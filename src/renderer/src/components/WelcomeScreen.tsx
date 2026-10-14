@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useApp } from '../context/AppState';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
+import Button from './ui/Button';
+import Banner from './ui/Banner';
 
 interface WelcomeScreenProps {
   onOpenManager(): void;
@@ -25,7 +27,6 @@ const SHORTCUTS: { label: string; keys: string }[] = [
   { label: 'Refresh results', keys: IS_MAC ? '⌘ R' : 'Ctrl+R' },
   { label: 'View document', keys: 'F3' }
 ];
-
 
 export default function WelcomeScreen({ onOpenManager, onNewConnection }: WelcomeScreenProps) {
   const { state, dispatch } = useApp();
@@ -59,10 +60,8 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-7 overflow-y-auto px-6 py-8">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-          Welcome to NexDB
-        </h1>
-        <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+        <h1 className="text-[22px] font-semibold tracking-tight text-label">Welcome to NexDB</h1>
+        <p className="mt-1.5 text-[13px] text-label-secondary">
           Open a collection from the sidebar to start working.
         </p>
       </div>
@@ -70,12 +69,12 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
       <ol className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
         {STEPS.map((step, index) => (
           <li key={step} className="flex items-center gap-2">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-caption font-semibold text-accent">
               {index + 1}
             </span>
-            <span className="text-xs text-slate-600 dark:text-slate-300">{step}</span>
+            <span className="text-xs text-label-secondary">{step}</span>
             {index < STEPS.length - 1 ? (
-              <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">
+              <span className="text-label-tertiary" aria-hidden="true">
                 →
               </span>
             ) : null}
@@ -97,29 +96,25 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
                   type="button"
                   onClick={() => void quickConnect(connection)}
                   disabled={isBusy || isConnecting || isConnected}
-                  className="rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/30"
+                  className="rounded-modal border border-border bg-surface p-3 text-left shadow-raise transition-colors duration-100 hover:border-accent/40 hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <div className="flex items-center gap-2">
                     <span
                       className={
                         isConnected
-                          ? 'h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500'
-                          : 'h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 dark:bg-slate-600'
+                          ? 'h-1.5 w-1.5 shrink-0 rounded-full bg-success'
+                          : 'h-1.5 w-1.5 shrink-0 rounded-full bg-label-tertiary/40'
                       }
                     />
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <span className="min-w-0 truncate text-[13px] font-medium text-label">
                       {connection.name}
                     </span>
                   </div>
-                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 truncate text-xs text-label-secondary">
                     {connection.host}:{connection.port}
                   </p>
-                  <p className="mt-2 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                    {isConnecting
-                      ? 'Connecting…'
-                      : isConnected
-                        ? 'Connected'
-                        : 'Connect'}
+                  <p className="mt-2 text-caption font-medium text-accent">
+                    {isConnecting ? 'Connecting…' : isConnected ? 'Connected' : 'Connect'}
                   </p>
                 </button>
               );
@@ -128,22 +123,20 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
         ) : null}
 
         {error !== null ? (
-          <p className="w-full rounded border border-red-200 bg-red-50 px-3 py-1.5 text-center text-xs text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+          <Banner tone="error" className="rounded-field w-full border border-border text-center">
             {error}
-          </p>
+          </Banner>
         ) : null}
 
-        <div className="w-full rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/60">
-          <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="w-full rounded-modal border border-border bg-chrome/60 p-4">
+          <p className="mb-2.5 text-caption font-semibold uppercase tracking-wide text-label-tertiary">
             Keyboard shortcuts
           </p>
           <div className="grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-3">
             {SHORTCUTS.map((shortcut) => (
               <div key={shortcut.label} className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-slate-600 dark:text-slate-300">
-                  {shortcut.label}
-                </span>
-                <kbd className="shrink-0 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <span className="truncate text-xs text-label-secondary">{shortcut.label}</span>
+                <kbd className="shrink-0 rounded-[4px] border border-border bg-surface px-1.5 py-0.5 font-mono text-micro text-label-secondary">
                   {shortcut.keys}
                 </kbd>
               </div>
@@ -151,24 +144,16 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={onOpenManager}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <Button size="md" className="px-4" onClick={onOpenManager}>
             Open connection manager
-          </button>
-          <button
-            type="button"
-            onClick={onNewConnection}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-          >
+          </Button>
+          <Button size="md" variant="primary" className="px-4" onClick={onNewConnection}>
             Create a new connection
-          </button>
+          </Button>
         </div>
 
-        <p className="text-[11px] text-slate-400 dark:text-slate-600">v{__APP_VERSION__}</p>
+        <p className="text-micro text-label-tertiary">v{__APP_VERSION__}</p>
       </div>
     </div>
   );

@@ -207,6 +207,64 @@ function init(): void {
       return { suggestions };
     }
   });
+
+  monaco.editor.defineTheme('nexdb-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '8E8E93' },
+      { token: 'string', foreground: '18864B' },
+      { token: 'number', foreground: 'C4600E' },
+      { token: 'keyword', foreground: '0055B3' },
+      { token: 'variable.name', foreground: '8250DF' },
+      { token: 'identifier', foreground: '1D1D1F' },
+      { token: 'bracket', foreground: '636366' },
+      { token: 'delimiter', foreground: '636366' },
+      { token: 'operator', foreground: '636366' }
+    ],
+    colors: {
+      'editor.background': '#FFFFFF',
+      'editor.foreground': '#1D1D1F',
+      'editor.selectionBackground': '#007AFF44',
+      'editor.inactiveSelectionBackground': '#007AFF22',
+      'editor.lineHighlightBackground': '#00000008',
+      'editorCursor.foreground': '#007AFF',
+      'editorLineNumber.foreground': '#C7C7CC',
+      'editorLineNumber.activeForeground': '#8E8E93',
+      'editorWidget.background': '#FFFFFF',
+      'editorWidget.border': '#0000001A',
+      'editorSuggestWidget.selectedBackground': '#007AFF1F'
+    }
+  });
+
+  monaco.editor.defineTheme('nexdb-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '98989D' },
+      { token: 'string', foreground: '30D158' },
+      { token: 'number', foreground: 'FF9F0A' },
+      { token: 'keyword', foreground: '6BD0FF' },
+      { token: 'variable.name', foreground: 'C9A8FF' },
+      { token: 'identifier', foreground: 'F5F5F7' },
+      { token: 'bracket', foreground: '98989D' },
+      { token: 'delimiter', foreground: '98989D' },
+      { token: 'operator', foreground: '98989D' }
+    ],
+    colors: {
+      'editor.background': '#252528',
+      'editor.foreground': '#F5F5F7',
+      'editor.selectionBackground': '#0A84FF48',
+      'editor.inactiveSelectionBackground': '#0A84FF26',
+      'editor.lineHighlightBackground': '#FFFFFF08',
+      'editorCursor.foreground': '#0A84FF',
+      'editorLineNumber.foreground': '#48484A',
+      'editorLineNumber.activeForeground': '#98989D',
+      'editorWidget.background': '#2C2C2E',
+      'editorWidget.border': '#FFFFFF1A',
+      'editorSuggestWidget.selectedBackground': '#0A84FF26'
+    }
+  });
 }
 
 init();
@@ -217,7 +275,7 @@ export function setCompletionFields(fields: string[]): void {
 
 export function setMonacoTheme(dark: boolean): void {
   monacoDark = dark;
-  monaco.editor.setTheme(dark ? 'vs-dark' : 'vs');
+  monaco.editor.setTheme(dark ? 'nexdb-dark' : 'nexdb-light');
 }
 
 export function isMonacoDark(): boolean {
