@@ -16,13 +16,20 @@ CREATE TABLE IF NOT EXISTS connections (
   auth_mechanism_properties TEXT NOT NULL DEFAULT '',
   extra_options TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  last_connected_at INTEGER
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `;
 
 export function runMigrations(db: DatabaseHandle): void {
   db.exec(SCHEMA);
+  const columns = db
+    .prepare<[], { name: string }>('PRAGMA table_info(connections)')
+    .all();
+  if (!columns.some((column) => column.name === 'last_connected_at')) {
+    db.exec('ALTER TABLE connections ADD COLUMN last_connected_at INTEGER');
+  }
 }
 
 let singleton: DatabaseHandle | null = null;

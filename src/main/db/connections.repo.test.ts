@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
 import type { ConnectionInput } from '../../shared/types';
-import { deleteConnection, getConnection, listConnections, saveConnection } from './connections.repo';
+import {
+  deleteConnection,
+  getConnection,
+  listConnections,
+  saveConnection,
+  touchLastConnected
+} from './connections.repo';
 import { runMigrations } from './database';
 import type { DatabaseHandle } from './database';
 
@@ -36,7 +42,8 @@ describe('connections.repo', () => {
       ...input,
       id: saved.id,
       createdAt: expect.any(Number),
-      updatedAt: expect.any(Number)
+      updatedAt: expect.any(Number),
+      lastConnectedAt: null
     });
     expect(getConnection(db, saved.id)).toEqual(saved);
   });
@@ -89,5 +96,18 @@ describe('connections.repo', () => {
   it('returns null for an unknown connection', () => {
     const db = makeDb();
     expect(getConnection(db, 'nope')).toBeNull();
+  });
+
+  it('starts with null lastConnectedAt and records touch time', () => {
+    const db = makeDb();
+    const saved = saveConnection(db, baseInput());
+    expect(saved.lastConnectedAt).toBeNull();
+    const before = Date.now();
+    touchLastConnected(db, saved.id);
+    const after = Date.now();
+    const touched = getConnection(db, saved.id);
+    expect(touched?.lastConnectedAt).not.toBeNull();
+    expect(touched!.lastConnectedAt!).toBeGreaterThanOrEqual(before);
+    expect(touched!.lastConnectedAt!).toBeLessThanOrEqual(after);
   });
 });

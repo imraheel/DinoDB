@@ -28,6 +28,7 @@ export interface ConnectionConfig {
   extraOptions: string;
   createdAt: number;
   updatedAt: number;
+  lastConnectedAt: number | null;
 }
 
 export interface AppSettings {

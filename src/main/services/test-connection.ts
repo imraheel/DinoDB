@@ -18,7 +18,8 @@ export async function testConnection(
     ...input,
     id: 'connection-test',
     createdAt: 0,
-    updatedAt: 0
+    updatedAt: 0,
+    lastConnectedAt: null
   };
   const client = new UtilityClient('test-connection', deps);
   try {

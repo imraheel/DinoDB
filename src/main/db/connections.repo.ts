@@ -16,6 +16,7 @@ interface ConnectionRow {
   extra_options: string;
   created_at: number;
   updated_at: number;
+  last_connected_at: number | null;
 }
 
 function toConnection(row: ConnectionRow): ConnectionConfig {
@@ -32,7 +33,8 @@ function toConnection(row: ConnectionRow): ConnectionConfig {
     authMechanismProperties: row.auth_mechanism_properties,
     extraOptions: row.extra_options,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    lastConnectedAt: row.last_connected_at
   };
 }
 
@@ -94,4 +96,8 @@ export function saveConnection(db: DatabaseHandle, input: ConnectionInput): Conn
 
 export function deleteConnection(db: DatabaseHandle, id: string): void {
   db.prepare('DELETE FROM connections WHERE id = ?').run(id);
+}
+
+export function touchLastConnected(db: DatabaseHandle, id: string): void {
+  db.prepare('UPDATE connections SET last_connected_at = ? WHERE id = ?').run(Date.now(), id);
 }

@@ -70,6 +70,8 @@ export default function Sidebar({
     try {
       const { databases } = await window.api.connectSession(connection.id);
       dispatch({ type: 'session/connected', connectionId: connection.id, databases });
+      const connections = await window.api.listConnections();
+      dispatch({ type: 'connections/loaded', connections });
     } catch (err) {
       const message = messageOf(err);
       dispatch({ type: 'session/errored', connectionId: connection.id, error: message });

@@ -24,7 +24,8 @@ function makeConnection(id: string): ConnectionConfig {
     authMechanismProperties: '',
     extraOptions: '',
     createdAt: 0,
-    updatedAt: 0
+    updatedAt: 0,
+    lastConnectedAt: null
   };
 }
 

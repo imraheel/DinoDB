@@ -71,7 +71,8 @@ function baseConnection(): ConnectionConfig {
     authMechanismProperties: '',
     extraOptions: '',
     createdAt: 0,
-    updatedAt: 0
+    updatedAt: 0,
+    lastConnectedAt: null
   };
 }
 
