@@ -9,6 +9,7 @@ interface QueryBarProps {
   tab: TabMeta;
   query: QueryInput;
   loading: boolean;
+  active: boolean;
   onRun(): void;
 }
 
@@ -16,7 +17,7 @@ const NUMBER_INPUT_CLASS =
   'w-20 rounded border border-slate-300 bg-slate-50 px-2 py-1 font-mono text-xs text-slate-900 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
 const LABEL_CLASS = 'text-xs text-slate-500 dark:text-slate-400';
 
-export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) {
+export default function QueryBar({ tab, query, loading, active, onRun }: QueryBarProps) {
   const { dispatch } = useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -57,6 +58,7 @@ export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) 
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.defaultPrevented) return;
     const modifier = /Mac/i.test(navigator.userAgent) ? event.metaKey : event.ctrlKey;
     if (modifier && event.key === 'Enter') {
       event.preventDefault();
@@ -84,20 +86,25 @@ export default function QueryBar({ tab, query, loading, onRun }: QueryBarProps) 
     const subscription = editor.onDidChangeModelContent(() => {
       changeRef.current(editor.getValue());
     });
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
+    const runSubscription = editor.onKeyDown((event) => {
+      if (event.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter)) {
+        event.preventDefault();
+        event.stopPropagation();
+        runRef.current();
+      }
+    });
     return () => {
       subscription.dispose();
+      runSubscription.dispose();
       editorRef.current = null;
       editor.dispose();
     };
   }, []);
 
   useEffect(() => {
-    const editor = editorRef.current;
-    if (editor !== null && editor.getValue() !== query.text) {
-      editor.setValue(query.text);
-    }
-  }, [query.text]);
+    if (!active) return;
+    editorRef.current?.layout();
+  }, [active]);
 
   return (
     <div className="relative flex flex-col gap-2 border-b border-slate-200 px-3 py-3 dark:border-slate-800">

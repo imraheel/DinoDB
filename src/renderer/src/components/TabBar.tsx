@@ -37,7 +37,7 @@ export default function TabBar() {
                 dispatch({ type: 'tab/removed', tabId: tab.id });
                 void window.api.closeTab(tab.id).catch(() => {});
               }}
-              className="shrink-0 rounded-full px-1.5 py-1.5 text-xs text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+              className="shrink-0 rounded-full px-1.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
             >
               ✕
             </button>

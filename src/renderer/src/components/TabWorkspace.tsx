@@ -13,6 +13,7 @@ import ResultCard from './ResultCard';
 
 interface TabWorkspaceProps {
   tab: TabMeta;
+  active: boolean;
 }
 
 function idTarget(document: unknown): unknown {
@@ -64,7 +65,7 @@ function ErrorBanner({ error, onDismiss }: { error: string; onDismiss(): void })
   );
 }
 
-export default function TabWorkspace({ tab }: TabWorkspaceProps) {
+export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const { state, dispatch } = useApp();
   const data = state.tabData[tab.id];
   const [insertText, setInsertText] = useState<string | null>(null);
@@ -326,9 +327,9 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
   }, [tab.id]);
 
   useEffect(() => {
-    if (!data) return;
+    if (!active || !data) return;
     setCompletionFields(data.fields.map((f) => f.path));
-  }, [data?.fields]);
+  }, [active, data?.fields]);
 
   useEffect(() => {
     setMonacoTheme(resolveTheme(state.settings.theme) === 'dark');
@@ -345,11 +346,12 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
     ) : null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className={active ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
       <QueryBar
         tab={tab}
         query={data.query}
         loading={data.loading}
+        active={active}
         onRun={() => void runQuery()}
       />
       {banner}
@@ -366,6 +368,7 @@ export default function TabWorkspace({ tab }: TabWorkspaceProps) {
             truncated={data.findResults?.truncated ?? false}
             loading={data.loading}
             readOnly={false}
+            active={active}
             onInsert={() => setInsertText('{}')}
             onView={(document) => setViewText(JSON.stringify(document, null, 2))}
             onEdit={(document) =>

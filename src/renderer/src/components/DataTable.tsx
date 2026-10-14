@@ -8,6 +8,7 @@ interface DataTableProps {
   truncated: boolean;
   loading: boolean;
   readOnly: boolean;
+  active: boolean;
   onInsert?(): void;
   onView?(doc: unknown): void;
   onEdit?(doc: unknown): void;
@@ -58,6 +59,7 @@ export default function DataTable({
   truncated,
   loading,
   readOnly,
+  active,
   onInsert,
   onView,
   onEdit,
@@ -76,6 +78,8 @@ export default function DataTable({
   const canMutate = !readOnly;
 
   useEffect(() => {
+    if (!active) return;
+
     function isEditableTarget(target: EventTarget | null): boolean {
       if (!(target instanceof HTMLElement)) return false;
       return (
@@ -146,7 +150,7 @@ export default function DataTable({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [columns, selectedDoc, canMutate, onInsert, onView, onEdit, onDelete, onRefresh]);
+  }, [active, columns, selectedDoc, canMutate, onInsert, onView, onEdit, onDelete, onRefresh]);
 
   useEffect(() => {
     if (menu === null) return;

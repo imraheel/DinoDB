@@ -58,8 +58,6 @@ export default function AppShell() {
     return () => mq.removeEventListener('change', handler);
   }, [state.settings.theme]);
 
-  const activeTab = state.tabs.find((tab) => tab.id === state.activeTabId) ?? null;
-
   return (
     <div className="flex h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Sidebar
@@ -71,13 +69,15 @@ export default function AppShell() {
       />
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TabBar />
-        {activeTab !== null ? (
-          <TabWorkspace key={activeTab.id} tab={activeTab} />
-        ) : (
+        {state.tabs.length === 0 ? (
           <WelcomeScreen
             onOpenManager={() => setConnectionsOpen(true)}
             onNewConnection={() => setModal({ open: true, editing: null })}
           />
+        ) : (
+          state.tabs.map((tab) => (
+            <TabWorkspace key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+          ))
         )}
       </main>
       <ConnectionModal
