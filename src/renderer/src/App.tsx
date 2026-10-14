@@ -4,6 +4,7 @@ import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
 import TabBar from './components/TabBar';
 import TabWorkspace from './components/TabWorkspace';
+import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
 import { setMonacoTheme } from './lib/monaco';
 import { applyTheme, resolveTheme } from './lib/theme';
@@ -73,11 +74,10 @@ export default function AppShell() {
         {activeTab !== null ? (
           <TabWorkspace key={activeTab.id} tab={activeTab} />
         ) : (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Open a collection from the sidebar to start working.
-            </p>
-          </div>
+          <WelcomeScreen
+            onOpenManager={() => setConnectionsOpen(true)}
+            onNewConnection={() => setModal({ open: true, editing: null })}
+          />
         )}
       </main>
       <ConnectionModal
