@@ -210,6 +210,47 @@ export async function executeRequest(
         .toArray();
       return { fields: inferSchema(documents) };
     }
+    case 'dropCollection': {
+      await ctx.client
+        .db(request.database)
+        .dropCollection(request.collection, { maxTimeMS: maxTimeMs });
+      return { ok: true };
+    }
+    case 'renameCollection': {
+      await ctx.client
+        .db('admin')
+        .command(
+          {
+            renameCollection: `${request.database}.${request.collection}`,
+            to: `${request.database}.${request.newName}`
+          },
+          { timeoutMS: maxTimeMs }
+        );
+      return { ok: true };
+    }
+    case 'duplicateCollection': {
+      await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .aggregate([{ $out: request.newName }], { maxTimeMS: maxTimeMs })
+        .toArray();
+      return { ok: true };
+    }
+    case 'clearCollection': {
+      const result = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .deleteMany({}, { maxTimeMS: maxTimeMs });
+      return { deleted: result.deletedCount };
+    }
+    case 'createCollection': {
+      await ctx.client.db(request.database).createCollection(request.name);
+      return { ok: true };
+    }
+    case 'dropDatabase': {
+      await ctx.client.db(request.database).dropDatabase({ maxTimeMS: maxTimeMs });
+      return { ok: true };
+    }
     default:
       return assertNever(request);
   }

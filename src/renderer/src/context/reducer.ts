@@ -63,6 +63,7 @@ export type AppAction =
   | { type: 'session/disconnected'; connectionId: string }
   | { type: 'session/expand'; connectionId: string; database: string }
   | { type: 'session/collections'; connectionId: string; database: string; collections: string[] }
+  | { type: 'session/databaseRemoved'; connectionId: string; database: string }
   | { type: 'tab/added'; tab: TabMeta; fields: SchemaField[] }
   | { type: 'tab/removed'; tabId: string }
   | { type: 'tab/activated'; tabId: string }
@@ -191,6 +192,37 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
         collections: { ...session.collections, [action.database]: action.collections }
       };
       return { ...state, sessions: { ...state.sessions, [action.connectionId]: next } };
+    }
+    case 'session/databaseRemoved': {
+      const session = state.sessions[action.connectionId] ?? emptySession();
+      const expanded = { ...session.expanded };
+      const collections = { ...session.collections };
+      delete expanded[action.database];
+      delete collections[action.database];
+      const next: SessionState = {
+        ...session,
+        databases: session.databases.filter((d) => d !== action.database),
+        expanded,
+        collections
+      };
+      const removedTabIds = new Set(
+        state.tabs
+          .filter((t) => t.connectionId === action.connectionId && t.database === action.database)
+          .map((t) => t.id)
+      );
+      const sessions = { ...state.sessions, [action.connectionId]: next };
+      if (removedTabIds.size === 0) {
+        return { ...state, sessions };
+      }
+      const tabs = state.tabs.filter((t) => !removedTabIds.has(t.id));
+      const tabData = { ...state.tabData };
+      for (const tabId of removedTabIds) delete tabData[tabId];
+      let activeTabId = state.activeTabId;
+      if (activeTabId !== null && removedTabIds.has(activeTabId)) {
+        const oldIndex = state.tabs.findIndex((t) => t.id === activeTabId);
+        activeTabId = tabs[Math.min(oldIndex, tabs.length - 1)]?.id ?? null;
+      }
+      return { ...state, sessions, tabs, activeTabId, tabData };
     }
     case 'tab/added': {
       const tabData: Record<string, TabData> = {

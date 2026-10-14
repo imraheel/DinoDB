@@ -1,3 +1,4 @@
+import type { AdminUtilityRequest, UtilityResponses } from '../../shared/ipc';
 import type { ConnectionConfig } from '../../shared/types';
 import { UtilityClient } from './utility-client';
 import type { UtilityClientDeps } from './utility-client';
@@ -38,6 +39,15 @@ export class SessionManager {
       { timeoutMs: 10000, maxTimeMs: 10000 }
     );
     return result.collections;
+  }
+
+  async admin<K extends AdminUtilityRequest['kind']>(
+    connectionId: string,
+    request: Extract<AdminUtilityRequest, { kind: K }>
+  ): Promise<UtilityResponses[K]> {
+    const client = this.sessions.get(connectionId);
+    if (!client) throw new Error('Session is not connected');
+    return client.request(request, { timeoutMs: 60000, maxTimeMs: 60000 });
   }
 
   disconnect(connectionId: string): void {

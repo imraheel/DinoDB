@@ -1,9 +1,11 @@
-import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useApp } from '../context/AppState';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
+import ConfirmDialog from './ConfirmDialog';
 import ManageConnectionsPopup from './ManageConnectionsPopup';
+import PromptDialog from './PromptDialog';
 
 interface SidebarProps {
   onAdd: () => void;
@@ -12,6 +14,44 @@ interface SidebarProps {
   onManageOpen: () => void;
   onManageClose: () => void;
 }
+
+type SidebarSelection =
+  | { kind: 'database'; connectionId: string; database: string }
+  | { kind: 'collection'; connectionId: string; database: string; collection: string };
+
+type SidebarMenu =
+  | { kind: 'database'; x: number; y: number; connection: ConnectionConfig; database: string }
+  | {
+      kind: 'collection';
+      x: number;
+      y: number;
+      connection: ConnectionConfig;
+      database: string;
+      collection: string;
+    };
+
+const MENU_ITEM_CLASS =
+  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
+const MENU_DANGER_CLASS =
+  'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950';
+const MENU_SEPARATOR_CLASS = 'my-1 h-px bg-slate-200 dark:bg-slate-700';
+const SELECTED_CLASS =
+  'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-100';
+
+type SidebarPrompt = {
+  title: string;
+  label: string;
+  initial: string;
+  confirmLabel: string;
+  confirm(value: string): void | Promise<void>;
+};
+
+type SidebarConfirm = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  confirm(): void | Promise<void>;
+};
 
 export default function Sidebar({
   onAdd,
@@ -25,6 +65,11 @@ export default function Sidebar({
   const [width, setWidth] = useState(256);
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  const [selection, setSelection] = useState<SidebarSelection | null>(null);
+  const [menu, setMenu] = useState<SidebarMenu | null>(null);
+  const [prompt, setPrompt] = useState<SidebarPrompt | null>(null);
+  const [confirm, setConfirm] = useState<SidebarConfirm | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -48,6 +93,26 @@ export default function Sidebar({
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   }
+
+  useEffect(() => {
+    if (menu === null) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (menuRef.current !== null && menuRef.current.contains(event.target as Node)) return;
+      setMenu(null);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenu(null);
+        setSelection(null);
+      }
+    };
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [menu]);
 
   const allConnections = state.connections;
   const connectedConnections = allConnections.filter(
@@ -123,6 +188,196 @@ export default function Sidebar({
     } catch (err) {
       setError(messageOf(err));
     }
+  }
+
+  async function refreshCollections(connectionId: string, database: string) {
+    try {
+      const { collections } = await window.api.listCollections(connectionId, database);
+      dispatch({ type: 'session/collections', connectionId, database, collections });
+    } catch (err) {
+      setError(messageOf(err));
+    }
+  }
+
+  function copyName(name: string) {
+    void navigator.clipboard.writeText(name).catch(() => {});
+  }
+
+  function promptAddCollection(connection: ConnectionConfig, database: string) {
+    setPrompt({
+      title: 'Add collection',
+      label: 'Collection name',
+      initial: '',
+      confirmLabel: 'Create',
+      confirm: async (name) => {
+        try {
+          await window.api.adminSession(connection.id, {
+            kind: 'createCollection',
+            database,
+            name
+          });
+          await refreshCollections(connection.id, database);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function promptRenameCollection(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    setPrompt({
+      title: 'Rename collection',
+      label: 'New name',
+      initial: collection,
+      confirmLabel: 'Rename',
+      confirm: async (name) => {
+        if (name === collection) return;
+        try {
+          await window.api.adminSession(connection.id, {
+            kind: 'renameCollection',
+            database,
+            collection,
+            newName: name
+          });
+          if (
+            selection !== null &&
+            selection.kind === 'collection' &&
+            selection.connectionId === connection.id &&
+            selection.database === database &&
+            selection.collection === collection
+          ) {
+            setSelection({ ...selection, collection: name });
+          }
+          await refreshCollections(connection.id, database);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function promptDuplicateCollection(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    setPrompt({
+      title: 'Duplicate collection',
+      label: 'Duplicate as',
+      initial: collection + '_copy',
+      confirmLabel: 'Duplicate',
+      confirm: async (name) => {
+        if (name === collection) return;
+        try {
+          await window.api.adminSession(connection.id, {
+            kind: 'duplicateCollection',
+            database,
+            collection,
+            newName: name
+          });
+          await refreshCollections(connection.id, database);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function confirmClearCollection(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    setConfirm({
+      title: 'Clear collection',
+      message: `Delete ALL documents in "${collection}"? This cannot be undone.`,
+      confirmLabel: 'Clear',
+      confirm: async () => {
+        try {
+          await window.api.adminSession(connection.id, {
+            kind: 'clearCollection',
+            database,
+            collection
+          });
+          setError(null);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function confirmDropCollection(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    setConfirm({
+      title: 'Drop collection',
+      message: `Drop collection "${collection}"? This cannot be undone.`,
+      confirmLabel: 'Drop',
+      confirm: async () => {
+        try {
+          await window.api.adminSession(connection.id, {
+            kind: 'dropCollection',
+            database,
+            collection
+          });
+          setSelection(null);
+          await refreshCollections(connection.id, database);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function confirmDropDatabase(connection: ConnectionConfig, database: string) {
+    setConfirm({
+      title: 'Drop database',
+      message: `Drop database "${database}"? All of its collections and data will be deleted.`,
+      confirmLabel: 'Drop',
+      confirm: async () => {
+        try {
+          await window.api.adminSession(connection.id, { kind: 'dropDatabase', database });
+          setSelection(null);
+          dispatch({ type: 'session/databaseRemoved', connectionId: connection.id, database });
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
+  }
+
+  function openDatabaseMenu(
+    event: ReactMouseEvent,
+    connection: ConnectionConfig,
+    database: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelection({ kind: 'database', connectionId: connection.id, database });
+    setMenu({ kind: 'database', x: event.clientX, y: event.clientY, connection, database });
+  }
+
+  function openCollectionMenu(
+    event: ReactMouseEvent,
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelection({ kind: 'collection', connectionId: connection.id, database, collection });
+    setMenu({ kind: 'collection', x: event.clientX, y: event.clientY, connection, database, collection });
+  }
+
+  function closeMenu() {
+    setMenu(null);
   }
 
   return (
@@ -207,12 +462,21 @@ export default function Sidebar({
                   {session.databases.map((database) => {
                     const expanded = session.expanded[database] ?? false;
                     const collections = session.collections[database];
+                    const dbSelected =
+                      selection !== null &&
+                      selection.kind === 'database' &&
+                      selection.connectionId === connection.id &&
+                      selection.database === database;
                     return (
                       <div key={database}>
                         <button
                           type="button"
-                          onClick={() => void handleToggle(connection.id, database, session)}
-                          className="flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-sm text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
+                          onClick={() =>
+                            setSelection({ kind: 'database', connectionId: connection.id, database })
+                          }
+                          onDoubleClick={() => void handleToggle(connection.id, database, session)}
+                          onContextMenu={(event) => openDatabaseMenu(event, connection, database)}
+                          className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${dbSelected ? ` ${SELECTED_CLASS}` : ''}`}
                         >
                           <span className="w-3 shrink-0 text-slate-400 dark:text-slate-500">
                             {expanded ? '▾' : '▸'}
@@ -230,18 +494,37 @@ export default function Sidebar({
                                 No collections
                               </p>
                             ) : (
-                              collections.slice().sort().map((collection) => (
-                                <button
-                                  key={collection}
-                                  type="button"
-                                  onClick={() =>
-                                    void handleOpenCollection(connection, database, collection)
-                                  }
-                                  className="block w-full truncate rounded px-1 py-0.5 text-left text-sm text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
-                                >
-                                  {collection}
-                                </button>
-                              ))
+                              collections.slice().sort().map((collection) => {
+                                const collectionSelected =
+                                  selection !== null &&
+                                  selection.kind === 'collection' &&
+                                  selection.connectionId === connection.id &&
+                                  selection.database === database &&
+                                  selection.collection === collection;
+                                return (
+                                  <button
+                                    key={collection}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelection({
+                                        kind: 'collection',
+                                        connectionId: connection.id,
+                                        database,
+                                        collection
+                                      })
+                                    }
+                                    onDoubleClick={() =>
+                                      void handleOpenCollection(connection, database, collection)
+                                    }
+                                    onContextMenu={(event) =>
+                                      openCollectionMenu(event, connection, database, collection)
+                                    }
+                                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${collectionSelected ? ` ${SELECTED_CLASS}` : ''}`}
+                                  >
+                                    {collection}
+                                  </button>
+                                );
+                              })
                             )}
                           </div>
                         ) : null}
@@ -254,6 +537,153 @@ export default function Sidebar({
           );
         })}
       </div>
+      {menu !== null ? (
+        <div
+          ref={menuRef}
+          style={{ left: menu.x, top: menu.y }}
+          className="fixed z-50 min-w-44 rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+        >
+          {menu.kind === 'database' ? (
+            <>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  void handleToggle(
+                    menu.connection.id,
+                    menu.database,
+                    state.sessions[menu.connection.id] ?? emptySession()
+                  );
+                  closeMenu();
+                }}
+              >
+                <span>
+                  {state.sessions[menu.connection.id]?.expanded[menu.database] ?? false
+                    ? 'Collapse'
+                    : 'Expand'}
+                </span>
+              </button>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  copyName(menu.database);
+                  closeMenu();
+                }}
+              >
+                <span>Copy name</span>
+              </button>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  promptAddCollection(menu.connection, menu.database);
+                  closeMenu();
+                }}
+              >
+                <span>Add collection…</span>
+              </button>
+              <div className={MENU_SEPARATOR_CLASS} />
+              <button
+                type="button"
+                className={MENU_DANGER_CLASS}
+                onClick={() => {
+                  confirmDropDatabase(menu.connection, menu.database);
+                  closeMenu();
+                }}
+              >
+                <span>Drop database…</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  void handleOpenCollection(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Open</span>
+              </button>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  copyName(menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Copy name</span>
+              </button>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  promptRenameCollection(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Rename collection…</span>
+              </button>
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  promptDuplicateCollection(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Duplicate collection…</span>
+              </button>
+              <div className={MENU_SEPARATOR_CLASS} />
+              <button
+                type="button"
+                className={MENU_ITEM_CLASS}
+                onClick={() => {
+                  confirmClearCollection(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Clear collection…</span>
+              </button>
+              <button
+                type="button"
+                className={MENU_DANGER_CLASS}
+                onClick={() => {
+                  confirmDropCollection(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                <span>Drop collection…</span>
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+      <PromptDialog
+        open={prompt !== null}
+        title={prompt?.title ?? ''}
+        label={prompt?.label ?? ''}
+        initial={prompt?.initial ?? ''}
+        confirmLabel={prompt?.confirmLabel ?? 'OK'}
+        onConfirm={(value) => {
+          void prompt?.confirm(value);
+        }}
+        onClose={() => setPrompt(null)}
+      />
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'Confirm'}
+        danger
+        onConfirm={() => {
+          void confirm?.confirm();
+        }}
+        onClose={() => setConfirm(null)}
+      />
     </aside>
   );
 }

@@ -7,6 +7,7 @@ import { resolveTheme } from '../lib/theme';
 import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
 import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
+import ConfirmDialog from './ConfirmDialog';
 import DocumentModal from './DocumentModal';
 import QueryBar from './QueryBar';
 import ResultCard from './ResultCard';
@@ -71,6 +72,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const [insertText, setInsertText] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ text: string; target: unknown } | null>(null);
   const [viewText, setViewText] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ target: unknown } | null>(null);
   const ranRef = useRef<string | null>(null);
 
   async function runParsed(parsed: ParsedQuery, sourceText: string) {
@@ -306,7 +308,6 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   }
 
   async function deleteDocument(target: unknown) {
-    if (!window.confirm('Delete this document?')) return;
     try {
       await window.api.executeTab<'deleteOne'>(tab.id, {
         kind: 'deleteOne',
@@ -374,7 +375,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             onEdit={(document) =>
               setEdit({ text: JSON.stringify(document, null, 2), target: idTarget(document) })
             }
-            onDelete={(document) => void deleteDocument(idTarget(document))}
+            onDelete={(document) => setPendingDelete({ target: idTarget(document) })}
             onRefresh={refresh}
           />
         )}
@@ -405,6 +406,18 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           viewOnly
         />
       ) : null}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete document"
+        message={`Delete this document from ${tab.collection}? This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        onConfirm={() => {
+          if (pendingDelete === null) return;
+          void deleteDocument(pendingDelete.target);
+        }}
+        onClose={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

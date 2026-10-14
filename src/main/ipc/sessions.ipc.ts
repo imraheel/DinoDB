@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { IPC } from '../../shared/ipc';
+import { IPC, type AdminUtilityRequest } from '../../shared/ipc';
 import { touchLastConnected } from '../db/connections.repo';
 import type { IpcDeps } from './index';
 
@@ -13,6 +13,10 @@ export function registerSessionsIpc(deps: IpcDeps): void {
 
   ipcMain.handle(IPC.sessionsCollections, (_event, payload: { connectionId: string; database: string }) =>
     deps.sessions.listCollections(payload.connectionId, payload.database).then((collections) => ({ collections }))
+  );
+
+  ipcMain.handle(IPC.sessionsAdmin, (_event, payload: { connectionId: string; request: AdminUtilityRequest }) =>
+    deps.sessions.admin(payload.connectionId, payload.request)
   );
 
   ipcMain.handle(IPC.sessionsDisconnect, (_event, connectionId: string) => {

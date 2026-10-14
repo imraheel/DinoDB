@@ -8,6 +8,7 @@ export const IPC = {
   sessionsConnect: 'sessions:connect',
   sessionsCollections: 'sessions:collections',
   sessionsDisconnect: 'sessions:disconnect',
+  sessionsAdmin: 'sessions:admin',
   tabsCreate: 'tabs:create',
   tabsExecute: 'tabs:execute',
   tabsClose: 'tabs:close',
@@ -37,7 +38,21 @@ export interface UtilityResponses {
   countDocuments: { count: number };
   aggregate: FindResult;
   inferSchema: { fields: SchemaField[] };
+  dropCollection: { ok: true };
+  renameCollection: { ok: true };
+  duplicateCollection: { ok: true };
+  clearCollection: { deleted: number };
+  createCollection: { ok: true };
+  dropDatabase: { ok: true };
 }
+
+export type AdminUtilityRequest =
+  | { kind: 'dropCollection'; database: string; collection: string }
+  | { kind: 'renameCollection'; database: string; collection: string; newName: string }
+  | { kind: 'duplicateCollection'; database: string; collection: string; newName: string }
+  | { kind: 'clearCollection'; database: string; collection: string }
+  | { kind: 'createCollection'; database: string; name: string }
+  | { kind: 'dropDatabase'; database: string };
 
 export type UtilityRequest =
   | { kind: 'ping' }
@@ -53,7 +68,8 @@ export type UtilityRequest =
   | { kind: 'updateMany'; database: string; collection: string; filter: unknown; update: unknown; upsert: boolean }
   | { kind: 'countDocuments'; database: string; collection: string; filter: unknown }
   | { kind: 'aggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
-  | { kind: 'inferSchema'; database: string; collection: string; sampleSize: number };
+  | { kind: 'inferSchema'; database: string; collection: string; sampleSize: number }
+  | AdminUtilityRequest;
 
 export type MainToUtility =
   | { kind: 'init'; init: InitMessage }
@@ -77,6 +93,10 @@ export interface MongoExplorerApi {
   connectSession(connectionId: string): Promise<{ databases: string[] }>;
   listCollections(connectionId: string, database: string): Promise<{ collections: string[] }>;
   disconnectSession(connectionId: string): Promise<void>;
+  adminSession<K extends AdminUtilityRequest['kind']>(
+    connectionId: string,
+    request: Extract<AdminUtilityRequest, { kind: K }>
+  ): Promise<UtilityResponses[K]>;
   createTab(input: CreateTabInput): Promise<CreateTabResult>;
   executeTab<K extends UtilityRequest['kind']>(
     tabId: string,
