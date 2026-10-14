@@ -469,6 +469,45 @@ export default function Sidebar({
                       selection.database === database;
                     return (
                       <div key={database}>
+                        <div className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${dbSelected ? ` ${SELECTED_CLASS}` : ''}`}>
+                        <button
+                          type="button"
+                          onClick={() => void handleToggle(connection.id, database, session)}
+                          className="shrink-0 text-slate-400 dark:text-slate-500"
+                          aria-label={expanded ? `Collapse ${database}` : `Expand ${database}`}
+                        >
+                          {expanded ? (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <path d="m9 18 6-6-6-6" />
+                            </svg>
+                          )}
+                        </button>
                         <button
                           type="button"
                           onClick={() =>
@@ -476,15 +515,13 @@ export default function Sidebar({
                           }
                           onDoubleClick={() => void handleToggle(connection.id, database, session)}
                           onContextMenu={(event) => openDatabaseMenu(event, connection, database)}
-                          className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${dbSelected ? ` ${SELECTED_CLASS}` : ''}`}
+                          className="min-w-0 flex-1 text-left"
                         >
-                          <span className="w-3 shrink-0 text-slate-400 dark:text-slate-500">
-                            {expanded ? '▾' : '▸'}
-                          </span>
                           <span className="min-w-0 flex-1 truncate">{database}</span>
                         </button>
+                        </div>
                         {expanded ? (
-                          <div className="pl-4">
+                          <div>
                             {collections === undefined || collections === 'loading' ? (
                               <p className="px-1 py-0.5 text-xs text-slate-500 dark:text-slate-400">
                                 Loading…
@@ -519,7 +556,7 @@ export default function Sidebar({
                                     onContextMenu={(event) =>
                                       openCollectionMenu(event, connection, database, collection)
                                     }
-                                    className={`block w-full truncate rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${collectionSelected ? ` ${SELECTED_CLASS}` : ''}`}
+                                    className={`block pl-8 w-full truncate rounded px-1 py-0.5 text-left text-sm text-slate-700 dark:text-slate-300${collectionSelected ? ` ${SELECTED_CLASS}` : ''}`}
                                   >
                                     {collection}
                                   </button>
