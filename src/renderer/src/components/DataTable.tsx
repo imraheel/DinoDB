@@ -39,6 +39,43 @@ function copyToClipboard(text: string): void {
   void navigator.clipboard.writeText(text).catch(() => {});
 }
 
+const EXTENDED_JSON_KEYS = [
+  '$oid',
+  '$date',
+  '$binary',
+  '$numberDecimal',
+  '$numberLong',
+  '$numberInt'
+];
+
+function displayCell(doc: unknown, column: string): string {
+  if (!isRecord(doc)) return '';
+  const value = doc[column];
+  if (value === null) return 'null';
+  if (Array.isArray(value)) {
+    return `[${value.length} ${value.length === 1 ? 'element' : 'elements'}]`;
+  }
+  if (value !== null && typeof value === 'object') {
+    if (isRecord(value) && EXTENDED_JSON_KEYS.some((key) => key in value)) {
+      return formatCell(value);
+    }
+    const count = Object.keys(value).length;
+    return `{${count} ${count === 1 ? 'key' : 'keys'}}`;
+  }
+  return formatCell(value);
+}
+
+function cellColorClass(value: unknown): string {
+  if (typeof value === 'boolean') return 'text-purple-600 dark:text-purple-400';
+  if (typeof value === 'string') return 'text-green-600 dark:text-green-400';
+  if (Array.isArray(value)) return 'text-orange-600 dark:text-orange-400';
+  if (value !== null && typeof value === 'object') {
+    if (isRecord(value) && EXTENDED_JSON_KEYS.some((key) => key in value)) return '';
+    return 'text-orange-600 dark:text-orange-400';
+  }
+  return '';
+}
+
 const MENU_ITEM_CLASS =
   'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800';
 const MENU_DANGER_CLASS =
@@ -68,6 +105,7 @@ export default function DataTable({
 }: DataTableProps) {
   const columns = getColumns(fields, documents);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +179,11 @@ export default function DataTable({
         return;
       }
       if (modifier && !event.shiftKey && !event.altKey && key === 'c') {
+        if (selectedCell !== null && selectedDoc !== null && isRecord(selectedDoc)) {
+          event.preventDefault();
+          copyToClipboard(formatCell(selectedDoc[selectedCell.column]));
+          return;
+        }
         if (selectedDoc !== null) {
           event.preventDefault();
           copyToClipboard(rowValuesAsText(selectedDoc));
@@ -150,7 +193,18 @@ export default function DataTable({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [active, columns, selectedDoc, canMutate, onInsert, onView, onEdit, onDelete, onRefresh]);
+  }, [
+    active,
+    columns,
+    selectedDoc,
+    selectedCell,
+    canMutate,
+    onInsert,
+    onView,
+    onEdit,
+    onDelete,
+    onRefresh
+  ]);
 
   useEffect(() => {
     if (menu === null) return;
@@ -179,12 +233,14 @@ export default function DataTable({
     const target = event.target as HTMLElement;
     const cell = target.closest('td');
     const column = cell?.getAttribute('data-column') ?? null;
+    setSelectedCell(column !== null ? { key, column } : null);
     setMenu({ x: event.clientX, y: event.clientY, doc: document, column });
   }
 
   function openBackgroundMenu(event: ReactMouseEvent) {
     event.preventDefault();
     setSelectedKey(null);
+    setSelectedCell(null);
     setMenu({ x: event.clientX, y: event.clientY, doc: null, column: null });
   }
 
@@ -254,7 +310,6 @@ export default function DataTable({
                 return (
                   <tr
                     key={key}
-                    onClick={() => setSelectedKey(key)}
                     onContextMenu={(event) => openRowMenu(event, document, index)}
                     className={
                       selected
@@ -263,13 +318,30 @@ export default function DataTable({
                     }
                   >
                     {columns.map((column) => {
-                      const text = isRecord(document) ? formatCell(document[column]) : '';
+                      const raw = isRecord(document) ? document[column] : undefined;
+                      const text = displayCell(document, column);
+                      const cellSelected =
+                        selectedCell !== null &&
+                        selectedCell.key === key &&
+                        selectedCell.column === column;
+                      const colorClass = cellColorClass(raw);
+                      const baseClass =
+                        'max-w-72 cursor-default truncate border-b border-slate-100 px-3 py-1.5 dark:border-slate-800';
                       return (
                         <td
                           key={column}
                           data-column={column}
                           title={text}
-                          className="max-w-72 truncate border-b border-slate-100 px-3 py-1.5 dark:border-slate-800"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedKey(key);
+                            setSelectedCell({ key, column });
+                          }}
+                          className={
+                            cellSelected
+                              ? `${baseClass} outline outline-1 -outline-offset-1 outline-emerald-500 dark:outline-emerald-400${colorClass !== '' ? ` ${colorClass}` : ''}`
+                              : `${baseClass}${colorClass !== '' ? ` ${colorClass}` : ''}`
+                          }
                         >
                           {text}
                         </td>

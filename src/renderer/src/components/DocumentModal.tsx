@@ -35,7 +35,7 @@ export default function DocumentModal({
 }: DocumentModalProps) {
   const [text, setText] = useState(initialText);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 512, height: 480 });
+  const [size, setSize] = useState({ width: 680, height: 480 });
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(
     null
