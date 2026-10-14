@@ -14,8 +14,8 @@ export default function TabBar() {
             key={tab.id}
             className={
               active
-                ? 'flex max-w-52 shrink-0 items-center rounded-t-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
-                : 'flex max-w-52 shrink-0 items-center rounded-t-lg hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
+                ? 'flex max-w-52 shrink-0 items-center rounded-t-md border border-b-0 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+                : 'flex max-w-52 shrink-0 items-center rounded-t-md hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
             }
           >
             <button
@@ -37,7 +37,7 @@ export default function TabBar() {
                 dispatch({ type: 'tab/removed', tabId: tab.id });
                 void window.api.closeTab(tab.id).catch(() => {});
               }}
-              className="shrink-0 px-1.5 py-1.5 text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"
+              className="shrink-0 rounded-full px-1.5 py-1.5 text-xs text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             >
               ✕
             </button>
