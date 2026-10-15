@@ -2,6 +2,7 @@ import * as monaco from 'monaco-editor';
 import '../../../../node_modules/monaco-editor/min/vs/editor/editor.main.css';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
 import { QUERY_METHODS } from './shell-query';
+import { bracketDepth, isBareMethodPosition, methodWordStart, stageSnippet } from './completion';
 
 const STAGES: string[] = [
   '$match',
@@ -151,7 +152,20 @@ function init(): void {
         /(?:^|[^A-Za-z0-9_$])(?:db|getCollection\s*\([^)]*\))(?:\s*\.\s*[A-Za-z_$][\w$]*)*\s*\.\s*[A-Za-z_$\w]*$/.test(
           line
         );
-      if (inMethodPosition) {
+      const beforeCursor = model.getValueInRange({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column
+      });
+      const bareMethodPosition = isBareMethodPosition(line, bracketDepth(beforeCursor));
+      if (inMethodPosition || bareMethodPosition) {
+        const methodRange: monaco.IRange = {
+          startLineNumber: position.lineNumber,
+          endLineNumber: position.lineNumber,
+          startColumn: methodWordStart(line, position.column),
+          endColumn: position.column
+        };
         const methodSuggestions: monaco.languages.CompletionItem[] = QUERY_METHODS.map(
           (method) => ({
             label: method,
@@ -160,7 +174,7 @@ function init(): void {
             insertText: `${method}($0)`,
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             sortText: `0_${method}`,
-            range
+            range: methodRange
           })
         );
         return { suggestions: methodSuggestions };
@@ -173,7 +187,7 @@ function init(): void {
           label: stage,
           kind: monaco.languages.CompletionItemKind.Snippet,
           detail: 'Aggregation stage',
-          insertText: `"${stage}": {\n\t\${1}\n}`,
+          insertText: stageSnippet(stage),
           insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           sortText: `0_${stage}`,
           range
@@ -186,11 +200,20 @@ function init(): void {
           kind: monaco.languages.CompletionItemKind.Function,
           detail: 'Operator',
           insertText: operator,
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           sortText: `1_${operator}`,
           range
         });
       }
+
+      suggestions.push({
+        label: 'ObjectId',
+        kind: monaco.languages.CompletionItemKind.Class,
+        detail: 'BSON ObjectId',
+        insertText: 'ObjectId("${1}")',
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        sortText: '1_objectId',
+        range
+      });
 
       for (const path of completionFields) {
         suggestions.push({
@@ -198,7 +221,6 @@ function init(): void {
           kind: monaco.languages.CompletionItemKind.Field,
           detail: 'Field',
           insertText: path,
-          insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           sortText: `2_${path}`,
           range
         });
