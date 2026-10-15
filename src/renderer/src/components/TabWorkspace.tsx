@@ -6,6 +6,7 @@ import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
 import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
 import { parseShellJson, toShellJson } from '../lib/shell-json';
+import { lastPageSkip } from '../lib/pagination';
 import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
 import Banner from './ui/Banner';
@@ -61,14 +62,14 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const [pendingDelete, setPendingDelete] = useState<{ target: unknown } | null>(null);
   const ranRef = useRef<string | null>(null);
 
-  async function runParsed(parsed: ParsedQuery, sourceText: string) {
+  async function runParsed(parsed: ParsedQuery, sourceText: string, skipOverride?: number) {
     if (!data) return;
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
     try {
       switch (parsed.op) {
         case 'find': {
-          const skip = Math.max(0, parsed.skip ?? (Number(data.query.skip) || 0));
+          const skip = Math.max(0, skipOverride ?? parsed.skip ?? (Number(data.query.skip) || 0));
           const limit = Math.min(
             1000,
             Math.max(1, parsed.limit ?? (Number(data.query.limit) || 50))
@@ -232,7 +233,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     }
   }
 
-  async function runQuery() {
+  async function runQuery(skipOverride?: number) {
     if (!data) return;
     const parsed = parseShellQuery(data.query.text);
     if (!parsed.ok) {
@@ -243,7 +244,32 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       });
       return;
     }
-    await runParsed(parsed.value, data.query.text);
+    await runParsed(parsed.value, data.query.text, skipOverride);
+  }
+
+  async function goToLastPage() {
+    if (!data) return;
+    const parsed = parseShellQuery(data.query.text);
+    if (!parsed.ok || parsed.value.op !== 'find') return;
+    const pageSize = Math.min(1000, Math.max(1, Number(data.query.limit) || 50));
+    dispatch({ type: 'tab/errorCleared', tabId: tab.id });
+    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
+    let lastSkip: number;
+    try {
+      const countResult = await window.api.executeTab<'countDocuments'>(tab.id, {
+        kind: 'countDocuments',
+        database: tab.database,
+        collection: tab.collection,
+        filter: parsed.value.filter
+      });
+      lastSkip = lastPageSkip(countResult.count, pageSize);
+      dispatch({ type: 'tab/query', tabId: tab.id, patch: { skip: String(lastSkip) } });
+    } catch (err) {
+      dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
+      return;
+    }
+    await runParsed(parsed.value, data.query.text, lastSkip);
   }
 
   function refresh() {
@@ -341,7 +367,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
         query={data.query}
         loading={data.loading}
         active={active}
-        onRun={() => void runQuery()}
+        hasMore={data.findResults?.truncated ?? false}
+        onRun={(skipOverride) => void runQuery(skipOverride)}
+        onLastPage={() => void goToLastPage()}
       />
       {banner}
       <div className="flex min-h-0 flex-1 flex-col p-3">

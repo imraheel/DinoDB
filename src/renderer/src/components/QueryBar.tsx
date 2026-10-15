@@ -12,7 +12,9 @@ interface QueryBarProps {
   query: QueryInput;
   loading: boolean;
   active: boolean;
-  onRun(): void;
+  hasMore: boolean;
+  onRun(skipOverride?: number): void;
+  onLastPage(): void;
 }
 
 const NUMBER_INPUT_CLASS = `${BASE_INPUT_CLASS} w-20 font-mono text-xs`;
@@ -138,7 +140,14 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
             className={NUMBER_INPUT_CLASS}
           />
         </label>
-        <Button variant="primary" size="md" pill onClick={onRun} disabled={loading} className="px-4">
+        <Button
+          variant="primary"
+          size="md"
+          pill
+          onClick={() => onRun()}
+          disabled={loading}
+          className="px-4"
+        >
           {loading ? 'Running…' : 'Run'}
         </Button>
       </div>
