@@ -4,6 +4,7 @@ import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
 import { isMonacoDark } from '../lib/monaco';
+import { pageSkip } from '../lib/pagination';
 import Button from './ui/Button';
 import { BASE_INPUT_CLASS, FRAME_CLASS } from './ui/Input';
 
@@ -20,7 +21,85 @@ interface QueryBarProps {
 const NUMBER_INPUT_CLASS = `${BASE_INPUT_CLASS} w-20 font-mono text-xs`;
 const LABEL_CLASS = 'text-xs text-label-secondary';
 
-export default function QueryBar({ tab, query, loading, active, onRun }: QueryBarProps) {
+interface IconProps {
+  size?: number;
+}
+
+function ChevronsLeftIcon({ size = 16 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="11 17 6 12 11 7" />
+      <polyline points="18 17 13 12 18 7" />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon({ size = 16 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="15 18 9 12 15 7" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ size = 16 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 7" />
+    </svg>
+  );
+}
+
+function ChevronsRightIcon({ size = 16 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="13 17 18 12 13 7" />
+      <polyline points="6 17 11 12 6 7" />
+    </svg>
+  );
+}
+
+export default function QueryBar({ tab, query, loading, active, hasMore, onRun, onLastPage }: QueryBarProps) {
   const { dispatch } = useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -58,6 +137,17 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
 
   function patch(partial: Partial<QueryInput>) {
     dispatch({ type: 'tab/query', tabId: tab.id, patch: partial });
+  }
+
+  const pageSize = Math.min(1000, Math.max(1, Number(query.limit) || 50));
+  const currentSkip = Math.max(0, Number(query.skip) || 0);
+  const atFirstPage = currentSkip <= 0;
+  const atLastPage = !hasMore;
+
+  function goToSkip(action: 'first' | 'prev' | 'next') {
+    const skip = pageSkip(action, currentSkip, pageSize);
+    patch({ skip: String(skip) });
+    onRun(skip);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -117,6 +207,52 @@ export default function QueryBar({ tab, query, loading, active, onRun }: QueryBa
           <p className="truncate text-caption text-label-tertiary">
             {tab.connectionName} · {tab.database}.{tab.collection}
           </p>
+        </div>
+        <div className="flex shrink-0 items-center" role="group" aria-label="Pagination">
+          <Button
+            variant="quiet"
+            size="sm"
+            aria-label="First page"
+            title="First page"
+            disabled={loading || atFirstPage}
+            onClick={() => goToSkip('first')}
+            className="w-7 px-0"
+          >
+            <ChevronsLeftIcon />
+          </Button>
+          <Button
+            variant="quiet"
+            size="sm"
+            aria-label="Previous page"
+            title="Previous page"
+            disabled={loading || atFirstPage}
+            onClick={() => goToSkip('prev')}
+            className="w-7 px-0"
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <Button
+            variant="quiet"
+            size="sm"
+            aria-label="Next page"
+            title="Next page"
+            disabled={loading || atLastPage}
+            onClick={() => goToSkip('next')}
+            className="w-7 px-0"
+          >
+            <ChevronRightIcon />
+          </Button>
+          <Button
+            variant="quiet"
+            size="sm"
+            aria-label="Last page"
+            title="Last page"
+            disabled={loading || atLastPage}
+            onClick={onLastPage}
+            className="w-7 px-0"
+          >
+            <ChevronsRightIcon />
+          </Button>
         </div>
         <label className="flex shrink-0 items-center gap-1.5">
           <span className={LABEL_CLASS}>Skip</span>
