@@ -25,7 +25,7 @@ interface IconProps {
   size?: number;
 }
 
-function ChevronsLeftIcon({ size = 16 }: IconProps) {
+function ChevronsLeftIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -44,7 +44,7 @@ function ChevronsLeftIcon({ size = 16 }: IconProps) {
   );
 }
 
-function ChevronLeftIcon({ size = 16 }: IconProps) {
+function ChevronLeftIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -62,7 +62,7 @@ function ChevronLeftIcon({ size = 16 }: IconProps) {
   );
 }
 
-function ChevronRightIcon({ size = 16 }: IconProps) {
+function ChevronRightIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -80,7 +80,7 @@ function ChevronRightIcon({ size = 16 }: IconProps) {
   );
 }
 
-function ChevronsRightIcon({ size = 16 }: IconProps) {
+function ChevronsRightIcon({ size = 20 }: IconProps) {
   return (
     <svg
       width={size}
@@ -216,7 +216,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
             title="First page"
             disabled={loading || atFirstPage}
             onClick={() => goToSkip('first')}
-            className="w-7 px-0"
+            className="w-8 px-0"
           >
             <ChevronsLeftIcon />
           </Button>
@@ -227,7 +227,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
             title="Previous page"
             disabled={loading || atFirstPage}
             onClick={() => goToSkip('prev')}
-            className="w-7 px-0"
+            className="w-8 px-0"
           >
             <ChevronLeftIcon />
           </Button>
@@ -238,7 +238,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
             title="Next page"
             disabled={loading || atLastPage}
             onClick={() => goToSkip('next')}
-            className="w-7 px-0"
+            className="w-8 px-0"
           >
             <ChevronRightIcon />
           </Button>
@@ -249,7 +249,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
             title="Last page"
             disabled={loading || atLastPage}
             onClick={onLastPage}
-            className="w-7 px-0"
+            className="w-8 px-0"
           >
             <ChevronsRightIcon />
           </Button>
