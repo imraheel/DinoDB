@@ -38,8 +38,7 @@ export function getSettings(db: DatabaseHandle): AppSettings {
       : DEFAULT_SETTINGS.theme;
   const maxTimeMs = isPositiveInt(stored.maxTimeMs) ? stored.maxTimeMs : DEFAULT_SETTINGS.maxTimeMs;
   const defaultLimit = isValidLimit(stored.defaultLimit) ? stored.defaultLimit : DEFAULT_SETTINGS.defaultLimit;
-  const vibrancy = typeof stored.vibrancy === 'boolean' ? stored.vibrancy : DEFAULT_SETTINGS.vibrancy;
-  return { theme, maxTimeMs, defaultLimit, vibrancy };
+  return { theme, maxTimeMs, defaultLimit };
 }
 
 export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): AppSettings {
@@ -47,8 +46,7 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
   const merged: AppSettings = {
     theme: patch.theme ?? current.theme,
     maxTimeMs: patch.maxTimeMs ?? current.maxTimeMs,
-    defaultLimit: patch.defaultLimit ?? current.defaultLimit,
-    vibrancy: patch.vibrancy ?? current.vibrancy
+    defaultLimit: patch.defaultLimit ?? current.defaultLimit
   };
   const upsert = db.prepare(
     'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
@@ -59,8 +57,7 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
   write([
     ['theme', JSON.stringify(merged.theme)],
     ['maxTimeMs', JSON.stringify(merged.maxTimeMs)],
-    ['defaultLimit', JSON.stringify(merged.defaultLimit)],
-    ['vibrancy', JSON.stringify(merged.vibrancy)]
+    ['defaultLimit', JSON.stringify(merged.defaultLimit)]
   ]);
   return getSettings(db);
 }

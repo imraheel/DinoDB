@@ -135,14 +135,6 @@
   --shadow-raise: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-.has-vibrancy {
-  --color-sidebar: rgba(246, 246, 248, 0.72);
-}
-
-.dark.has-vibrancy {
-  --color-sidebar: rgba(40, 40, 44, 0.65);
-}
-
 html,
 body,
 #root {
@@ -166,11 +158,6 @@ body {
   background: var(--color-bg);
 }
 
-.has-vibrancy,
-.has-vibrancy body {
-  background: transparent;
-}
-
 ::selection {
   background: rgba(0, 122, 255, 0.28);
 }
@@ -186,10 +173,6 @@ body {
 
 @layer components {
   .traffic-gutter {
-    padding-left: 12px;
-  }
-
-  .has-vibrancy .traffic-gutter {
     padding-left: 70px;
   }
 

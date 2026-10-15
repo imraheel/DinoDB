@@ -7,7 +7,7 @@ import TabWorkspace from './components/TabWorkspace';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
 import { setMonacoTheme } from './lib/monaco';
-import { applyPlatform, applyTheme, resolveTheme } from './lib/theme';
+import { applyTheme, resolveTheme } from './lib/theme';
 import type { ConnectionConfig } from '../../shared/types';
 
 export default function AppShell() {
@@ -44,9 +44,8 @@ export default function AppShell() {
 
   useEffect(() => {
     applyTheme(state.settings.theme);
-    applyPlatform(state.settings.vibrancy);
     setMonacoTheme(resolveTheme(state.settings.theme) === 'dark');
-  }, [state.settings.theme, state.settings.vibrancy]);
+  }, [state.settings.theme]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');

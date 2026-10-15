@@ -1,11 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useApp } from '../context/AppState';
-import { isMacPlatform } from '../lib/theme';
 import type { AppSettings } from '../../../shared/types';
 import Button from './ui/Button';
 import Modal, { ModalBody, ModalFooter, ModalHeader } from './ui/Modal';
 import SegmentedControl from './ui/SegmentedControl';
-import Toggle from './ui/Toggle';
 import { TextInput } from './ui/Input';
 
 interface SettingsModalProps {
@@ -17,7 +15,6 @@ interface FormState {
   theme: AppSettings['theme'];
   maxTimeMs: number;
   defaultLimit: number;
-  vibrancy: boolean;
 }
 
 const THEME_OPTIONS: { value: AppSettings['theme']; label: string }[] = [
@@ -35,8 +32,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
   const [form, setForm] = useState<FormState>({
     theme: state.settings.theme,
     maxTimeMs: state.settings.maxTimeMs,
-    defaultLimit: state.settings.defaultLimit,
-    vibrancy: state.settings.vibrancy
+    defaultLimit: state.settings.defaultLimit
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,25 +42,17 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     setForm({
       theme: state.settings.theme,
       maxTimeMs: state.settings.maxTimeMs,
-      defaultLimit: state.settings.defaultLimit,
-      vibrancy: state.settings.vibrancy
+      defaultLimit: state.settings.defaultLimit
     });
     setError(null);
     setSaving(false);
-  }, [
-    open,
-    state.settings.theme,
-    state.settings.maxTimeMs,
-    state.settings.defaultLimit,
-    state.settings.vibrancy
-  ]);
+  }, [open, state.settings.theme, state.settings.maxTimeMs, state.settings.defaultLimit]);
 
   async function handleSave() {
     const patch = {
       theme: form.theme,
       maxTimeMs: clamp(form.maxTimeMs, 1000, 300000),
-      defaultLimit: clamp(form.defaultLimit, 1, 1000),
-      vibrancy: form.vibrancy
+      defaultLimit: clamp(form.defaultLimit, 1, 1000)
     };
     setSaving(true);
     setError(null);
@@ -98,22 +86,6 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
               className="w-full"
             />
           </div>
-
-          {isMacPlatform() ? (
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <span className="block text-xs font-medium text-label-secondary">Vibrancy</span>
-                <p className="mt-0.5 text-caption text-label-tertiary">
-                  Translucent sidebar that blends with the desktop
-                </p>
-              </div>
-              <Toggle
-                checked={form.vibrancy}
-                onChange={(vibrancy) => setForm((previous) => ({ ...previous, vibrancy }))}
-                aria-label="Vibrancy"
-              />
-            </div>
-          ) : null}
 
           <div>
             <TextInput

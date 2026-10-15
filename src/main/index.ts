@@ -9,10 +9,6 @@ import { SessionManager } from './services/sessions-manager';
 import { TabManager } from './services/tabs-manager';
 import { createApplicationMenu } from './menu';
 import { createMainWindow } from './window';
-import type { AppSettings } from '../shared/types';
-import { DEFAULT_SETTINGS } from '../shared/types';
-
-let cachedSettings: AppSettings = DEFAULT_SETTINGS;
 
 app.whenReady().then(() => {
   const db = getDb(path.join(app.getPath('userData'), 'nexdb.db'));
@@ -20,9 +16,9 @@ app.whenReady().then(() => {
   const sessions = new SessionManager(utilityDeps, (id) => getConnection(db, id));
   const tabs = new TabManager(utilityDeps);
   registerAllIpc({ db: () => db, sessions, tabs, utilityDeps });
-  cachedSettings = getSettings(db);
-  nativeTheme.themeSource = cachedSettings.theme;
-  createMainWindow(cachedSettings);
+  const settings = getSettings(db);
+  nativeTheme.themeSource = settings.theme;
+  createMainWindow(settings.theme);
   createApplicationMenu();
 
   app.on('will-quit', () => {
@@ -37,5 +33,5 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createMainWindow(cachedSettings);
+  if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
 });

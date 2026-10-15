@@ -35,14 +35,12 @@ export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   maxTimeMs: number;
   defaultLimit: number;
-  vibrancy: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   maxTimeMs: 30000,
-  defaultLimit: 50,
-  vibrancy: true
+  defaultLimit: 50
 };
 export const SCHEMA_SAMPLE_SIZE = 50;
 
