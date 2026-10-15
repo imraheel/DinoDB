@@ -38,8 +38,8 @@ function ChevronsLeftIcon({ size = 16 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <polyline points="11 17 6 12 11 7" />
-      <polyline points="18 17 13 12 18 7" />
+      <path d="m11 17-5-5 5-5" />
+      <path d="m18 17-5-5 5-5" />
     </svg>
   );
 }
@@ -57,7 +57,7 @@ function ChevronLeftIcon({ size = 16 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <polyline points="15 18 9 12 15 7" />
+      <path d="m15 18-6-6 6-6" />
     </svg>
   );
 }
@@ -75,7 +75,7 @@ function ChevronRightIcon({ size = 16 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <polyline points="9 18 15 12 9 7" />
+      <path d="m9 18 6-6-6-6" />
     </svg>
   );
 }
@@ -93,8 +93,8 @@ function ChevronsRightIcon({ size = 16 }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <polyline points="13 17 18 12 13 7" />
-      <polyline points="6 17 11 12 6 7" />
+      <path d="m6 17 5-5-5-5" />
+      <path d="m13 17 5-5-5-5" />
     </svg>
   );
 }
@@ -284,7 +284,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
           disabled={loading}
           className="px-4"
         >
-          {loading ? 'Running…' : 'Run'}
+          Run
         </Button>
       </div>
       <div ref={containerRef} style={{ height: editorHeight }} className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`} />
