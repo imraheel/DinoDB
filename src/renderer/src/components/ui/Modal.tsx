@@ -1,4 +1,10 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+  type ReactNode
+} from 'react';
 
 interface ModalProps {
   open: boolean;
@@ -19,35 +25,43 @@ export default function Modal({
   dismissOnOverlay = true,
   'aria-label': ariaLabel
 }: ModalProps) {
+  const [rendered, setRendered] = useState(open);
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    if (open) setClosing(false);
-  }, [open]);
-
-  function handleClose() {
-    setClosing(true);
-    onClose();
-  }
+    if (open) {
+      setRendered(true);
+      setClosing(false);
+    } else if (rendered) {
+      setClosing(true);
+    }
+  }, [open, rendered]);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') handleClose();
+      if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, onClose]);
 
-  if (!open && !closing) return null;
+  function handleOverlayAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget || !closing) return;
+    setClosing(false);
+    setRendered(false);
+  }
+
+  if (!rendered) return null;
 
   return (
     <div
       role="presentation"
+      onAnimationEnd={handleOverlayAnimationEnd}
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-[2px] ${
         closing ? 'animate-fade-out' : 'animate-fade-in'
       }`}
-      onMouseDown={dismissOnOverlay ? handleClose : undefined}
+      onMouseDown={dismissOnOverlay ? onClose : undefined}
     >
       <div
         role="dialog"

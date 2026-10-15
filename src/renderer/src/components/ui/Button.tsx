@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
 
-export type ButtonVariant = 'primary' | 'default' | 'quiet' | 'destructive';
+export type ButtonVariant = 'primary' | 'default' | 'quiet' | 'accentOutline' | 'destructive';
 export type ButtonSize = 'sm' | 'md';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,6 +20,8 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
   default: 'button-neutral',
   quiet:
     'text-label-secondary hover:bg-well hover:text-label active:bg-[rgba(0,0,0,0.08)] dark:active:bg-[rgba(255,255,255,0.12)]',
+  accentOutline:
+    'border border-accent bg-transparent text-accent hover:bg-accent-soft active:bg-[rgba(0,122,255,0.18)] dark:active:bg-[rgba(10,132,255,0.24)]',
   destructive:
     'bg-danger text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-danger-hover active:shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)]'
 };

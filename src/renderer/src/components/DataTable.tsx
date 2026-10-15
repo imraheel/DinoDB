@@ -254,12 +254,7 @@ export default function DataTable({
         ) : null}
         <span className="flex-1" />
         {canMutate && onInsert !== undefined ? (
-          <Button
-            variant="quiet"
-            size="sm"
-            className="border border-accent font-medium text-accent"
-            onClick={onInsert}
-          >
+          <Button variant="accentOutline" size="sm" onClick={onInsert}>
             Insert document
           </Button>
         ) : null}
