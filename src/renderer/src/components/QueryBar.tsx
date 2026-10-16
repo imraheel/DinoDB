@@ -17,6 +17,7 @@ interface QueryBarProps {
   hasMore: boolean;
   onRun(text: string, skipOverride?: number): void;
   onRunAll(text: string): void;
+  onExplain(text: string): void;
   onLastPage(text: string): void;
 }
 
@@ -109,6 +110,7 @@ export default function QueryBar({
   hasMore,
   onRun,
   onRunAll,
+  onExplain,
   onLastPage
 }: QueryBarProps) {
   const { dispatch } = useApp();
@@ -326,6 +328,17 @@ export default function QueryBar({
           className="px-4"
         >
           Run all
+        </Button>
+        <Button
+          variant="default"
+          size="md"
+          pill
+          onClick={() => onExplain(activeQueryText())}
+          disabled={loading}
+          title="Explain query at cursor (executionStats)"
+          className="px-4"
+        >
+          Explain
         </Button>
       </div>
       <div ref={containerRef} style={{ height: editorHeight }} className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`} />

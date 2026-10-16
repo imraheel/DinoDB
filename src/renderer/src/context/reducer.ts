@@ -31,7 +31,8 @@ export type ResultCard =
       inserted: number;
       insertedId: unknown | null;
       message?: string;
-    };
+    }
+  | { kind: 'explain'; op: string; plan: unknown };
 
 export interface TabData {
   query: QueryInput;

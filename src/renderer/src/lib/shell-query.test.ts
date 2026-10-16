@@ -74,7 +74,11 @@ describe('parseShellQuery', () => {
       filter: { a: 1 },
       collection: 'find('
     });
-    expect(parseOk('find({ a: 1 }).explain()')).toEqual({ op: 'find', filter: { a: 1 } });
+    expect(parseOk('find({ a: 1 }).explain()')).toEqual({
+      op: 'find',
+      filter: { a: 1 },
+      explain: true
+    });
   });
 
   it('converts ObjectId, ISODate, Date and RegExp to Extended JSON', () => {
@@ -116,6 +120,57 @@ describe('parseShellQuery', () => {
       op: 'find',
       filter: { a: 1 },
       projection: { b: 1 }
+    });
+  });
+
+  it('sets the explain flag for find, findOne and aggregate with .explain()', () => {
+    expect(parseOk('find({ a: 1 }).explain()')).toEqual({
+      op: 'find',
+      filter: { a: 1 },
+      explain: true
+    });
+    expect(parseOk('find({ a: 1 }).sort({ b: 1 }).skip(5).limit(10).explain()')).toEqual({
+      op: 'find',
+      filter: { a: 1 },
+      sort: { b: 1 },
+      skip: 5,
+      limit: 10,
+      explain: true
+    });
+    expect(parseOk('db.getCollection("users").find({}).explain()')).toEqual({
+      op: 'find',
+      filter: {},
+      collection: 'users',
+      explain: true
+    });
+    expect(parseOk('findOne({ a: 1 }).explain()')).toEqual({
+      op: 'findOne',
+      filter: { a: 1 },
+      explain: true
+    });
+    expect(parseOk('aggregate([{ $match: { a: 1 } }]).explain()')).toEqual({
+      op: 'aggregate',
+      pipeline: [{ $match: { a: 1 } }],
+      explain: true
+    });
+    expect(parseOk('aggregate([{ $match: {} }]).explain("executionStats")')).toEqual({
+      op: 'aggregate',
+      pipeline: [{ $match: {} }],
+      explain: true
+    });
+  });
+
+  it('does not set the explain flag without .explain() or on non-read ops', () => {
+    expect(parseOk('find({ a: 1 })')).toEqual({ op: 'find', filter: { a: 1 } });
+    expect(parseOk('countDocuments({ a: 1 }).explain()')).toEqual({
+      op: 'countDocuments',
+      filter: { a: 1 }
+    });
+    expect(parseOk('updateMany({}, { $set: { a: 1 } }).explain()')).toEqual({
+      op: 'updateMany',
+      filter: {},
+      update: { $set: { a: 1 } },
+      upsert: false
     });
   });
 

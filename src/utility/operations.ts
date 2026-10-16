@@ -200,6 +200,32 @@ export async function executeRequest(
         truncated: guarded && documents.length >= clampLimit(request.limit)
       };
     }
+    case 'explainFind': {
+      const options: FindOptions = {
+        ...buildFindOptions({
+          projection: request.projection,
+          sort: request.sort,
+          skip: request.skip,
+          limit: request.limit
+        }),
+        maxTimeMS: maxTimeMs
+      };
+      const plan = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .find(fromWire(request.filter) as Document, options)
+        .limit(clampLimit(request.limit))
+        .explain('executionStats');
+      return { plan: toWire(plan) };
+    }
+    case 'explainAggregate': {
+      const plan = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .aggregate(buildPipeline(request.pipeline, request.limit), { maxTimeMS: maxTimeMs })
+        .explain('executionStats');
+      return { plan: toWire(plan) };
+    }
     case 'inferSchema': {
       const limit = clampLimit(request.sampleSize);
       const documents = await ctx.client

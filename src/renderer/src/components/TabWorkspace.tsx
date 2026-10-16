@@ -53,6 +53,13 @@ function writeCard(op: string, result: WriteResult, inserted: number): ResultCar
   };
 }
 
+function hasExplainFlag(parsed: ParsedQuery): boolean {
+  return (
+    (parsed.op === 'find' || parsed.op === 'findOne' || parsed.op === 'aggregate') &&
+    parsed.explain === true
+  );
+}
+
 export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const { state, dispatch } = useApp();
   const data = state.tabData[tab.id];
@@ -68,6 +75,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     skipOverride?: number
   ): Promise<boolean> {
     if (!data) return false;
+    if (hasExplainFlag(parsed)) {
+      return explainParsed(parsed, sourceText);
+    }
     const collection = parsed.collection ?? tab.collection;
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
@@ -238,6 +248,82 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     } finally {
       dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
     }
+  }
+
+  async function explainParsed(parsed: ParsedQuery, sourceText: string): Promise<boolean> {
+    if (!data) return false;
+    const collection = parsed.collection ?? tab.collection;
+    if (parsed.op !== 'find' && parsed.op !== 'findOne' && parsed.op !== 'aggregate') {
+      dispatch({
+        type: 'tab/errored',
+        tabId: tab.id,
+        error: 'Explain is only supported for find and aggregate queries'
+      });
+      return false;
+    }
+    dispatch({ type: 'tab/errorCleared', tabId: tab.id });
+    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
+    try {
+      if (parsed.op === 'aggregate') {
+        const limit = Math.min(1000, Math.max(1, Number(data.query.limit) || 50));
+        const result = await window.api.executeTab<'explainAggregate'>(tab.id, {
+          kind: 'explainAggregate',
+          database: tab.database,
+          collection,
+          pipeline: parsed.pipeline,
+          limit
+        });
+        dispatch({
+          type: 'tab/card',
+          tabId: tab.id,
+          card: { kind: 'explain', op: 'aggregate', plan: result.plan }
+        });
+      } else {
+        const limit = Math.min(
+          1000,
+          Math.max(1, (parsed.op === 'find' ? parsed.limit : undefined) ?? (Number(data.query.limit) || 50))
+        );
+        const skip = Math.max(
+          0,
+          (parsed.op === 'find' ? parsed.skip : undefined) ?? (Number(data.query.skip) || 0)
+        );
+        const result = await window.api.executeTab<'explainFind'>(tab.id, {
+          kind: 'explainFind',
+          database: tab.database,
+          collection,
+          filter: parsed.filter,
+          projection: parsed.projection,
+          sort: parsed.sort,
+          skip,
+          limit
+        });
+        dispatch({
+          type: 'tab/card',
+          tabId: tab.id,
+          card: { kind: 'explain', op: parsed.op, plan: result.plan }
+        });
+      }
+      dispatch({ type: 'tab/read', tabId: tab.id, text: sourceText });
+      return true;
+    } catch (err) {
+      dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
+      return false;
+    } finally {
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
+    }
+  }
+
+  async function explainQuery(text: string): Promise<boolean> {
+    const parsed = parseShellQuery(text);
+    if (!parsed.ok) {
+      dispatch({
+        type: 'tab/errored',
+        tabId: tab.id,
+        error: `Query failed to parse: ${parsed.message}`
+      });
+      return false;
+    }
+    return explainParsed(parsed.value, text);
   }
 
   async function runQuery(text: string, skipOverride?: number): Promise<boolean> {
@@ -414,6 +500,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
         hasMore={data.findResults?.truncated ?? false}
         onRun={(text, skipOverride) => void runQuery(text, skipOverride)}
         onRunAll={(text) => void runEntireScript(text)}
+        onExplain={(text) => void explainQuery(text)}
         onLastPage={(text) => void goToLastPage(text)}
       />
       {banner}

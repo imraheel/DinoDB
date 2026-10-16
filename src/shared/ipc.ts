@@ -37,6 +37,8 @@ export interface UtilityResponses {
   updateMany: WriteResult;
   countDocuments: { count: number };
   aggregate: FindResult;
+  explainFind: { plan: unknown };
+  explainAggregate: { plan: unknown };
   inferSchema: { fields: SchemaField[] };
   dropCollection: { ok: true };
   renameCollection: { ok: true };
@@ -68,6 +70,8 @@ export type UtilityRequest =
   | { kind: 'updateMany'; database: string; collection: string; filter: unknown; update: unknown; upsert: boolean }
   | { kind: 'countDocuments'; database: string; collection: string; filter: unknown }
   | { kind: 'aggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
+  | { kind: 'explainFind'; database: string; collection: string; filter: unknown; projection?: unknown; sort?: unknown; skip?: number; limit: number }
+  | { kind: 'explainAggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
   | { kind: 'inferSchema'; database: string; collection: string; sampleSize: number }
   | AdminUtilityRequest;
 

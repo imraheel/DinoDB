@@ -1,5 +1,6 @@
 import type { ResultCard as ResultCardData } from '../context/reducer';
 import Button from './ui/Button';
+import JsonTree from './ui/JsonTree';
 
 interface ResultCardProps {
   card: ResultCardData;
@@ -10,6 +11,7 @@ function rowsOf(card: ResultCardData): Array<{ label: string; value: number }> {
   if (card.kind === 'count') {
     return [{ label: 'count', value: card.count }];
   }
+  if (card.kind === 'explain') return [];
   const rows: Array<{ label: string; value: number }> = [];
   if (card.op.startsWith('update') || card.op === 'replaceOne') {
     rows.push({ label: 'matched', value: card.matched });
@@ -22,12 +24,15 @@ function rowsOf(card: ResultCardData): Array<{ label: string; value: number }> {
 }
 
 function titleOf(card: ResultCardData): string {
-  return card.kind === 'count' ? 'countDocuments' : `${card.op}()`;
+  if (card.kind === 'count') return 'countDocuments';
+  if (card.kind === 'explain') return `Explain · ${card.op}`;
+  return `${card.op}()`;
 }
 
 export default function ResultCard({ card, onShowResults }: ResultCardProps) {
   const rows = rowsOf(card);
   const message = card.kind === 'write' ? card.message : undefined;
+  const explainPlan = card.kind === 'explain' ? card.plan : undefined;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -41,6 +46,7 @@ export default function ResultCard({ card, onShowResults }: ResultCardProps) {
         ) : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border">
+        {explainPlan !== undefined ? <JsonTree value={explainPlan} /> : null}
         {rows.length > 0 ? (
           <table className="w-full font-mono text-xs">
             <thead className="sticky top-0 z-10 bg-chrome">

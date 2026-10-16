@@ -28,8 +28,15 @@ export type ParsedQuery =
       sort?: unknown;
       skip?: number;
       limit?: number;
+      explain?: boolean;
     })
-  | (QueryBase & { op: 'findOne'; filter: unknown; projection?: unknown; sort?: unknown })
+  | (QueryBase & {
+      op: 'findOne';
+      filter: unknown;
+      projection?: unknown;
+      sort?: unknown;
+      explain?: boolean;
+    })
   | (QueryBase & { op: 'countDocuments'; filter: unknown })
   | (QueryBase & { op: 'updateOne'; filter: unknown; update: unknown; upsert: boolean })
   | (QueryBase & { op: 'updateMany'; filter: unknown; update: unknown; upsert: boolean })
@@ -43,7 +50,7 @@ export type ParsedQuery =
   | (QueryBase & { op: 'deleteMany'; filter: unknown })
   | (QueryBase & { op: 'insertOne'; document: unknown })
   | (QueryBase & { op: 'insertMany'; documents: unknown[] })
-  | (QueryBase & { op: 'aggregate'; pipeline: unknown[] });
+  | (QueryBase & { op: 'aggregate'; pipeline: unknown[]; explain?: boolean });
 
 export type ShellQueryResult =
   | { ok: true; value: ParsedQuery }
@@ -264,10 +271,11 @@ interface ChainArgs {
   sort?: string;
   skip?: string;
   limit?: string;
+  explain: boolean;
 }
 
 function parseChains(text: string): ChainArgs {
-  const chains: ChainArgs = {};
+  const chains: ChainArgs = { explain: false };
   let i = 0;
   while (i < text.length) {
     const ch = text[i];
@@ -291,7 +299,7 @@ function parseChains(text: string): ChainArgs {
     let j = i;
     while (j < text.length && isIdentPart(text[j])) j += 1;
     const ident = text.slice(start, j);
-    if (ident !== 'sort' && ident !== 'skip' && ident !== 'limit') {
+    if (ident !== 'sort' && ident !== 'skip' && ident !== 'limit' && ident !== 'explain') {
       i = j;
       continue;
     }
@@ -300,7 +308,11 @@ function parseChains(text: string): ChainArgs {
     if (text[k] === '(' && prevNonSpace(text, start) === '.') {
       const close = findMatchingParen(text, k);
       if (close === -1) throw new Error(`Unbalanced parentheses in .${ident}()`);
-      chains[ident] = text.slice(k + 1, close);
+      if (ident === 'explain') {
+        chains.explain = true;
+      } else {
+        chains[ident] = text.slice(k + 1, close);
+      }
       i = close + 1;
       continue;
     }
@@ -478,7 +490,18 @@ function buildParsed(name: QueryMethod, args: string[], tail: string): ShellQuer
         chains.sort !== undefined ? readObject(chains.sort, '.sort() argument') : undefined;
       const skip = chains.skip !== undefined ? readNumber(chains.skip, 'skip') : undefined;
       const limit = chains.limit !== undefined ? readNumber(chains.limit, 'limit') : undefined;
-      return { ok: true, value: { op: 'find', filter, projection, sort, skip, limit } };
+      return {
+        ok: true,
+        value: {
+          op: 'find',
+          filter,
+          projection,
+          sort,
+          skip,
+          limit,
+          ...(chains.explain ? { explain: true } : {})
+        }
+      };
     }
     case 'findOne': {
       expectArgs(args, 0, 3, 'findOne() usage: findOne(filter, projection?, options?)');
@@ -492,7 +515,17 @@ function buildParsed(name: QueryMethod, args: string[], tail: string): ShellQuer
           throw new Error('findOne() options.sort must be an object');
         }
       }
-      return { ok: true, value: { op: 'findOne', filter, projection, sort } };
+      const chains = parseChains(tail);
+      return {
+        ok: true,
+        value: {
+          op: 'findOne',
+          filter,
+          projection,
+          sort,
+          ...(chains.explain ? { explain: true } : {})
+        }
+      };
     }
     case 'countDocuments': {
       expectArgs(args, 0, 1, 'countDocuments() usage: countDocuments(filter?)');
@@ -533,7 +566,15 @@ function buildParsed(name: QueryMethod, args: string[], tail: string): ShellQuer
     }
     case 'aggregate': {
       expectArgs(args, 1, 1, 'aggregate() usage: aggregate(pipeline)');
-      return { ok: true, value: { op: 'aggregate', pipeline: readPipeline(args[0]) } };
+      const chains = parseChains(tail);
+      return {
+        ok: true,
+        value: {
+          op: 'aggregate',
+          pipeline: readPipeline(args[0]),
+          ...(chains.explain ? { explain: true } : {})
+        }
+      };
     }
     default:
       throw new Error(`Unsupported method "${name as string}"`);
