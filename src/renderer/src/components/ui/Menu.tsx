@@ -3,10 +3,11 @@ interface MenuProps {
   x: number;
   y: number;
   onClose(): void;
+  className?: string;
   children: ReactNode;
 }
 
-export default function Menu({ x, y, onClose, children }: MenuProps) {
+export default function Menu({ x, y, onClose, className, children }: MenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function Menu({ x, y, onClose, children }: MenuProps) {
   return (
     <div
       ref={menuRef}
-      className="fixed left-0 top-0 z-[60] min-w-44 animate-menu-in rounded-menu border border-border bg-surface-raised py-1 shadow-menu"
+      className={`fixed left-0 top-0 z-[60] min-w-44 animate-menu-in rounded-menu border border-border bg-surface-raised py-1 shadow-menu ${className ?? ''}`}
     >
       {children}
     </div>

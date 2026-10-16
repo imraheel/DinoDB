@@ -17,6 +17,7 @@ export interface TabMeta {
   database: string;
   collection: string;
   title: string;
+  pinned?: boolean;
 }
 
 export type ResultCard =
@@ -67,6 +68,8 @@ export type AppAction =
   | { type: 'tab/added'; tab: TabMeta; fields: SchemaField[] }
   | { type: 'tab/removed'; tabId: string }
   | { type: 'tab/activated'; tabId: string }
+  | { type: 'tab/pinned'; tabId: string; pinned: boolean }
+  | { type: 'tab/retitled'; tabId: string; title: string }
   | { type: 'tab/query'; tabId: string; patch: Partial<QueryInput> }
   | { type: 'tab/loading'; tabId: string; loading: boolean }
   | { type: 'tab/results'; tabId: string; results: FindResult }
@@ -251,6 +254,16 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
     }
     case 'tab/activated':
       return { ...state, activeTabId: action.tabId };
+    case 'tab/pinned':
+      return {
+        ...state,
+        tabs: state.tabs.map((t) => (t.id === action.tabId ? { ...t, pinned: action.pinned } : t))
+      };
+    case 'tab/retitled':
+      return {
+        ...state,
+        tabs: state.tabs.map((t) => (t.id === action.tabId ? { ...t, title: action.title } : t))
+      };
     case 'tab/query': {
       const data = state.tabData[action.tabId];
       if (!data) return state;

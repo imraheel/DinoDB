@@ -177,6 +177,22 @@ describe('reducer tab actions', () => {
     expect(state.tabData.t1.card).toEqual({ kind: 'count', count: 2 });
     expect(state.tabData.t1.lastRead).toBe('countDocuments()');
   });
+
+  it('tab/pinned sets and clears the pinned flag', () => {
+    let state = stateWithTabs([makeTab('a'), makeTab('b')]);
+    state = reducer(state, { type: 'tab/pinned', tabId: 'a', pinned: true });
+    expect(state.tabs.find((t) => t.id === 'a')?.pinned).toBe(true);
+    expect(state.tabs.find((t) => t.id === 'b')?.pinned).toBeUndefined();
+    state = reducer(state, { type: 'tab/pinned', tabId: 'a', pinned: false });
+    expect(state.tabs.find((t) => t.id === 'a')?.pinned).toBe(false);
+  });
+
+  it('tab/retitled updates the tab title and leaves others untouched', () => {
+    let state = stateWithTabs([makeTab('a'), makeTab('b')]);
+    state = reducer(state, { type: 'tab/retitled', tabId: 'b', title: 'renamed' });
+    expect(state.tabs.find((t) => t.id === 'a')?.title).toBe('db.coll');
+    expect(state.tabs.find((t) => t.id === 'b')?.title).toBe('renamed');
+  });
 });
 
 describe('reducer connection actions', () => {
