@@ -1,67 +1,52 @@
 # NexDB
 
-A fast, MongoDB desktop client built with Electron + React + Tailwind. Multiple saved connections, multi-tab collection browsing, full CRUD, and a shell-style query editor — with hard process isolation so one slow query can never freeze the app.
+A fast, native-feeling MongoDB desktop client for macOS and Windows. Built with Electron, React, and TypeScript, with hard process isolation so one slow query can never freeze the app.
 
-> Screenshot placeholder — `pnpm dev`, connect to a MongoDB instance, and open a couple of collection tabs.
+Every collection tab runs in its own forked worker process with a hard timeout, so the UI and other tabs stay fully responsive even when a query hangs.
 
-## Why process isolation?
+## Features
 
-Most MongoDB clients run every query inside the main UI process (or a single worker). One accidental `{ $where: "sleep(30000); return true" }` freezes the whole app.
+- **Connections** — save multiple connections with full auth support (SCRAM, X.509, AWS, GSSAPI, PLAIN), test before saving, stored locally in SQLite
+- **Shell-style query editor** — Monaco editor with `find`, `findOne`, `countDocuments`, `aggregate`, and full write ops; `ObjectId`/`ISODate` stubs converted to Extended JSON; multi-statement scripts with run-at-cursor (⌘⏎) or run-all
+- **Explain** — run `explain("executionStats")` from the toolbar or with `.explain()` syntax, shown in a collapsible plan tree
+- **Document CRUD** — insert, edit, and delete documents with live JSON validation
+- **Schema-aware results** — columns inferred from your data; Extended JSON rendered readably; pagination with first/prev/next/last and skip/limit
+- **Collections sidebar** — databases → collections tree; create, rename, duplicate, drop, and clear collections
+- **Tabs** — pin, rename, drag-to-reorder, close others; clipped tabs collected in an overflow menu
+- **Settings** — dark/light/system theme, query timeout, default row limit
 
-NexDB forks **one Electron `UtilityProcess` per collection tab** (plus one session process per connection for the sidebar tree). A stuck tab times out on its own (`maxTimeMs + 5s` hard cap enforced by the main process) while every other tab — and the UI — stays fully responsive.
+## Supported Platforms
 
-```
-┌────────────┐   IPC (correlation id + timeout)   ┌─────────────────────┐
-│  Renderer  │ ◄────────────────────────────────► │  Main (orchestrator)│
-│  (React)   │         contextBridge only         │  SQLite · managers  │
-└────────────┘                                     └──────────┬──────────┘
-                                                              │ utilityProcess.fork
-                     ┌────────────────────────────────────────┼────────────────┐
-                     ▼                    ▼                   ▼                ▼
-               ┌──────────┐        ┌──────────┐        ┌──────────┐     ┌──────────┐
-               │ session  │        │ tab #1   │        │ tab #2   │     │ tab #N   │
-               │ (sidebar)│        │ find()   │        │ find()   │     │ find()   │
-               └──────────┘        └──────────┘        └──────────┘     └──────────┘
-```
-
-The renderer never touches MongoDB, SQLite, or Node APIs — only a typed `window.api` preload bridge.
-
-## Commands
-
-| Command | What it does |
+| Platform | Artifact |
 | --- | --- |
-| `pnpm install` | Install deps + rebuild native modules for Electron |
-| `pnpm dev` | Build the utility worker, then launch the app with HMR |
-| `pnpm typecheck` | `tsc --noEmit` across main, preload/shared, renderer, and utility configs |
-| `pnpm test` | Unit tests (run inside Electron-as-Node so `better-sqlite3` matches the app ABI) |
-| `pnpm build` | Production build of utility + main + preload + renderer into `out/` |
-| `pnpm package` | Build + create installers (`dmg`/`zip` on macOS) into `dist/` |
-| `pnpm package:dir` | Build + create an unpacked app directory (fast local smoke test) |
+| macOS 12+ (Intel & Apple Silicon) | `.dmg`, `.zip` |
+| Windows 10/11 (x64) | NSIS installer (`.exe`) |
+| Linux | Planned |
 
-## Features (v1)
+## Download
 
-- **Connections** — CRUD with full auth support (SCRAM, X.509, AWS, GSSAPI, PLAIN via `authMechanism`, `authSource`, `authMechanismProperties`, plus free-form URI options). Stored in a local SQLite database (`nexdb.db` in the user-data dir).
-- **Connection test** — ping + server version before saving.
-- **Sidebar tree** — databases → collections, lazy-loaded per connection, one shared session process per connection.
-- **Multi-tab workspace** — each opened collection gets its own tab and its own isolated worker process; results, query drafts, and errors are preserved per tab.
-- **Query bar** — Monaco editor for shell-style queries: `find`, `findOne`, `countDocuments`, `updateOne`, `updateMany`, `replaceOne`, `deleteOne`, `deleteMany`, `insertOne`, `insertMany`, `aggregate` (under `db.getCollection("c")…`, with `ObjectId`/`ISODate` stubs → Extended JSON), skip/limit inputs, `Cmd/Ctrl+Enter` to run, 1000-row clamp, truncation hinting; count/write results show in a simple results table, and `Refresh` re-runs the last read.
-- **CRUD** — insert, edit (replace), delete documents with Monaco JSON editing and live validation.
-- **Schema-aware table** — column set inferred from a 50-document sample plus live keys; Extended JSON (`$oid`, `$date`, `$binary`, …) rendered readably.
-- **Settings** — theme (Light / Dark / System with live OS-follow), query timeout, default row limit.
+Grab the latest build from the [Releases](https://github.com/imraheel/mongo-client/releases) page.
 
-## Stack
+## Development
 
-Electron 43 · React 19 · Tailwind CSS v4 · Vite (electron-vite) · TypeScript strict · better-sqlite3 · official `mongodb` driver · Monaco. Minimal dependencies by design; no ORM, no state-management library, no CSS framework beyond Tailwind.
+| Command | Description |
+| --- | --- |
+| `pnpm install` | Install dependencies |
+| `pnpm dev` | Launch the app with hot reload |
+| `pnpm test` | Run unit tests |
+| `pnpm typecheck` | Type-check all TypeScript projects |
+| `pnpm build` | Production build |
+| `pnpm clean` | Remove `dist/` and `out/` |
+| `pnpm package:mac` | Build macOS installers |
+| `pnpm package:win` | Build Windows installer (x64) |
+| `pnpm package:all` | Build for macOS and Windows |
 
-## Known constraints
+To cut a release, push a tag — CI builds both platforms and publishes a GitHub Release with the installers attached:
 
-- Connection passwords are stored **unencrypted** in `nexdb.db` (deliberate v1 trade-off; a master-password/keychain scheme is a candidate for V2).
-- Table view only (no tree/JSON document views yet), no virtualized rows.
-
-## V2 backlog
-
-Index Manager, Explain plans, SSH tunneling, TLS UI, query history/favorites, import/export, tree/JSON document views, virtualized result tables. See `docs/superpowers/specs/2026-10-09-nexdb-design.md` for the full design and decisions.
+```
+git tag v0.2.0 && git push origin v0.2.0
+```
 
 ## License
 
-MIT
+Licensed under the [GNU General Public License v3.0](LICENSE).
