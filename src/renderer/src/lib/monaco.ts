@@ -87,6 +87,10 @@ function init(): void {
 
   monaco.languages.setLanguageConfiguration('mongodb', {
     wordPattern: /[A-Za-z0-9_$.]+/,
+    comments: {
+      lineComment: '//',
+      blockComment: ['/*', '*/']
+    },
     brackets: [
       ['{', '}'],
       ['[', ']'],
