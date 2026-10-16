@@ -22,7 +22,8 @@ describe('parseShellQuery', () => {
   it('parses the default seeded query text', () => {
     expect(parseOk('db.getCollection("coll").find({\n  \n})')).toEqual({
       op: 'find',
-      filter: {}
+      filter: {},
+      collection: 'coll'
     });
   });
 
@@ -57,18 +58,21 @@ describe('parseShellQuery', () => {
       projection: { leadPhones: 1 },
       sort: { _id: -1 },
       skip: 10,
-      limit: 5
+      limit: 5,
+      collection: 'crm_leads'
     });
   });
 
   it('ignores leading statements, string lookalikes and unknown chains', () => {
     expect(parseOk('use reports; db.getCollection("x").find({ a: 1 }).pretty();')).toEqual({
       op: 'find',
-      filter: { a: 1 }
+      filter: { a: 1 },
+      collection: 'x'
     });
     expect(parseOk('db.getCollection("find(").find({ a: 1 })')).toEqual({
       op: 'find',
-      filter: { a: 1 }
+      filter: { a: 1 },
+      collection: 'find('
     });
     expect(parseOk('find({ a: 1 }).explain()')).toEqual({ op: 'find', filter: { a: 1 } });
   });
@@ -133,7 +137,8 @@ describe('parseShellQuery', () => {
   it('parses findOne with projection and options sort', () => {
     expect(parseOk('db.getCollection("x").findOne({ a: 1 })')).toEqual({
       op: 'findOne',
-      filter: { a: 1 }
+      filter: { a: 1 },
+      collection: 'x'
     });
     expect(parseOk('findOne({ a: 1 }, { b: 1 })')).toEqual({
       op: 'findOne',
@@ -151,7 +156,8 @@ describe('parseShellQuery', () => {
     expect(parseOk('countDocuments()')).toEqual({ op: 'countDocuments', filter: {} });
     expect(parseOk('db.getCollection("x").countDocuments({ active: true })')).toEqual({
       op: 'countDocuments',
-      filter: { active: true }
+      filter: { active: true },
+      collection: 'x'
     });
     expect(parseErr('countDocuments({}, {})')).toMatch(/countDocuments\(\) usage/);
   });
@@ -197,7 +203,8 @@ describe('parseShellQuery', () => {
     });
     expect(parseOk('db.getCollection("x").deleteMany({ expired: true })')).toEqual({
       op: 'deleteMany',
-      filter: { expired: true }
+      filter: { expired: true },
+      collection: 'x'
     });
     expect(parseErr('deleteMany()')).toMatch(/deleteMany\(\) usage/);
   });
@@ -250,5 +257,31 @@ describe('parseShellQuery', () => {
     );
     expect(parseErr('db.users.drop()')).toMatch(/Supported methods: find, findOne, countDocuments/);
     expect(parseErr('db.getCollection("x")')).toMatch(/No query method after getCollection/);
+  });
+
+  it('extracts the collection from getCollection() and db.<name> prefixes', () => {
+    expect(parseOk('db.getCollection("department").find({})')).toEqual({
+      op: 'find',
+      filter: {},
+      collection: 'department'
+    });
+    expect(parseOk("db.getCollection('department').countDocuments()")).toEqual({
+      op: 'countDocuments',
+      filter: {},
+      collection: 'department'
+    });
+    expect(parseOk('db.department.find({ active: true })')).toEqual({
+      op: 'find',
+      filter: { active: true },
+      collection: 'department'
+    });
+    expect(parseOk('db.department.updateMany({}, { $set: { a: 1 } })')).toEqual({
+      op: 'updateMany',
+      filter: {},
+      update: { $set: { a: 1 } },
+      upsert: false,
+      collection: 'department'
+    });
+    expect(parseOk('find({})')).toEqual({ op: 'find', filter: {} });
   });
 });

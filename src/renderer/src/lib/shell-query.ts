@@ -16,18 +16,34 @@ export const QUERY_METHODS = [
 
 export type QueryMethod = (typeof QUERY_METHODS)[number];
 
+interface QueryBase {
+  collection?: string;
+}
+
 export type ParsedQuery =
-  | { op: 'find'; filter: unknown; projection?: unknown; sort?: unknown; skip?: number; limit?: number }
-  | { op: 'findOne'; filter: unknown; projection?: unknown; sort?: unknown }
-  | { op: 'countDocuments'; filter: unknown }
-  | { op: 'updateOne'; filter: unknown; update: unknown; upsert: boolean }
-  | { op: 'updateMany'; filter: unknown; update: unknown; upsert: boolean }
-  | { op: 'replaceOne'; filter: unknown; replacement: unknown; upsert: boolean }
-  | { op: 'deleteOne'; filter: unknown }
-  | { op: 'deleteMany'; filter: unknown }
-  | { op: 'insertOne'; document: unknown }
-  | { op: 'insertMany'; documents: unknown[] }
-  | { op: 'aggregate'; pipeline: unknown[] };
+  | (QueryBase & {
+      op: 'find';
+      filter: unknown;
+      projection?: unknown;
+      sort?: unknown;
+      skip?: number;
+      limit?: number;
+    })
+  | (QueryBase & { op: 'findOne'; filter: unknown; projection?: unknown; sort?: unknown })
+  | (QueryBase & { op: 'countDocuments'; filter: unknown })
+  | (QueryBase & { op: 'updateOne'; filter: unknown; update: unknown; upsert: boolean })
+  | (QueryBase & { op: 'updateMany'; filter: unknown; update: unknown; upsert: boolean })
+  | (QueryBase & {
+      op: 'replaceOne';
+      filter: unknown;
+      replacement: unknown;
+      upsert: boolean;
+    })
+  | (QueryBase & { op: 'deleteOne'; filter: unknown })
+  | (QueryBase & { op: 'deleteMany'; filter: unknown })
+  | (QueryBase & { op: 'insertOne'; document: unknown })
+  | (QueryBase & { op: 'insertMany'; documents: unknown[] })
+  | (QueryBase & { op: 'aggregate'; pipeline: unknown[] });
 
 export type ShellQueryResult =
   | { ok: true; value: ParsedQuery }
@@ -141,6 +157,7 @@ function isQueryMethod(ident: string): ident is QueryMethod {
 
 interface MethodCall {
   name: QueryMethod;
+  identStart: number;
   openIdx: number;
   closeIdx: number;
 }
@@ -175,12 +192,22 @@ function findMethodCall(text: string): MethodCall | null {
       if (text[k] === '(') {
         const closeIdx = findMatchingParen(text, k);
         if (closeIdx === -1) throw new Error(`Unbalanced parentheses in ${ident}()`);
-        return { name: ident, openIdx: k, closeIdx };
+        return { name: ident, identStart: start, openIdx: k, closeIdx };
       }
     }
     i = j;
   }
   return null;
+}
+
+function extractCollection(prefix: string): string | undefined {
+  const trimmed = prefix.trim().replace(/\.+$/, '');
+  if (trimmed === '') return undefined;
+  const getter = trimmed.match(/(?:^|[^A-Za-z0-9_$])getCollection\s*\(\s*(['"`])([^'"`]+)\1\s*\)$/);
+  if (getter !== null) return getter[2];
+  const dotted = trimmed.match(/^db\.([A-Za-z_$][\w$]*)$/);
+  if (dotted !== null) return dotted[1];
+  return undefined;
 }
 
 function findForeignCall(text: string): string | null {
@@ -534,8 +561,14 @@ export function parseShellQuery(text: string): ShellQueryResult {
       }
       return parseFilterOnly(source);
     }
+    const collection = extractCollection(source.slice(0, call.identStart));
     const args = normalizeArgs(splitTopLevel(source.slice(call.openIdx + 1, call.closeIdx)));
-    return buildParsed(call.name, args, source.slice(call.closeIdx + 1));
+    const built = buildParsed(call.name, args, source.slice(call.closeIdx + 1));
+    if (!built.ok) return built;
+    return {
+      ok: true,
+      value: collection !== undefined ? { ...built.value, collection } : built.value
+    };
   } catch (err) {
     return { ok: false, message: messageOf(err) };
   }

@@ -64,6 +64,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   async function runParsed(parsed: ParsedQuery, sourceText: string, skipOverride?: number) {
     if (!data) return;
+    const collection = parsed.collection ?? tab.collection;
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
     try {
@@ -77,7 +78,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'find'>(tab.id, {
             kind: 'find',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             filter: parsed.filter,
             projection: parsed.projection,
             sort: parsed.sort,
@@ -91,7 +92,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'find'>(tab.id, {
             kind: 'find',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             filter: parsed.filter,
             projection: parsed.projection,
             sort: parsed.sort,
@@ -105,7 +106,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'countDocuments'>(tab.id, {
             kind: 'countDocuments',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             filter: parsed.filter
           });
           dispatch({
@@ -120,7 +121,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'aggregate'>(tab.id, {
             kind: 'aggregate',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             pipeline: parsed.pipeline,
             limit
           });
@@ -150,7 +151,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'updateOne' | 'updateMany'>(tab.id, {
             kind: parsed.op,
             database: tab.database,
-            collection: tab.collection,
+            collection,
             filter: parsed.filter,
             update: parsed.update,
             upsert: parsed.upsert
@@ -166,7 +167,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'replaceOne'>(tab.id, {
             kind: 'replaceOne',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             target: parsed.filter,
             document: parsed.replacement,
             upsert: parsed.upsert
@@ -182,7 +183,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'deleteOne'>(tab.id, {
             kind: 'deleteOne',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             target: parsed.filter
           });
           dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('deleteOne', result, 0) });
@@ -192,7 +193,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'deleteMany'>(tab.id, {
             kind: 'deleteMany',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             filter: parsed.filter
           });
           dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('deleteMany', result, 0) });
@@ -202,7 +203,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'insertOne'>(tab.id, {
             kind: 'insertOne',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             document: parsed.document
           });
           dispatch({ type: 'tab/card', tabId: tab.id, card: writeCard('insertOne', result, 1) });
@@ -212,7 +213,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           const result = await window.api.executeTab<'insertMany'>(tab.id, {
             kind: 'insertMany',
             database: tab.database,
-            collection: tab.collection,
+            collection,
             documents: parsed.documents
           });
           dispatch({
@@ -259,7 +260,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       const countResult = await window.api.executeTab<'countDocuments'>(tab.id, {
         kind: 'countDocuments',
         database: tab.database,
-        collection: tab.collection,
+        collection: parsed.value.collection ?? tab.collection,
         filter: parsed.value.filter
       });
       lastSkip = lastPageSkip(countResult.count, pageSize);
@@ -286,13 +287,21 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     void runQuery();
   }
 
+  function resultsCollection(): string {
+    if (data !== undefined && data.lastRead !== undefined) {
+      const parsed = parseShellQuery(data.lastRead);
+      if (parsed.ok && parsed.value.collection !== undefined) return parsed.value.collection;
+    }
+    return tab.collection;
+  }
+
   async function insertDocument(text: string) {
     try {
       const parsed: unknown = parseShellJson(text);
       await window.api.executeTab<'insertOne'>(tab.id, {
         kind: 'insertOne',
         database: tab.database,
-        collection: tab.collection,
+        collection: resultsCollection(),
         document: parsed
       });
       setInsertText(null);
@@ -308,7 +317,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       await window.api.executeTab<'replaceOne'>(tab.id, {
         kind: 'replaceOne',
         database: tab.database,
-        collection: tab.collection,
+        collection: resultsCollection(),
         target,
         document: parsed
       });
@@ -324,7 +333,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       await window.api.executeTab<'deleteOne'>(tab.id, {
         kind: 'deleteOne',
         database: tab.database,
-        collection: tab.collection,
+        collection: resultsCollection(),
         target
       });
       refresh();
@@ -399,7 +408,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
       {insertText !== null ? (
         <DocumentModal
-          title={`Insert into ${tab.collection}`}
+          title={`Insert into ${resultsCollection()}`}
           initialText={insertText}
           onSave={(text) => void insertDocument(text)}
           onClose={() => setInsertText(null)}
@@ -407,7 +416,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       ) : null}
       {edit !== null ? (
         <DocumentModal
-          title={`Edit document in ${tab.collection}`}
+          title={`Edit document in ${resultsCollection()}`}
           initialText={edit.text}
           onSave={(text) => void replaceDocument(edit.target, text)}
           onClose={() => setEdit(null)}
@@ -415,7 +424,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       ) : null}
       {viewText !== null ? (
         <DocumentModal
-          title={`Document in ${tab.collection}`}
+          title={`Document in ${resultsCollection()}`}
           initialText={viewText}
           onSave={() => {}}
           onClose={() => setViewText(null)}
@@ -425,7 +434,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       <ConfirmDialog
         open={pendingDelete !== null}
         title="Delete document"
-        message={`Delete this document from ${tab.collection}? This cannot be undone.`}
+        message={`Delete this document from ${resultsCollection()}? This cannot be undone.`}
         confirmLabel="Delete"
         danger
         onConfirm={() => {
