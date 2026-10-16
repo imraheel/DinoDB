@@ -98,7 +98,8 @@ export default function DataTable({
   onDelete,
   onRefresh
 }: DataTableProps) {
-  const columns = getColumns(fields, documents);
+  const columns =
+    documents.length > 0 ? getColumns([], documents) : getColumns(fields, []);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
