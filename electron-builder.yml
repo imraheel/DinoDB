@@ -16,13 +16,15 @@ asar: true
 asarUnpack:
   - node_modules/better-sqlite3/**/*
   - build/icon.png
-npmRebuild: true
+npmRebuild: false
 mac:
   target: [dmg, zip]
   category: public.app-category.developer-tools
   identity: null
 win:
-  target: [nsis]
+  target:
+    - target: nsis
+      arch: [x64]
 linux:
   target: [AppImage, deb]
   category: Development

@@ -1,19 +1,23 @@
 {
   "name": "nexdb",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "NexDB — a fast MongoDB client",
   "private": true,
+  "author": "NexDB <dev@nexdb.app>",
   "main": "out/main/index.js",
   "scripts": {
-    "postinstall": "electron-builder install-app-deps",
     "build:utility": "tsc -p tsconfig.utility.json && node -e \"const {rmSync,globSync}=require('node:fs');for(const f of globSync('out/**/*.test.js'))rmSync(f)\"",
     "dev": "pnpm run build:utility && electron-vite dev",
     "build": "pnpm run build:utility && electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.utility.json --noEmit",
     "test": "node scripts/run-tests.mjs",
+    "clean": "rm -rf dist out",
     "package": "pnpm build && electron-builder --publish never",
-    "package:dir": "pnpm build && electron-builder --dir --publish never"
+    "package:dir": "pnpm build && electron-builder --dir --publish never",
+    "package:mac": "pnpm build && electron-builder --mac --publish never",
+    "package:win": "pnpm build && electron-builder --win --publish never",
+    "package:all": "pnpm build && electron-builder --mac --win --publish never"
   },
   "license": "MIT",
   "dependencies": {
