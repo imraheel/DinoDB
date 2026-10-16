@@ -1,6 +1,6 @@
 {
   "name": "nexdb",
-  "version": "0.1.4",
+  "version": "0.1.5-alpha",
   "description": "NexDB — a fast MongoDB client",
   "private": true,
   "author": "NexDB <dev@nexdb.app>",

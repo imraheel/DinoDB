@@ -4,7 +4,9 @@ All notable changes to NexDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.4] - 2026-10-17
+## [0.1.5-alpha] - 2026-10-17
+
+First pre-release. No installer artifacts were published for the intermediate 0.1.4 build; all changes below ship together in this alpha.
 
 ### Added
 
