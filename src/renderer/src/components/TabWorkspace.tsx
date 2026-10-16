@@ -4,7 +4,7 @@ import type { ResultCard as ResultCardData, TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
-import { parseShellQuery, type ParsedQuery } from '../lib/shell-query';
+import { parseShellQuery, splitQueries, type ParsedQuery } from '../lib/shell-query';
 import { parseShellJson, toShellJson } from '../lib/shell-json';
 import { lastPageSkip } from '../lib/pagination';
 import type { WriteResult } from '../../../shared/ipc';
@@ -62,8 +62,12 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const [pendingDelete, setPendingDelete] = useState<{ target: unknown } | null>(null);
   const ranRef = useRef<string | null>(null);
 
-  async function runParsed(parsed: ParsedQuery, sourceText: string, skipOverride?: number) {
-    if (!data) return;
+  async function runParsed(
+    parsed: ParsedQuery,
+    sourceText: string,
+    skipOverride?: number
+  ): Promise<boolean> {
+    if (!data) return false;
     const collection = parsed.collection ?? tab.collection;
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
@@ -227,30 +231,57 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       const recordsRead =
         isReadOp(parsed.op) && !(parsed.op === 'aggregate' && hasOutputStage(parsed.pipeline));
       if (recordsRead) dispatch({ type: 'tab/read', tabId: tab.id, text: sourceText });
+      return true;
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
+      return false;
     } finally {
       dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
     }
   }
 
-  async function runQuery(skipOverride?: number) {
-    if (!data) return;
-    const parsed = parseShellQuery(data.query.text);
+  async function runQuery(text: string, skipOverride?: number): Promise<boolean> {
+    if (!data) return false;
+    const parsed = parseShellQuery(text);
     if (!parsed.ok) {
       dispatch({
         type: 'tab/errored',
         tabId: tab.id,
         error: `Query failed to parse: ${parsed.message}`
       });
-      return;
+      return false;
     }
-    await runParsed(parsed.value, data.query.text, skipOverride);
+    return runParsed(parsed.value, text, skipOverride);
   }
 
-  async function goToLastPage() {
+  async function runEntireScript(text: string): Promise<void> {
+    const segments = splitQueries(text);
+    if (segments.length <= 1) {
+      await runQuery(text);
+      return;
+    }
+    dispatch({ type: 'tab/errorCleared', tabId: tab.id });
+    let sawRead = false;
+    for (const segment of segments) {
+      const parsed = parseShellQuery(segment.text);
+      if (!parsed.ok) {
+        dispatch({
+          type: 'tab/errored',
+          tabId: tab.id,
+          error: `Query failed to parse: ${parsed.message}`
+        });
+        return;
+      }
+      if (isReadOp(parsed.value.op)) sawRead = true;
+      const ok = await runParsed(parsed.value, segment.text);
+      if (!ok) return;
+    }
+    if (sawRead) dispatch({ type: 'tab/read', tabId: tab.id, text });
+  }
+
+  async function goToLastPage(text: string) {
     if (!data) return;
-    const parsed = parseShellQuery(data.query.text);
+    const parsed = parseShellQuery(text);
     if (!parsed.ok || parsed.value.op !== 'find') return;
     const pageSize = Math.min(1000, Math.max(1, Number(data.query.limit) || 50));
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
@@ -270,21 +301,25 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
       return;
     }
-    await runParsed(parsed.value, data.query.text, lastSkip);
+    await runParsed(parsed.value, text, lastSkip);
   }
 
   function refresh() {
     if (!data) return;
     if (data.lastRead !== undefined) {
+      if (splitQueries(data.lastRead).length > 1) {
+        void runEntireScript(data.lastRead);
+        return;
+      }
       const parsed = parseShellQuery(data.lastRead);
       if (parsed.ok && isReadOp(parsed.value.op)) {
-        void runParsed(parsed.value, data.lastRead);
+        void runQuery(data.lastRead);
         return;
       }
     }
     const parsed = parseShellQuery(data.query.text);
     if (parsed.ok && !isReadOp(parsed.value.op)) return;
-    void runQuery();
+    void runQuery(data.query.text);
   }
 
   function resultsCollection(): string {
@@ -377,8 +412,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
         loading={data.loading}
         active={active}
         hasMore={data.findResults?.truncated ?? false}
-        onRun={(skipOverride) => void runQuery(skipOverride)}
-        onLastPage={() => void goToLastPage()}
+        onRun={(text, skipOverride) => void runQuery(text, skipOverride)}
+        onRunAll={(text) => void runEntireScript(text)}
+        onLastPage={(text) => void goToLastPage(text)}
       />
       {banner}
       <div className="flex min-h-0 flex-1 flex-col p-3">

@@ -5,6 +5,7 @@ import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
 import { isMonacoDark } from '../lib/monaco';
 import { pageSkip } from '../lib/pagination';
+import { queryAtOffset } from '../lib/shell-query';
 import Button from './ui/Button';
 import { BASE_INPUT_CLASS, FRAME_CLASS } from './ui/Input';
 
@@ -14,8 +15,9 @@ interface QueryBarProps {
   loading: boolean;
   active: boolean;
   hasMore: boolean;
-  onRun(skipOverride?: number): void;
-  onLastPage(): void;
+  onRun(text: string, skipOverride?: number): void;
+  onRunAll(text: string): void;
+  onLastPage(text: string): void;
 }
 
 const NUMBER_INPUT_CLASS = `${BASE_INPUT_CLASS} w-20 font-mono text-xs`;
@@ -99,18 +101,45 @@ function ChevronsRightIcon({ size = 20 }: IconProps) {
   );
 }
 
-export default function QueryBar({ tab, query, loading, active, hasMore, onRun, onLastPage }: QueryBarProps) {
+export default function QueryBar({
+  tab,
+  query,
+  loading,
+  active,
+  hasMore,
+  onRun,
+  onRunAll,
+  onLastPage
+}: QueryBarProps) {
   const { dispatch } = useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const changeRef = useRef<(text: string) => void>(() => {});
   changeRef.current = (text: string) =>
     dispatch({ type: 'tab/query', tabId: tab.id, patch: { text } });
+  const textRef = useRef(query.text);
+  textRef.current = query.text;
   const runRef = useRef(onRun);
   runRef.current = onRun;
   const [editorHeight, setEditorHeight] = useState(192);
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ startY: number; startHeight: number } | null>(null);
+
+  function activeQueryText(): string {
+    const editor = editorRef.current;
+    if (editor === null) return textRef.current;
+    const model = editor.getModel();
+    if (model === null) return editor.getValue();
+    const selection = editor.getSelection();
+    if (selection !== null && !selection.isEmpty()) {
+      return model.getValueInRange(selection);
+    }
+    const position = editor.getPosition();
+    const offset =
+      position === null ? 0 : model.getOffsetAt(position);
+    const segment = queryAtOffset(model.getValue(), offset);
+    return segment?.text ?? model.getValue();
+  }
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -147,15 +176,15 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
   function goToSkip(action: 'first' | 'prev' | 'next') {
     const skip = pageSkip(action, currentSkip, pageSize);
     patch({ skip: String(skip) });
-    onRun(skip);
+    onRun(activeQueryText(), skip);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.defaultPrevented) return;
     const modifier = /Mac/i.test(navigator.userAgent) ? event.metaKey : event.ctrlKey;
-    if (modifier && event.key === 'Enter') {
+    if (modifier && !event.shiftKey && event.key === 'Enter') {
       event.preventDefault();
-      onRun();
+      onRun(activeQueryText());
     }
   }
 
@@ -183,7 +212,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
       if (event.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter)) {
         event.preventDefault();
         event.stopPropagation();
-        runRef.current();
+        runRef.current(activeQueryText());
       }
     });
     return () => {
@@ -248,7 +277,7 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
             aria-label="Last page"
             title="Last page"
             disabled={loading || atLastPage}
-            onClick={onLastPage}
+            onClick={() => onLastPage(activeQueryText())}
             className="w-8 px-0"
           >
             <ChevronsRightIcon />
@@ -280,11 +309,23 @@ export default function QueryBar({ tab, query, loading, active, hasMore, onRun, 
           variant="primary"
           size="md"
           pill
-          onClick={() => onRun()}
+          onClick={() => onRun(activeQueryText())}
           disabled={loading}
+          title="Run query at cursor (⌘⏎)"
           className="px-4"
         >
           Run
+        </Button>
+        <Button
+          variant="default"
+          size="md"
+          pill
+          onClick={() => onRunAll(editorRef.current?.getValue() ?? query.text)}
+          disabled={loading}
+          title="Run entire script"
+          className="px-4"
+        >
+          Run all
         </Button>
       </div>
       <div ref={containerRef} style={{ height: editorHeight }} className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`} />

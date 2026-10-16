@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseShellQuery } from './shell-query';
+import { parseShellQuery, queryAtOffset, splitQueries } from './shell-query';
 
 function parseOk(text: string) {
   const result = parseShellQuery(text);
@@ -283,5 +283,67 @@ describe('parseShellQuery', () => {
       collection: 'department'
     });
     expect(parseOk('find({})')).toEqual({ op: 'find', filter: {} });
+  });
+});
+
+describe('splitQueries', () => {
+  const script = `db.getCollection("users").find({ email: 'test@agent.com' })
+
+db.getCollection("users").find({
+  email: 'demo@company.com'
+})`;
+
+  it('splits on top-level lines starting with db.', () => {
+    const segments = splitQueries(script);
+    expect(segments).toHaveLength(2);
+    expect(segments[0].text).toBe(`db.getCollection("users").find({ email: 'test@agent.com' })`);
+    expect(segments[1].text).toBe(`db.getCollection("users").find({\n  email: 'demo@company.com'\n})`);
+    expect(script.slice(segments[0].start, segments[0].end)).toBe(segments[0].text);
+    expect(script.slice(segments[1].start, segments[1].end)).toBe(segments[1].text);
+  });
+
+  it('does not split on db. inside strings, comments or nested braces', () => {
+    const text = `db.getCollection("users").find({
+  note: "see db.orders later",
+  // db.internal note
+  nested: { db: 1 }
+})`;
+    expect(splitQueries(text)).toHaveLength(1);
+  });
+
+  it('returns one segment for a single query or bare filter', () => {
+    expect(splitQueries('db.getCollection("users").find({})')).toHaveLength(1);
+    expect(splitQueries('find({ a: 1 })')).toHaveLength(1);
+    expect(splitQueries('{ a: 1 }')).toHaveLength(1);
+    expect(splitQueries('   ')).toHaveLength(0);
+  });
+
+  it('keeps use statements attached to the surrounding segment', () => {
+    const text = `use reports
+db.getCollection("x").find({})`;
+    expect(splitQueries(text)).toHaveLength(1);
+  });
+});
+
+describe('queryAtOffset', () => {
+  const first = `db.getCollection("users").find({ a: 1 })`;
+  const second = `db.getCollection("users").find({ b: 2 })`;
+  const script = `${first}\n\n${second}`;
+
+  it('returns the segment containing the offset', () => {
+    expect(queryAtOffset(script, 5)?.text).toBe(first);
+    const secondStart = script.indexOf(second);
+    expect(queryAtOffset(script, secondStart + 4)?.text).toBe(second);
+  });
+
+  it('picks the previous segment when the offset is in the gap between queries', () => {
+    const gap = first.length + 1;
+    expect(queryAtOffset(script, gap)?.text).toBe(first);
+  });
+
+  it('returns the first segment before all text and handles a single query', () => {
+    expect(queryAtOffset(script, 0)?.text).toBe(first);
+    expect(queryAtOffset(first, 10)?.text).toBe(first);
+    expect(queryAtOffset('', 0)).toBeNull();
   });
 });

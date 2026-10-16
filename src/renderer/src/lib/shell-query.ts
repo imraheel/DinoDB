@@ -573,3 +573,95 @@ export function parseShellQuery(text: string): ShellQueryResult {
     return { ok: false, message: messageOf(err) };
   }
 }
+
+export interface QuerySegment {
+  text: string;
+  start: number;
+  end: number;
+}
+
+export function splitQueries(text: string): QuerySegment[] {
+  const lineStarts: number[] = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') lineStarts.push(i + 1);
+  }
+
+  const depthAtLineStart = new Map<number, number>();
+  let depth = 0;
+  let lineIndex = 0;
+  let i = 0;
+  while (i < text.length) {
+    while (lineIndex < lineStarts.length && lineStarts[lineIndex] === i) {
+      depthAtLineStart.set(lineStarts[lineIndex], depth);
+      lineIndex += 1;
+    }
+    const ch = text[i];
+    if (ch === "'" || ch === '"' || ch === '`') {
+      i = skipString(text, i);
+      continue;
+    }
+    if (ch === '/' && text[i + 1] === '/') {
+      i = skipLineComment(text, i + 2);
+      continue;
+    }
+    if (ch === '/' && text[i + 1] === '*') {
+      i = skipBlockComment(text, i);
+      continue;
+    }
+    if (ch === '(' || ch === '[' || ch === '{') depth += 1;
+    else if (ch === ')' || ch === ']' || ch === '}') depth = Math.max(0, depth - 1);
+    i += 1;
+  }
+  while (lineIndex < lineStarts.length) {
+    depthAtLineStart.set(lineStarts[lineIndex], depth);
+    lineIndex += 1;
+  }
+
+  const dbCutIndexes: number[] = [];
+  for (let k = 1; k < lineStarts.length; k++) {
+    const lineStart = lineStarts[k];
+    if ((depthAtLineStart.get(lineStart) ?? 0) !== 0) continue;
+    const lineEnd = text.indexOf('\n', lineStart);
+    const line = text.slice(lineStart, lineEnd === -1 ? text.length : lineEnd);
+    if (/^\s*db\b/.test(line)) dbCutIndexes.push(k);
+  }
+
+  const cutPoints: number[] = [0];
+  for (const cutIndex of dbCutIndexes) {
+    let index = cutIndex;
+    while (index > 0) {
+      const prevStart = lineStarts[index - 1];
+      const prevEnd = lineStarts[index] - 1;
+      const prevLine = text.slice(prevStart, Math.max(prevStart, prevEnd));
+      if (/^\s*use\b/.test(prevLine)) index -= 1;
+      else break;
+    }
+    const cutStart = lineStarts[index];
+    if (cutStart > cutPoints[cutPoints.length - 1]) cutPoints.push(cutStart);
+  }
+
+  const segments: QuerySegment[] = [];
+  for (let k = 0; k < cutPoints.length; k++) {
+    const rawStart = cutPoints[k];
+    const rawEnd = k + 1 < cutPoints.length ? cutPoints[k + 1] : text.length;
+    let start = rawStart;
+    let end = rawEnd;
+    while (start < end && /\s/.test(text[start])) start += 1;
+    while (end > start && /\s/.test(text[end - 1])) end -= 1;
+    if (end > start) segments.push({ text: text.slice(start, end), start, end });
+  }
+  return segments;
+}
+
+export function queryAtOffset(text: string, offset: number): QuerySegment | null {
+  const segments = splitQueries(text);
+  if (segments.length === 0) return null;
+  for (const segment of segments) {
+    if (offset >= segment.start && offset <= segment.end) return segment;
+  }
+  let before: QuerySegment | null = null;
+  for (const segment of segments) {
+    if (segment.end <= offset) before = segment;
+  }
+  return before ?? segments[0];
+}
