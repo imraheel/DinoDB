@@ -70,6 +70,7 @@ export type AppAction =
   | { type: 'tab/activated'; tabId: string }
   | { type: 'tab/pinned'; tabId: string; pinned: boolean }
   | { type: 'tab/retitled'; tabId: string; title: string }
+  | { type: 'tab/reordered'; tabId: string; targetId: string; position: 'before' | 'after' }
   | { type: 'tab/query'; tabId: string; patch: Partial<QueryInput> }
   | { type: 'tab/loading'; tabId: string; loading: boolean }
   | { type: 'tab/results'; tabId: string; results: FindResult }
@@ -264,6 +265,18 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
         ...state,
         tabs: state.tabs.map((t) => (t.id === action.tabId ? { ...t, title: action.title } : t))
       };
+    case 'tab/reordered': {
+      if (action.tabId === action.targetId) return state;
+      const from = state.tabs.findIndex((t) => t.id === action.tabId);
+      if (from === -1) return state;
+      const moving = state.tabs[from];
+      const rest = state.tabs.filter((t) => t.id !== action.tabId);
+      const to = rest.findIndex((t) => t.id === action.targetId);
+      if (to === -1) return state;
+      const insertAt = action.position === 'before' ? to : to + 1;
+      const tabs = [...rest.slice(0, insertAt), moving, ...rest.slice(insertAt)];
+      return { ...state, tabs };
+    }
     case 'tab/query': {
       const data = state.tabData[action.tabId];
       if (!data) return state;

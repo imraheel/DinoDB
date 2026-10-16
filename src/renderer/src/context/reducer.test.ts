@@ -193,6 +193,29 @@ describe('reducer tab actions', () => {
     expect(state.tabs.find((t) => t.id === 'a')?.title).toBe('db.coll');
     expect(state.tabs.find((t) => t.id === 'b')?.title).toBe('renamed');
   });
+
+  it('tab/reordered moves a tab before and after a target', () => {
+    let state = stateWithTabs([makeTab('a'), makeTab('b'), makeTab('c'), makeTab('d')]);
+    state = reducer(state, { type: 'tab/reordered', tabId: 'd', targetId: 'b', position: 'before' });
+    expect(state.tabs.map((t) => t.id)).toEqual(['a', 'd', 'b', 'c']);
+    state = reducer(state, { type: 'tab/reordered', tabId: 'd', targetId: 'b', position: 'after' });
+    expect(state.tabs.map((t) => t.id)).toEqual(['a', 'b', 'd', 'c']);
+    state = reducer(state, { type: 'tab/reordered', tabId: 'a', targetId: 'c', position: 'after' });
+    expect(state.tabs.map((t) => t.id)).toEqual(['b', 'd', 'c', 'a']);
+  });
+
+  it('tab/reordered ignores self drops and unknown ids', () => {
+    const state = stateWithTabs([makeTab('a'), makeTab('b')]);
+    const self = reducer(state, { type: 'tab/reordered', tabId: 'a', targetId: 'a', position: 'before' });
+    expect(self.tabs.map((t) => t.id)).toEqual(['a', 'b']);
+    const unknown = reducer(state, {
+      type: 'tab/reordered',
+      tabId: 'a',
+      targetId: 'zzz',
+      position: 'before'
+    });
+    expect(unknown.tabs.map((t) => t.id)).toEqual(['a', 'b']);
+  });
 });
 
 describe('reducer connection actions', () => {

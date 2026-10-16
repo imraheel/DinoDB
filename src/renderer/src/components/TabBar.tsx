@@ -109,13 +109,26 @@ function ChevronDownIcon({ size = 20 }: IconProps) {
 
 export default function TabBar() {
   const { state, dispatch } = useApp();
+  const barRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<string, HTMLDivElement>());
   const intersectingRef = useRef(new Map<string, boolean>());
+  const tabsRef = useRef(state.tabs);
+  tabsRef.current = state.tabs;
+  const dragStateRef = useRef<{
+    tabId: string;
+    pinned: boolean;
+    started: boolean;
+    drop: { id: string; position: 'before' | 'after' } | null;
+  } | null>(null);
   const [clippedIds, setClippedIds] = useState<ReadonlySet<string>>(new Set());
   const [overflowMenu, setOverflowMenu] = useState<{ x: number; y: number } | null>(null);
   const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
   const [rename, setRename] = useState<{ tabId: string; initial: string } | null>(null);
+  const [dragTabId, setDragTabId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: string; position: 'before' | 'after' } | null>(
+    null
+  );
 
   const pinnedTabs = state.tabs.filter((t) => t.pinned === true);
   const unpinnedTabs = state.tabs.filter((t) => t.pinned !== true);
@@ -183,9 +196,74 @@ export default function TabBar() {
     };
   }
 
+  function handleTabMouseDown(event: ReactMouseEvent<HTMLDivElement>, tab: TabMeta) {
+    if (event.button !== 0) return;
+    const startX = event.clientX;
+    const dragState = {
+      tabId: tab.id,
+      pinned: tab.pinned === true,
+      started: false,
+      drop: null as { id: string; position: 'before' | 'after' } | null
+    };
+    dragStateRef.current = dragState;
+
+    const handleMove = (moveEvent: MouseEvent) => {
+      if (!dragState.started) {
+        if (Math.abs(moveEvent.clientX - startX) < 4) return;
+        dragState.started = true;
+        setDragTabId(dragState.tabId);
+      }
+      const group = tabsRef.current.filter((t) => (t.pinned === true) === dragState.pinned);
+      let drop: { id: string; position: 'before' | 'after' } | null = null;
+      for (const candidate of group) {
+        if (candidate.id === dragState.tabId) continue;
+        const element = barRef.current?.querySelector<HTMLElement>(
+          `[data-tab-id="${candidate.id}"]`
+        );
+        if (element === undefined || element === null) continue;
+        const rect = element.getBoundingClientRect();
+        if (moveEvent.clientX < rect.left + rect.width / 2) {
+          drop = { id: candidate.id, position: 'before' };
+          break;
+        }
+        drop = { id: candidate.id, position: 'after' };
+      }
+      dragState.drop = drop;
+      setDropTarget((prev) => {
+        if (prev === null && drop === null) return prev;
+        if (prev !== null && drop !== null && prev.id === drop.id && prev.position === drop.position) {
+          return prev;
+        }
+        return drop;
+      });
+    };
+
+    const handleUp = () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+      dragStateRef.current = null;
+      if (dragState.started && dragState.drop !== null) {
+        dispatch({
+          type: 'tab/reordered',
+          tabId: dragState.tabId,
+          targetId: dragState.drop.id,
+          position: dragState.drop.position
+        });
+      }
+      setDragTabId(null);
+      setDropTarget(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+  }
+
   function renderTab(tab: TabMeta) {
     const active = tab.id === state.activeTabId;
     const pinned = tab.pinned === true;
+    const dragging = dragTabId === tab.id;
+    const dropBefore = dropTarget?.id === tab.id && dropTarget.position === 'before';
+    const dropAfter = dropTarget?.id === tab.id && dropTarget.position === 'after';
     return (
       <div
         key={tab.id}
@@ -196,13 +274,22 @@ export default function TabBar() {
         }}
         data-tab-id={tab.id}
         title={tab.title}
+        onMouseDown={(event) => handleTabMouseDown(event, tab)}
         onContextMenu={(event) => openTabMenu(event, tab.id)}
-        className={`window-no-drag group flex items-center rounded-t-[6px] ${
+        className={`window-no-drag group relative flex items-center rounded-t-[6px] ${
           pinned ? 'w-40 shrink-0' : 'min-w-40 max-w-52 flex-1'
+        } ${
+          dragging ? 'opacity-50' : ''
         } ${
           active ? 'bg-surface shadow-[0_-1px_2px_rgba(0,0,0,0.04)]' : 'hover:bg-sidebar-hover'
         }`}
       >
+        {dropBefore ? (
+          <span className="pointer-events-none absolute top-1 bottom-1 -left-px w-[2px] rounded-full bg-accent" />
+        ) : null}
+        {dropAfter ? (
+          <span className="pointer-events-none absolute top-1 bottom-1 -right-px w-[2px] rounded-full bg-accent" />
+        ) : null}
         <button
           type="button"
           onClick={() => dispatch({ type: 'tab/activated', tabId: tab.id })}
@@ -248,7 +335,10 @@ export default function TabBar() {
   const overflowTabs = unpinnedTabs.filter((t) => clippedIds.has(t.id));
 
   return (
-    <div className="window-drag flex h-9 shrink-0 items-end border-b border-border bg-chrome select-none">
+    <div
+      ref={barRef}
+      className="window-drag flex h-9 shrink-0 items-end border-b border-border bg-chrome select-none"
+    >
       {pinnedTabs.length > 0 ? (
         <div className="flex shrink-0 items-end gap-1 px-2 pt-1">{pinnedTabs.map(renderTab)}</div>
       ) : null}
