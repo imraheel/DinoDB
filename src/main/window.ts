@@ -6,7 +6,7 @@ function windowIconPath(): string | undefined {
   if (process.platform === 'darwin') {
     return undefined;
   }
-  const iconFile = 'build/icon.png';
+  const iconFile = process.platform === 'win32' ? 'build/icon.ico' : 'build/icon.png';
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'app.asar.unpacked', iconFile);
   }

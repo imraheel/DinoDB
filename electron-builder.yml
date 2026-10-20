@@ -6,6 +6,7 @@ directories:
 files:
   - out/**/*
   - build/icon.png
+  - build/icon.ico
   - "!src/**/*"
   - "!docs/**/*"
   - "!scripts/**/*"
@@ -16,15 +17,19 @@ asar: true
 asarUnpack:
   - node_modules/better-sqlite3/**/*
   - build/icon.png
+  - build/icon.ico
 npmRebuild: false
 mac:
+  icon: build/icon.icns
   target: [dmg, zip]
   category: public.app-category.developer-tools
   identity: null
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
 linux:
+  icon: build/icon.png
   target: [AppImage, deb]
   category: Development
