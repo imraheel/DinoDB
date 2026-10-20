@@ -6,6 +6,7 @@ import {
   type MenuItemConstructorOptions
 } from 'electron';
 import { IPC, type MenuAction } from '../shared/ipc';
+import { openAboutWindow } from './about';
 
 function sendMenuAction(win: BaseWindow | undefined, action: MenuAction): void {
   if (win instanceof BrowserWindow && !win.isDestroyed()) {
@@ -20,7 +21,10 @@ export function createApplicationMenu(): void {
     {
       label: app.name,
       submenu: [
-        { role: 'about' },
+        {
+          label: 'About NexDB',
+          click: () => openAboutWindow()
+        },
         { type: 'separator' },
         { role: 'hide' },
         { role: 'hideOthers' },
@@ -71,7 +75,12 @@ export function createApplicationMenu(): void {
     { role: 'windowMenu' },
     {
       role: 'help',
-      submenu: [{ label: 'NexDB', click: () => {} }]
+      submenu: [
+        {
+          label: 'About NexDB',
+          click: () => openAboutWindow()
+        }
+      ]
     }
   ];
 

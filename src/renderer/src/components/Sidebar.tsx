@@ -369,8 +369,7 @@ export default function Sidebar({
         onMouseDown={handleResizeMouseDown}
         className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
       />
-      <div className="traffic-gutter window-drag flex h-9 shrink-0 items-center justify-between border-b border-border pr-2">
-        <span className="text-ui font-semibold tracking-tight text-label">NexDB</span>
+      <div className="traffic-gutter window-drag flex h-9 shrink-0 items-center justify-end border-b border-border pr-2">
         <Button
           variant="quiet"
           size="sm"
