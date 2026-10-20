@@ -31,14 +31,39 @@ export interface ConnectionConfig {
   lastConnectedAt: number | null;
 }
 
+export type ThemeSetting = 'light' | 'dark' | 'system';
+export type AccentSetting =
+  | 'blue'
+  | 'purple'
+  | 'pink'
+  | 'red'
+  | 'orange'
+  | 'yellow'
+  | 'green'
+  | 'graphite';
+export type UiFontSetting = 'system' | 'serif' | 'mono';
+export type CodeFontSetting = 'system-mono' | 'menlo' | 'consolas' | 'courier';
+
 export interface AppSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: ThemeSetting;
+  accent: AccentSetting;
+  uiFont: UiFontSetting;
+  codeFont: CodeFontSetting;
+  uiFontSize: number;
+  tableFontSize: number;
+  editorFontSize: number;
   maxTimeMs: number;
   defaultLimit: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
+  accent: 'blue',
+  uiFont: 'system',
+  codeFont: 'system-mono',
+  uiFontSize: 13,
+  tableFontSize: 12,
+  editorFontSize: 13,
   maxTimeMs: 30000,
   defaultLimit: 50
 };

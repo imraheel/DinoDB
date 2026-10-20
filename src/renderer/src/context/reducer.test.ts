@@ -296,12 +296,13 @@ describe('reducer session actions', () => {
 
 describe('reducer settings actions', () => {
   it('settings/loaded replaces settings and settings/patched merges a partial', () => {
+    const loaded = { ...DEFAULT_SETTINGS, theme: 'dark' as const, maxTimeMs: 10000, defaultLimit: 10 };
     let state = reducer(initialState, {
       type: 'settings/loaded',
-      settings: { theme: 'dark', maxTimeMs: 10000, defaultLimit: 10 }
+      settings: loaded
     });
-    expect(state.settings).toEqual({ theme: 'dark', maxTimeMs: 10000, defaultLimit: 10 });
+    expect(state.settings).toEqual(loaded);
     state = reducer(state, { type: 'settings/patched', patch: { theme: 'light' } });
-    expect(state.settings).toEqual({ theme: 'light', maxTimeMs: 10000, defaultLimit: 10 });
+    expect(state.settings).toEqual({ ...loaded, theme: 'light' });
   });
 });

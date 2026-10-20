@@ -3,6 +3,8 @@ import '../../../../node_modules/monaco-editor/min/vs/editor/editor.main.css';
 import EditorWorker from 'monaco-editor/editor/editor.worker?worker';
 import { QUERY_METHODS } from './shell-query';
 import { bracketDepth, isBareMethodPosition, methodWordStart, stageSnippet } from './completion';
+import { getAccentPalette } from './appearance';
+import type { AccentSetting } from '../../../shared/types';
 
 const STAGES: string[] = [
   '$match',
@@ -59,6 +61,7 @@ const OPERATORS: string[] = [
 let initialized = false;
 let completionFields: string[] = [];
 let monacoDark = false;
+let currentAccent: AccentSetting = 'blue';
 
 function wordRange(
   model: monaco.editor.ITextModel,
@@ -234,6 +237,13 @@ function init(): void {
     }
   });
 
+  defineNexdbThemes();
+}
+
+function defineNexdbThemes(): void {
+  const light = getAccentPalette(currentAccent, 'light');
+  const dark = getAccentPalette(currentAccent, 'dark');
+
   monaco.editor.defineTheme('nexdb-light', {
     base: 'vs',
     inherit: true,
@@ -241,7 +251,7 @@ function init(): void {
       { token: 'comment', foreground: '8E8E93' },
       { token: 'string', foreground: '18864B' },
       { token: 'number', foreground: 'C4600E' },
-      { token: 'keyword', foreground: '0055B3' },
+      { token: 'keyword', foreground: light.keyword.slice(1).toUpperCase() },
       { token: 'variable.name', foreground: '8250DF' },
       { token: 'identifier', foreground: '1D1D1F' },
       { token: 'bracket', foreground: '636366' },
@@ -251,10 +261,10 @@ function init(): void {
     colors: {
       'editor.background': '#FFFFFF',
       'editor.foreground': '#1D1D1F',
-      'editor.selectionBackground': '#007AFF44',
-      'editor.inactiveSelectionBackground': '#007AFF22',
+      'editor.selectionBackground': `${light.accent}44`,
+      'editor.inactiveSelectionBackground': `${light.accent}22`,
       'editor.lineHighlightBackground': '#00000008',
-      'editorCursor.foreground': '#007AFF',
+      'editorCursor.foreground': light.accent,
       'editorLineNumber.foreground': '#C7C7CC',
       'editorLineNumber.activeForeground': '#8E8E93',
       'editorIndentGuide.background1': '#00000014',
@@ -262,27 +272,27 @@ function init(): void {
       'editorWidget.foreground': '#1D1D1F',
       'editorWidget.background': '#FFFFFF',
       'editorWidget.border': '#0000001A',
-      'editorWidget.resizeBorder': '#007AFF',
+      'editorWidget.resizeBorder': light.accent,
       'editorHoverWidget.background': '#FFFFFF',
       'editorHoverWidget.border': '#0000001A',
       'editorHoverWidget.statusBarBackground': '#F2F2F5',
-      'editorHoverWidget.highlightForeground': '#0055B3',
+      'editorHoverWidget.highlightForeground': light.keyword,
       'editorSuggestWidget.background': '#FFFFFF',
       'editorSuggestWidget.border': '#0000001A',
       'editorSuggestWidget.foreground': '#1D1D1F',
-      'editorSuggestWidget.highlightForeground': '#007AFF',
-      'editorSuggestWidget.focusHighlightForeground': '#0055B3',
-      'editorSuggestWidget.selectedBackground': '#007AFF1F',
+      'editorSuggestWidget.highlightForeground': light.accent,
+      'editorSuggestWidget.focusHighlightForeground': light.keyword,
+      'editorSuggestWidget.selectedBackground': `${light.accent}1F`,
       'editorSuggestWidget.selectedForeground': '#1D1D1F',
       'list.hoverBackground': '#0000000A',
       'list.hoverForeground': '#1D1D1F',
-      'list.focusBackground': '#007AFF14',
+      'list.focusBackground': `${light.accent}14`,
       'list.focusForeground': '#1D1D1F',
-      'list.focusOutline': '#007AFF44',
-      'list.activeSelectionBackground': '#007AFF',
+      'list.focusOutline': `${light.accent}44`,
+      'list.activeSelectionBackground': light.accent,
       'list.activeSelectionForeground': '#FFFFFF',
-      'list.inactiveSelectionBackground': '#007AFF22',
-      'list.highlightForeground': '#007AFF'
+      'list.inactiveSelectionBackground': `${light.accent}22`,
+      'list.highlightForeground': light.accent
     }
   });
 
@@ -293,7 +303,7 @@ function init(): void {
       { token: 'comment', foreground: '98989D' },
       { token: 'string', foreground: '30D158' },
       { token: 'number', foreground: 'FF9F0A' },
-      { token: 'keyword', foreground: '6BD0FF' },
+      { token: 'keyword', foreground: dark.keyword.slice(1).toUpperCase() },
       { token: 'variable.name', foreground: 'C9A8FF' },
       { token: 'identifier', foreground: 'F5F5F7' },
       { token: 'bracket', foreground: '98989D' },
@@ -303,10 +313,10 @@ function init(): void {
     colors: {
       'editor.background': '#252528',
       'editor.foreground': '#F5F5F7',
-      'editor.selectionBackground': '#0A84FF48',
-      'editor.inactiveSelectionBackground': '#0A84FF26',
+      'editor.selectionBackground': `${dark.accent}48`,
+      'editor.inactiveSelectionBackground': `${dark.accent}26`,
       'editor.lineHighlightBackground': '#FFFFFF08',
-      'editorCursor.foreground': '#0A84FF',
+      'editorCursor.foreground': dark.accent,
       'editorLineNumber.foreground': '#48484A',
       'editorLineNumber.activeForeground': '#98989D',
       'editorIndentGuide.background1': '#FFFFFF0D',
@@ -314,27 +324,27 @@ function init(): void {
       'editorWidget.foreground': '#F5F5F7',
       'editorWidget.background': '#2C2C2E',
       'editorWidget.border': '#FFFFFF1A',
-      'editorWidget.resizeBorder': '#0A84FF',
+      'editorWidget.resizeBorder': dark.accent,
       'editorHoverWidget.background': '#2C2C2E',
       'editorHoverWidget.border': '#FFFFFF1A',
       'editorHoverWidget.statusBarBackground': '#3A3A3C',
-      'editorHoverWidget.highlightForeground': '#6BD0FF',
+      'editorHoverWidget.highlightForeground': dark.keyword,
       'editorSuggestWidget.background': '#2C2C2E',
       'editorSuggestWidget.border': '#FFFFFF1A',
       'editorSuggestWidget.foreground': '#F5F5F7',
-      'editorSuggestWidget.highlightForeground': '#0A84FF',
-      'editorSuggestWidget.focusHighlightForeground': '#6BD0FF',
-      'editorSuggestWidget.selectedBackground': '#0A84FF26',
+      'editorSuggestWidget.highlightForeground': dark.accent,
+      'editorSuggestWidget.focusHighlightForeground': dark.keyword,
+      'editorSuggestWidget.selectedBackground': `${dark.accent}26`,
       'editorSuggestWidget.selectedForeground': '#F5F5F7',
       'list.hoverBackground': '#FFFFFF0F',
       'list.hoverForeground': '#F5F5F7',
-      'list.focusBackground': '#0A84FF26',
+      'list.focusBackground': `${dark.accent}26`,
       'list.focusForeground': '#F5F5F7',
-      'list.focusOutline': '#0A84FF55',
-      'list.activeSelectionBackground': '#0A84FF',
+      'list.focusOutline': `${dark.accent}55`,
+      'list.activeSelectionBackground': dark.accent,
       'list.activeSelectionForeground': '#FFFFFF',
-      'list.inactiveSelectionBackground': '#0A84FF26',
-      'list.highlightForeground': '#0A84FF'
+      'list.inactiveSelectionBackground': `${dark.accent}26`,
+      'list.highlightForeground': dark.accent
     }
   });
 }
@@ -343,6 +353,13 @@ init();
 
 export function setCompletionFields(fields: string[]): void {
   completionFields = fields;
+}
+
+export function setMonacoAccent(accent: AccentSetting): void {
+  if (accent === currentAccent) return;
+  currentAccent = accent;
+  defineNexdbThemes();
+  monaco.editor.setTheme(monacoDark ? 'nexdb-dark' : 'nexdb-light');
 }
 
 export function setMonacoTheme(dark: boolean): void {

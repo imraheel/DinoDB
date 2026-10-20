@@ -24,22 +24,39 @@ describe('settings.repo', () => {
   it('roundtrips a partial save and preserves earlier values', () => {
     const db = makeDb();
     const first = saveSettings(db, { theme: 'dark' });
-    expect(first).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 50 });
+    expect(first).toEqual({ ...DEFAULT_SETTINGS, theme: 'dark' });
     const second = saveSettings(db, { defaultLimit: 200 });
-    expect(second).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 200 });
+    expect(second).toEqual({ ...DEFAULT_SETTINGS, theme: 'dark', defaultLimit: 200 });
     expect(getSettings(db)).toEqual(second);
   });
 
   it('roundtrips a full save', () => {
     const db = makeDb();
-    const saved = saveSettings(db, { theme: 'light', maxTimeMs: 5000, defaultLimit: 100 });
-    expect(saved).toEqual({ theme: 'light', maxTimeMs: 5000, defaultLimit: 100 });
+    const full = {
+      theme: 'light' as const,
+      accent: 'purple' as const,
+      uiFont: 'serif' as const,
+      codeFont: 'menlo' as const,
+      uiFontSize: 14,
+      tableFontSize: 13,
+      editorFontSize: 15,
+      maxTimeMs: 5000,
+      defaultLimit: 100
+    };
+    const saved = saveSettings(db, full);
+    expect(saved).toEqual(full);
     expect(getSettings(db)).toEqual(saved);
   });
 
   it('falls back to defaults for invalid stored values', () => {
     const db = makeDb();
     seed(db, 'theme', JSON.stringify('neon'));
+    seed(db, 'accent', JSON.stringify('neon'));
+    seed(db, 'uiFont', JSON.stringify('comic'));
+    seed(db, 'codeFont', JSON.stringify('wingdings'));
+    seed(db, 'uiFontSize', JSON.stringify(99));
+    seed(db, 'tableFontSize', JSON.stringify(2));
+    seed(db, 'editorFontSize', JSON.stringify(50));
     seed(db, 'maxTimeMs', JSON.stringify(-1));
     seed(db, 'defaultLimit', JSON.stringify(1001));
     expect(getSettings(db)).toEqual(DEFAULT_SETTINGS);
@@ -48,6 +65,8 @@ describe('settings.repo', () => {
   it('falls back to defaults for malformed JSON and wrong types', () => {
     const db = makeDb();
     seed(db, 'theme', '{not json');
+    seed(db, 'accent', JSON.stringify(3));
+    seed(db, 'uiFontSize', JSON.stringify('13'));
     seed(db, 'maxTimeMs', JSON.stringify('30000'));
     seed(db, 'defaultLimit', JSON.stringify(1000.5));
     expect(getSettings(db)).toEqual(DEFAULT_SETTINGS);
@@ -56,9 +75,15 @@ describe('settings.repo', () => {
   it('falls back per field without discarding valid siblings', () => {
     const db = makeDb();
     seed(db, 'theme', JSON.stringify('dark'));
+    seed(db, 'accent', JSON.stringify('green'));
     seed(db, 'maxTimeMs', JSON.stringify(0));
     seed(db, 'defaultLimit', JSON.stringify(25));
-    expect(getSettings(db)).toEqual({ theme: 'dark', maxTimeMs: 30000, defaultLimit: 25 });
+    expect(getSettings(db)).toEqual({
+      ...DEFAULT_SETTINGS,
+      theme: 'dark',
+      accent: 'green',
+      defaultLimit: 25
+    });
   });
 
   it('overwrites an existing key on save', () => {
@@ -67,6 +92,6 @@ describe('settings.repo', () => {
     saveSettings(db, { maxTimeMs: 15000 });
     expect(getSettings(db).maxTimeMs).toBe(15000);
     const row = db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM settings').get();
-    expect(row?.count).toBe(3);
+    expect(row?.count).toBe(9);
   });
 });

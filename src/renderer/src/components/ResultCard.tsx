@@ -48,7 +48,7 @@ export default function ResultCard({ card, onShowResults }: ResultCardProps) {
       <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border">
         {explainPlan !== undefined ? <JsonTree value={explainPlan} /> : null}
         {rows.length > 0 ? (
-          <table className="w-full font-mono text-xs">
+          <table className="w-full text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)]">
             <thead className="sticky top-0 z-10 bg-chrome">
               <tr className="text-left">
                 <th className="border-b border-border px-3 py-1.5 text-caption font-semibold text-label-secondary">

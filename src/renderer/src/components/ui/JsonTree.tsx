@@ -44,7 +44,7 @@ function JsonNode({
 
   if (!container) {
     return (
-      <div className="flex items-baseline gap-1.5 py-px font-mono text-xs" style={{ paddingLeft: depth * 14 }}>
+      <div className="flex items-baseline gap-1.5 py-px text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)]" style={{ paddingLeft: depth * 14 }}>
         {label !== null ? <span className={keyClass(label)}>{label}</span> : null}
         {label !== null ? <span className="text-label-tertiary">:</span> : null}
         <span className={scalarClass(value)}>{scalarText(value)}</span>
@@ -63,7 +63,7 @@ function JsonNode({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-baseline gap-1.5 py-px text-left font-mono text-xs hover:bg-well"
+        className="flex w-full items-baseline gap-1.5 py-px text-left text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)] hover:bg-well"
         style={{ paddingLeft: depth * 14 }}
       >
         <span
@@ -94,7 +94,7 @@ function JsonNode({
             />
           ))}
           <div
-            className="py-px font-mono text-xs text-label-tertiary"
+            className="py-px text-[length:var(--dt-font-size,12px)] text-label-tertiary [font-family:var(--font-code,ui-monospace)]"
             style={{ paddingLeft: depth * 14 + 18 }}
           >
             {closeLabel}

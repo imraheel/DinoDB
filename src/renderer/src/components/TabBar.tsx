@@ -293,7 +293,7 @@ export default function TabBar() {
         <button
           type="button"
           onClick={() => dispatch({ type: 'tab/activated', tabId: tab.id })}
-          className={`flex min-w-0 flex-1 items-center gap-1 py-1.5 pl-2.5 text-left text-xs ${
+          className={`flex min-w-0 flex-1 items-center gap-1 py-1.5 pl-2.5 text-left text-ui ${
             active ? 'font-medium text-label' : 'text-label-secondary'
           }`}
         >

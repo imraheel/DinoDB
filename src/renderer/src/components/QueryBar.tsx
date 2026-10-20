@@ -4,6 +4,7 @@ import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
 import { isMonacoDark } from '../lib/monaco';
+import { codeFontStack } from '../lib/appearance';
 import { pageSkip } from '../lib/pagination';
 import { queryAtOffset } from '../lib/shell-query';
 import Button from './ui/Button';
@@ -113,7 +114,7 @@ export default function QueryBar({
   onExplain,
   onLastPage
 }: QueryBarProps) {
-  const { dispatch } = useApp();
+  const { state, dispatch } = useApp();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const changeRef = useRef<(text: string) => void>(() => {});
@@ -196,7 +197,8 @@ export default function QueryBar({
     const editor = monaco.editor.create(container, {
       value: query.text,
       language: 'mongodb',
-      fontSize: 13,
+      fontSize: state.settings.editorFontSize,
+      fontFamily: codeFontStack(state.settings.codeFont),
       minimap: { enabled: false },
       wordWrap: 'on',
       tabSize: 2,
@@ -230,11 +232,18 @@ export default function QueryBar({
     editorRef.current?.layout();
   }, [active]);
 
+  useEffect(() => {
+    editorRef.current?.updateOptions({
+      fontSize: state.settings.editorFontSize,
+      fontFamily: codeFontStack(state.settings.codeFont)
+    });
+  }, [state.settings.editorFontSize, state.settings.codeFont]);
+
   return (
     <div className="relative flex flex-col gap-2.5 border-b border-border px-3 py-3">
       <div className="flex flex-wrap items-center gap-2" onKeyDown={handleKeyDown}>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[13px] font-medium text-label">{tab.title}</h2>
+          <h2 className="truncate text-ui font-medium text-label">{tab.title}</h2>
           <p className="truncate text-caption text-label-tertiary">
             {tab.connectionName} · {tab.database}.{tab.collection}
           </p>

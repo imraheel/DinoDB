@@ -370,7 +370,7 @@ export default function Sidebar({
         className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
       />
       <div className="traffic-gutter window-drag flex h-9 shrink-0 items-center justify-between border-b border-border pr-2">
-        <span className="text-[13px] font-semibold tracking-tight text-label">NexDB</span>
+        <span className="text-ui font-semibold tracking-tight text-label">NexDB</span>
         <Button
           variant="quiet"
           size="sm"
@@ -411,7 +411,7 @@ export default function Sidebar({
                     session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
                   }`}
                 />
-                <span className="min-w-0 flex-1 truncate text-[13px] text-label">
+                <span className="min-w-0 flex-1 truncate text-ui text-label">
                   {connection.name}
                 </span>
               </div>
@@ -443,7 +443,7 @@ export default function Sidebar({
                     return (
                       <div key={database}>
                         <div
-                          className={`flex w-full items-center gap-0.5 rounded-[5px] pr-1 pl-0.5 text-left text-[13px]${
+                          className={`flex w-full items-center gap-0.5 rounded-[5px] pr-1 pl-0.5 text-left text-ui${
                             dbSelected
                               ? ` ${SELECTED_CLASS}`
                               : ' text-label-secondary hover:bg-sidebar-hover'
@@ -513,7 +513,7 @@ export default function Sidebar({
                                     onContextMenu={(event) =>
                                       openCollectionMenu(event, connection, database, collection)
                                     }
-                                    className={`block w-full truncate rounded-[5px] py-[3px] pr-1 pl-7 text-left text-[13px]${
+                                    className={`block w-full truncate rounded-[5px] py-[3px] pr-1 pl-7 text-left text-ui${
                                       collectionSelected
                                         ? ` ${SELECTED_CLASS}`
                                         : ' text-label-secondary hover:bg-sidebar-hover'

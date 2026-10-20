@@ -269,7 +269,7 @@ export default function DataTable({
             {loading ? 'Loading…' : 'No documents match this query.'}
           </p>
         ) : (
-          <table className="w-full font-mono text-xs">
+          <table className="w-full text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)]">
             <thead className="sticky top-0 z-10 bg-chrome">
               <tr className="text-left">
                 {columns.map((column) => (

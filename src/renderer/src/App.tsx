@@ -6,7 +6,8 @@ import TabBar from './components/TabBar';
 import TabWorkspace from './components/TabWorkspace';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
-import { setMonacoTheme } from './lib/monaco';
+import { setMonacoAccent, setMonacoTheme } from './lib/monaco';
+import { applyAppearance } from './lib/appearance';
 import { applyTheme, resolveTheme } from './lib/theme';
 import type { ConnectionConfig } from '../../shared/types';
 
@@ -44,19 +45,36 @@ export default function AppShell() {
 
   useEffect(() => {
     applyTheme(state.settings.theme);
+    applyAppearance(state.settings);
+    setMonacoAccent(state.settings.accent);
     setMonacoTheme(resolveTheme(state.settings.theme) === 'dark');
-  }, [state.settings.theme]);
+  }, [
+    state.settings.theme,
+    state.settings.accent,
+    state.settings.uiFont,
+    state.settings.codeFont,
+    state.settings.uiFontSize,
+    state.settings.tableFontSize
+  ]);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = () => {
       if (state.settings.theme !== 'system') return;
       applyTheme(state.settings.theme);
+      applyAppearance(state.settings);
       setMonacoTheme(resolveTheme(state.settings.theme) === 'dark');
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [state.settings.theme]);
+  }, [
+    state.settings.theme,
+    state.settings.accent,
+    state.settings.uiFont,
+    state.settings.codeFont,
+    state.settings.uiFontSize,
+    state.settings.tableFontSize
+  ]);
 
   return (
     <div className="flex h-screen">
