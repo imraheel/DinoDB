@@ -4,6 +4,26 @@ All notable changes to NexDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7-alpha] - 2026-10-22
+
+### Added
+
+- Collection index manager — dedicated index tabs listing each index's key pattern, properties, and usage; create, drop, hide/unhide actions with context menus; open via "View Indexes" on a collection in the sidebar
+- `createIndex(key, options?)` queries in the query bar, with editor autocompletion and a confirmation card on success
+- VS Code–style titlebar — Connect button, settings gear, centered tab title, and macOS traffic-light spacing
+- Sidebar collapse/expand from the titlebar (panel icon or ⌘B / Ctrl+B)
+- Sidebar search to filter databases and collections
+- About menu (macOS)
+- Multi-row selection in the result table with bulk delete and copy
+- Confirmation when disconnecting a connection that has open tabs — the connection's tabs are closed on confirm
+
+### Changed
+
+- Index usage shows the absolute operation count with the stats start date (e.g. `1,546,806 since 2026-08-04`)
+- Index properties displayed as compact labels (Unique, Sparse, TTL, Compacting)
+- Connect button moved from the sidebar into the titlebar; the sidebar now starts at search
+- App icon and settings popup refreshed
+
 ## [0.1.6-alpha] - 2026-10-17
 
 First pre-release. Supersedes the `v0.1.5-alpha` tag, whose Windows CI build failed; no release should be taken from that tag.
