@@ -197,6 +197,37 @@ export default function Sidebar({
     }
   }
 
+  async function handleViewIndexes(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    try {
+      const { tabId } = await window.api.createTab({
+        connectionId: connection.id,
+        database,
+        collection,
+        kind: 'indexes'
+      });
+      dispatch({
+        type: 'tab/added',
+        tab: {
+          id: tabId,
+          connectionId: connection.id,
+          connectionName: connection.name,
+          database,
+          collection,
+          kind: 'indexes',
+          title: `${database}.${collection} — Indexes`
+        },
+        fields: []
+      });
+      setError(null);
+    } catch (err) {
+      setError(messageOf(err));
+    }
+  }
+
   async function refreshCollections(connectionId: string, database: string) {
     try {
       const { collections } = await window.api.listCollections(connectionId, database);
@@ -692,6 +723,14 @@ export default function Sidebar({
                 }}
               >
                 Open
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  void handleViewIndexes(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                View Indexes…
               </MenuItem>
               <MenuItem
                 onClick={() => {
