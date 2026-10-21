@@ -1,4 +1,4 @@
-import type { AppSettings, ConnectionConfig, ConnectionInput, SchemaField } from './types';
+import type { AppSettings, ConnectionConfig, ConnectionInput, SchemaField, TabKind } from './types';
 
 export const IPC = {
   connectionsList: 'connections:list',
@@ -23,6 +23,18 @@ export interface InitMessage { role: 'session' | 'tab'; connection: ConnectionCo
 export interface FindResult { documents: unknown[]; truncated: boolean }
 export interface WriteResult { matched: number; modified: number; deleted: number; insertedId: unknown | null }
 
+export interface CollectionIndexInfo {
+  name: string;
+  key: Record<string, unknown>;
+  unique?: boolean;
+  sparse?: boolean;
+  hidden?: boolean;
+  expireAfterSeconds?: number;
+  partialFilterExpression?: Record<string, unknown>;
+  sizeBytes?: number;
+  usageCount?: number;
+}
+
 export interface UtilityResponses {
   ping: { version: string };
   listDatabases: { databases: string[] };
@@ -46,6 +58,10 @@ export interface UtilityResponses {
   clearCollection: { deleted: number };
   createCollection: { ok: true };
   dropDatabase: { ok: true };
+  listIndexes: { indexes: CollectionIndexInfo[] };
+  createIndex: { ok: true; name: string };
+  dropIndex: { ok: true };
+  hideIndex: { ok: true };
 }
 
 export type AdminUtilityRequest =
@@ -54,7 +70,23 @@ export type AdminUtilityRequest =
   | { kind: 'duplicateCollection'; database: string; collection: string; newName: string }
   | { kind: 'clearCollection'; database: string; collection: string }
   | { kind: 'createCollection'; database: string; name: string }
-  | { kind: 'dropDatabase'; database: string };
+  | { kind: 'dropDatabase'; database: string }
+  | { kind: 'listIndexes'; database: string; collection: string }
+  | {
+      kind: 'createIndex';
+      database: string;
+      collection: string;
+      key: Record<string, unknown>;
+      options: Record<string, unknown>;
+    }
+  | { kind: 'dropIndex'; database: string; collection: string; name: string }
+  | {
+      kind: 'hideIndex';
+      database: string;
+      collection: string;
+      name: string;
+      hidden: boolean;
+    };
 
 export type UtilityRequest =
   | { kind: 'ping' }
@@ -85,7 +117,7 @@ export type UtilityToMain =
   | { kind: 'response'; id: number; ok: false; error: string }
   | { kind: 'fatal'; error: string };
 
-export interface CreateTabInput { connectionId: string; database: string; collection: string }
+export interface CreateTabInput { connectionId: string; database: string; collection: string; kind?: TabKind }
 export interface CreateTabResult { tabId: string; fields: SchemaField[] }
 export interface TestConnectionResult { ok: boolean; version?: string; error?: string }
 
