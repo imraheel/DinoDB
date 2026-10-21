@@ -237,6 +237,30 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
           });
           break;
         }
+        case 'createIndex': {
+          const result = await window.api.adminSession<'createIndex'>(tab.connectionId, {
+            kind: 'createIndex',
+            database: tab.database,
+            collection,
+            key: parsed.key,
+            options: parsed.options ?? {}
+          });
+          dispatch({
+            type: 'tab/card',
+            tabId: tab.id,
+            card: {
+              kind: 'write',
+              op: 'createIndex',
+              matched: 0,
+              modified: 0,
+              deleted: 0,
+              inserted: 0,
+              insertedId: null,
+              message: `Index "${result.name}" created on ${collection}`
+            }
+          });
+          break;
+        }
       }
       const recordsRead =
         isReadOp(parsed.op) && !(parsed.op === 'aggregate' && hasOutputStage(parsed.pipeline));

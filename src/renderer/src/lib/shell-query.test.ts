@@ -288,6 +288,30 @@ describe('parseShellQuery', () => {
     expect(parseErr('aggregate([])')).toMatch(/at least one stage/);
   });
 
+  it('parses createIndex with a key and optional options', () => {
+    expect(parseOk("db.getCollection('crm_leads').createIndex( { \"companyId\": 1 } )")).toEqual({
+      op: 'createIndex',
+      key: { companyId: 1 },
+      collection: 'crm_leads'
+    });
+    expect(
+      parseOk("db.crm_leads.createIndex({ companyId: 1, externalId: 1 }, { unique: true, name: 'company_external' })")
+    ).toEqual({
+      op: 'createIndex',
+      key: { companyId: 1, externalId: 1 },
+      options: { unique: true, name: 'company_external' },
+      collection: 'crm_leads'
+    });
+    expect(parseOk('createIndex({ score: "text" })')).toEqual({
+      op: 'createIndex',
+      key: { score: 'text' }
+    });
+    expect(parseErr('createIndex()')).toMatch(/createIndex\(\) usage/);
+    expect(parseErr('createIndex({})')).toMatch(/requires a key pattern/);
+    expect(parseErr('createIndex("nope")')).toMatch(/key must be an object/);
+    expect(parseErr('createIndex({ a: 1 }, "nope")')).toMatch(/options must be an object/);
+  });
+
   it('ignores chains after non-find methods', () => {
     expect(parseOk('deleteMany({ a: 1 }).limit(5)')).toEqual({
       op: 'deleteMany',

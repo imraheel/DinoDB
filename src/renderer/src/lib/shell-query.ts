@@ -11,7 +11,8 @@ export const QUERY_METHODS = [
   'deleteMany',
   'insertOne',
   'insertMany',
-  'aggregate'
+  'aggregate',
+  'createIndex'
 ] as const;
 
 export type QueryMethod = (typeof QUERY_METHODS)[number];
@@ -50,7 +51,12 @@ export type ParsedQuery =
   | (QueryBase & { op: 'deleteMany'; filter: unknown })
   | (QueryBase & { op: 'insertOne'; document: unknown })
   | (QueryBase & { op: 'insertMany'; documents: unknown[] })
-  | (QueryBase & { op: 'aggregate'; pipeline: unknown[]; explain?: boolean });
+  | (QueryBase & { op: 'aggregate'; pipeline: unknown[]; explain?: boolean })
+  | (QueryBase & {
+      op: 'createIndex';
+      key: Record<string, unknown>;
+      options?: Record<string, unknown>;
+    });
 
 export type ShellQueryResult =
   | { ok: true; value: ParsedQuery }
@@ -563,6 +569,20 @@ function buildParsed(name: QueryMethod, args: string[], tail: string): ShellQuer
     case 'insertMany': {
       expectArgs(args, 1, 1, 'insertMany() usage: insertMany(documents)');
       return { ok: true, value: { op: 'insertMany', documents: readDocumentList(args[0]) } };
+    }
+    case 'createIndex': {
+      expectArgs(args, 1, 2, 'createIndex() usage: createIndex(key, options?)');
+      const key = readObject(args[0], 'createIndex() key');
+      if (key === undefined) {
+        throw new Error(
+          'createIndex() requires a key pattern, e.g. createIndex({ companyId: 1 })'
+        );
+      }
+      const options = args.length > 1 ? readObject(args[1], 'createIndex() options') : undefined;
+      return {
+        ok: true,
+        value: { op: 'createIndex', key, ...(options !== undefined ? { options } : {}) }
+      };
     }
     case 'aggregate': {
       expectArgs(args, 1, 1, 'aggregate() usage: aggregate(pipeline)');
