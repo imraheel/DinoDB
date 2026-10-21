@@ -11,6 +11,7 @@ import ManageConnectionsPopup from './ManageConnectionsPopup';
 import PromptDialog from './PromptDialog';
 
 interface SidebarProps {
+  collapsed: boolean;
   onAdd: () => void;
   onEdit: (connection: ConnectionConfig) => void;
   manageOpen: boolean;
@@ -50,6 +51,7 @@ type SidebarConfirm = {
 };
 
 export default function Sidebar({
+  collapsed,
   onAdd,
   onEdit,
   manageOpen,
@@ -67,6 +69,10 @@ export default function Sidebar({
   const [filterText, setFilterText] = useState('');
   const prefetchingRef = useRef<Set<string>>(new Set());
   const filter = filterText.trim().toLowerCase();
+
+  useEffect(() => {
+    if (collapsed) setMenu(null);
+  }, [collapsed]);
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -418,16 +424,20 @@ export default function Sidebar({
 
   return (
     <aside
-      style={{ width }}
-      className={`relative flex h-full shrink-0 flex-col border-r border-border bg-sidebar${dragging ? ' select-none' : ''}`}
+      style={{ width: collapsed ? 0 : width }}
+      className={`relative flex h-full shrink-0 flex-col bg-sidebar${
+        collapsed ? ' overflow-hidden' : ' border-r border-border'
+      }${dragging ? ' select-none' : ''}`}
     >
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize sidebar"
-        onMouseDown={handleResizeMouseDown}
-        className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
-      />
+      {collapsed ? null : (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          onMouseDown={handleResizeMouseDown}
+          className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
+        />
+      )}
       <div className="flex h-9 shrink-0 items-center border-b border-border px-2">
         <div className="relative w-full">
           <svg

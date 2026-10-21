@@ -2,8 +2,29 @@ import { useApp } from '../context/AppState';
 import Button from './ui/Button';
 
 interface TitlebarProps {
+  collapsed: boolean;
+  onToggleSidebar(): void;
   onConnect(): void;
   onOpenSettings(): void;
+}
+
+function PanelLeftIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M9 3v18" />
+    </svg>
+  );
 }
 
 function SettingsIcon({ size = 16 }: { size?: number }) {
@@ -25,7 +46,12 @@ function SettingsIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-export default function Titlebar({ onConnect, onOpenSettings }: TitlebarProps) {
+export default function Titlebar({
+  collapsed,
+  onToggleSidebar,
+  onConnect,
+  onOpenSettings
+}: TitlebarProps) {
   const { state } = useApp();
   const title =
     state.tabs.find((tab) => tab.id === state.activeTabId)?.title ?? 'NexDB';
@@ -46,6 +72,17 @@ export default function Titlebar({ onConnect, onOpenSettings }: TitlebarProps) {
           onClick={onConnect}
         >
           Connect
+        </Button>
+        <Button
+          variant="quiet"
+          size="sm"
+          aria-pressed={!collapsed}
+          aria-label="Toggle sidebar"
+          title="Toggle sidebar (⌘B)"
+          onClick={onToggleSidebar}
+          className="w-8 px-0"
+        >
+          <PanelLeftIcon />
         </Button>
         <Button
           variant="quiet"

@@ -23,6 +23,7 @@ export default function AppShell() {
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +46,17 @@ export default function AppShell() {
       else if (action === 'new-connection') setModal({ open: true, editing: null });
     });
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        setSidebarCollapsed((previous) => !previous);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -84,12 +96,15 @@ export default function AppShell() {
     <div className="flex h-screen flex-col">
       {IS_MACOS ? (
         <Titlebar
+          collapsed={sidebarCollapsed}
+          onToggleSidebar={() => setSidebarCollapsed((previous) => !previous)}
           onConnect={() => setConnectionsOpen(true)}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       ) : null}
       <div className="flex min-h-0 flex-1">
         <Sidebar
+          collapsed={sidebarCollapsed}
           onAdd={() => setModal({ open: true, editing: null })}
           onEdit={(connection) => setModal({ open: true, editing: connection })}
           manageOpen={connectionsOpen}
