@@ -58,22 +58,27 @@ export function MenuItem({
   danger = false,
   shortcut,
   icon,
+  disabled = false,
   children
 }: {
   onClick(): void;
   danger?: boolean;
   shortcut?: string;
   icon?: ReactNode;
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       className={`mx-1 flex w-[calc(100%-8px)] items-center justify-between gap-6 rounded-[4px] px-2 py-[3px] text-left text-[13px] transition-colors duration-100 ${
-        danger
-          ? 'text-danger hover:bg-danger hover:text-white'
-          : 'text-label hover:bg-accent hover:text-white'
+        disabled
+          ? 'cursor-not-allowed opacity-40'
+          : danger
+            ? 'text-danger hover:bg-danger hover:text-white'
+            : 'text-label hover:bg-accent hover:text-white'
       }`}
     >
       <span className="flex min-w-0 items-center gap-2">

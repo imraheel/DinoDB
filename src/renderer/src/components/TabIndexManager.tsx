@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import {
@@ -11,12 +11,38 @@ import { toShellJson, parseShellJson } from '../lib/shell-json';
 import type { CollectionIndexInfo } from '../../../shared/ipc';
 import Banner from './ui/Banner';
 import Button from './ui/Button';
+import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
 import ConfirmDialog from './ConfirmDialog';
 import DocumentModal from './DocumentModal';
 
 interface TabIndexManagerProps {
   tab: TabMeta;
   active: boolean;
+}
+
+interface IconProps {
+  size?: number;
+}
+
+function RefreshCcwIcon({ size = 16 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+      <path d="M16 16h5v5" />
+    </svg>
+  );
 }
 
 interface IndexDraft {
@@ -55,6 +81,11 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
   const [detailsFor, setDetailsFor] = useState<CollectionIndexInfo | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; text: string } | null>(null);
   const [pendingDrop, setPendingDrop] = useState(false);
+  const [menu, setMenu] = useState<{
+    x: number;
+    y: number;
+    index: CollectionIndexInfo | null;
+  } | null>(null);
 
   const selectedIndex =
     selectedName === null ? null : (indexes.find((index) => index.name === selectedName) ?? null);
@@ -172,6 +203,31 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
     });
   }
 
+  function openRowMenu(event: ReactMouseEvent, index: CollectionIndexInfo) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedName(index.name);
+    setMenu({ x: event.clientX, y: event.clientY, index });
+  }
+
+  function openBackgroundMenu(event: ReactMouseEvent) {
+    event.preventDefault();
+    setMenu({ x: event.clientX, y: event.clientY, index: null });
+  }
+
+  function handleMenuItem(action: () => void) {
+    return () => {
+      action();
+      setMenu(null);
+    };
+  }
+
+  function copyIndexName(name: string) {
+    navigator.clipboard
+      .writeText(name)
+      .catch((err: unknown) => setError(messageOf(err)));
+  }
+
   function optionsOf(index: CollectionIndexInfo): Record<string, unknown> {
     const options: Record<string, unknown> = {};
     if (index.unique === true) options.unique = true;
@@ -186,6 +242,8 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
     return options;
   }
 
+  const menuIndex = menu !== null ? menu.index : null;
+
   return (
     <div className={active ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
       <div className="flex shrink-0 flex-col gap-2 p-3 pb-1.5">
@@ -194,8 +252,16 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
             Indexes — {tab.database}.{tab.collection}
           </span>
           <span className="flex-1" />
-          <Button variant="quiet" size="sm" onClick={() => void refresh()}>
-            Refresh
+          <Button
+            variant="quiet"
+            size="sm"
+            aria-label="Refresh indexes"
+            title="Refresh indexes"
+            disabled={loading}
+            onClick={() => void refresh()}
+            className="w-8 px-0"
+          >
+            <RefreshCcwIcon />
           </Button>
           <Button variant="accentOutline" size="sm" onClick={openAdd}>
             Add Index
@@ -240,7 +306,10 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
         ) : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-auto p-3 pt-0">
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border">
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border"
+          onContextMenu={openBackgroundMenu}
+        >
           {indexes.length === 0 && !loading ? (
             <p className="px-3 py-6 text-center text-[13px] text-label-tertiary">
               {loading ? 'Loading…' : 'No indexes found.'}
@@ -274,6 +343,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
                       key={index.name}
                       onClick={() => setSelectedName(index.name)}
                       onDoubleClick={() => setDetailsFor(index)}
+                      onContextMenu={(event) => openRowMenu(event, index)}
                       className={
                         selected
                           ? 'cursor-default bg-accent text-white'
@@ -350,6 +420,39 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
         }}
         onClose={() => setPendingDrop(false)}
       />
+      {menu !== null && menuIndex !== null ? (
+        <Menu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          <MenuItem onClick={handleMenuItem(() => setDetailsFor(menuIndex))}>
+            View details
+          </MenuItem>
+          <MenuItem onClick={handleMenuItem(openEdit)}>Edit index</MenuItem>
+          <MenuItem
+            disabled={menuIndex.name === '_id_'}
+            onClick={handleMenuItem(() => void toggleHidden())}
+          >
+            {menuIndex.hidden === true ? 'Unhide index' : 'Hide index'}
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            danger
+            disabled={menuIndex.name === '_id_'}
+            onClick={handleMenuItem(() => setPendingDrop(true))}
+          >
+            Drop index
+          </MenuItem>
+          <MenuItem onClick={handleMenuItem(() => copyIndexName(menuIndex.name))}>
+            Copy index name
+          </MenuItem>
+        </Menu>
+      ) : null}
+      {menu !== null && menu.index === null ? (
+        <Menu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
+          <MenuItem disabled={loading} onClick={handleMenuItem(() => void refresh())}>
+            Refresh
+          </MenuItem>
+          <MenuItem onClick={handleMenuItem(openAdd)}>Add index…</MenuItem>
+        </Menu>
+      ) : null}
     </div>
   );
 }
