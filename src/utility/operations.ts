@@ -1,5 +1,5 @@
-import { BSON, type Document, type FindOptions, type MongoClient } from 'mongodb';
-import type { UtilityRequest, UtilityResponses } from '../shared/ipc';
+import { BSON, type Document, type FindOptions, type IndexSpecification, type MongoClient } from 'mongodb';
+import type { CollectionIndexInfo, UtilityRequest, UtilityResponses } from '../shared/ipc';
 import { inferSchema } from './schema';
 
 export function toWire(value: unknown): unknown {
@@ -275,6 +275,88 @@ export async function executeRequest(
     }
     case 'dropDatabase': {
       await ctx.client.db(request.database).dropDatabase({ maxTimeMS: maxTimeMs });
+      return { ok: true };
+    }
+    case 'listIndexes': {
+      const collection = ctx.client.db(request.database).collection(request.collection);
+      const specs = await collection.listIndexes({ maxTimeMS: maxTimeMs }).toArray();
+      let sizes: Record<string, number> = {};
+      try {
+        const stats = await ctx.client
+          .db(request.database)
+          .command({ collStats: request.collection, scale: 1 });
+        sizes = (stats.indexSizes ?? {}) as Record<string, number>;
+      } catch {
+        sizes = {};
+      }
+      let usage: Record<string, number> = {};
+      try {
+        const statRows = await collection
+          .aggregate([{ $indexStats: {} }], { maxTimeMS: maxTimeMs })
+          .toArray();
+        for (const row of statRows) {
+          const name = (row as Record<string, unknown>).name;
+          if (typeof name === 'string') {
+            usage[name] = Number((row as Record<string, unknown>).accessOps ?? 0);
+          }
+        }
+      } catch {
+        usage = {};
+      }
+      const indexes: CollectionIndexInfo[] = specs.map((spec) => {
+        const record = spec as Record<string, unknown>;
+        const name = String(record.name ?? '');
+        return {
+          name,
+          key: toWire(record.key ?? {}) as Record<string, unknown>,
+          unique: record.unique === true,
+          sparse: record.sparse === true,
+          hidden: record.hidden === true,
+          expireAfterSeconds:
+            typeof record.expireAfterSeconds === 'number'
+              ? record.expireAfterSeconds
+              : undefined,
+          partialFilterExpression:
+            record.partialFilterExpression !== undefined
+              ? (toWire(record.partialFilterExpression) as Record<string, unknown>)
+              : undefined,
+          sizeBytes: sizes[name],
+          usageCount: usage[name]
+        };
+      });
+      return { indexes };
+    }
+    case 'createIndex': {
+      const key = fromWire(request.key) as IndexSpecification;
+      const options = fromWire(request.options) as Record<string, unknown>;
+      const name = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .createIndex(key, { ...options, maxTimeMS: maxTimeMs });
+      return { ok: true, name };
+    }
+    case 'dropIndex': {
+      await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .dropIndex(request.name, { maxTimeMS: maxTimeMs });
+      return { ok: true };
+    }
+    case 'hideIndex': {
+      const specs = await ctx.client
+        .db(request.database)
+        .collection(request.collection)
+        .listIndexes({ maxTimeMS: maxTimeMs })
+        .toArray();
+      const spec = specs.find(
+        (candidate) => (candidate as Record<string, unknown>).name === request.name
+      );
+      if (spec === undefined) throw new Error(`Index not found: ${request.name}`);
+      const keyPattern = fromWire((spec as Record<string, unknown>).key ?? {});
+      await ctx.client.db(request.database).command({
+        collMod: request.collection,
+        index: { keyPattern, hidden: request.hidden }
+      });
       return { ok: true };
     }
     default:
