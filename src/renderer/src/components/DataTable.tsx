@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { formatCell, getColumns } from '../lib/format';
 import type { SchemaField } from '../../../shared/types';
 import Button from './ui/Button';
@@ -14,7 +14,7 @@ interface DataTableProps {
   onInsert?(): void;
   onView?(doc: unknown): void;
   onEdit?(doc: unknown): void;
-  onDelete?(doc: unknown): void;
+  onDelete?(docs: unknown[]): void;
   onRefresh?(): void;
 }
 
@@ -85,6 +85,10 @@ function shortcutLabel(...parts: string[]): string {
   return parts.join(IS_MAC ? '' : '+');
 }
 
+function hasModifier(event: MouseEvent | ReactMouseEvent): boolean {
+  return IS_MAC ? event.metaKey : event.ctrlKey;
+}
+
 export default function DataTable({
   fields,
   documents,
@@ -100,15 +104,72 @@ export default function DataTable({
 }: DataTableProps) {
   const columns =
     documents.length > 0 ? getColumns([], documents) : getColumns(fields, []);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const keys = useMemo(() => documents.map((document, index) => rowKey(document, index)), [documents]);
+  const [selectedKeys, setSelectedKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const anchorKeyRef = useRef<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
 
-  const selectedDoc =
-    selectedKey === null
-      ? null
-      : (documents.find((document, index) => rowKey(document, index) === selectedKey) ?? null);
+  useEffect(() => {
+    setSelectedKeys((previous) => {
+      const keySet = new Set(keys);
+      const next = new Set([...previous].filter((key) => keySet.has(key)));
+      return next.size === previous.size ? previous : next;
+    });
+    setSelectedCell(null);
+    anchorKeyRef.current = null;
+  }, [documents, keys]);
+
+  const selectedDocs = useMemo(
+    () => documents.filter((document, index) => selectedKeys.has(rowKey(document, index))),
+    [documents, selectedKeys]
+  );
+  const singleSelectedDoc = selectedDocs.length === 1 ? selectedDocs[0] : null;
   const canMutate = !readOnly;
+
+  function selectOnly(key: string) {
+    setSelectedKeys(new Set([key]));
+    anchorKeyRef.current = key;
+  }
+
+  function toggleKey(key: string) {
+    setSelectedKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    anchorKeyRef.current = key;
+  }
+
+  function selectRange(key: string) {
+    const anchor = anchorKeyRef.current;
+    if (anchor === null) {
+      selectOnly(key);
+      return;
+    }
+    const anchorIndex = keys.indexOf(anchor);
+    const keyIndex = keys.indexOf(key);
+    if (anchorIndex === -1 || keyIndex === -1) {
+      selectOnly(key);
+      return;
+    }
+    const [from, to] = anchorIndex <= keyIndex ? [anchorIndex, keyIndex] : [keyIndex, anchorIndex];
+    setSelectedKeys(new Set(keys.slice(from, to + 1)));
+  }
+
+  function handleRowClick(event: ReactMouseEvent, key: string) {
+    if (hasModifier(event)) {
+      toggleKey(key);
+      return;
+    }
+    if (event.shiftKey) {
+      selectRange(key);
+      return;
+    }
+    selectOnly(key);
+    setSelectedCell(null);
+  }
 
   useEffect(() => {
     if (!active) return;
@@ -124,6 +185,10 @@ export default function DataTable({
     function rowValuesAsText(doc: unknown): string {
       if (!isRecord(doc)) return '';
       return columns.map((column) => formatCell(doc[column])).join('\t');
+    }
+
+    function docsAsJson(docs: unknown[]): string {
+      return JSON.stringify(docs.length === 1 ? docs[0] : docs, null, 2);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -146,42 +211,47 @@ export default function DataTable({
         return;
       }
       if (event.key === 'F3') {
-        if (selectedDoc !== null && onView !== undefined) {
+        if (singleSelectedDoc !== null && onView !== undefined) {
           event.preventDefault();
-          onView(selectedDoc);
+          onView(singleSelectedDoc);
         }
         return;
       }
       if (modifier && !event.shiftKey && !event.altKey && key === 'j') {
-        if (canMutate && selectedDoc !== null && onEdit !== undefined) {
+        if (canMutate && singleSelectedDoc !== null && onEdit !== undefined) {
           event.preventDefault();
-          onEdit(selectedDoc);
+          onEdit(singleSelectedDoc);
         }
         return;
       }
       if (event.shiftKey && (event.key === 'Backspace' || event.key === 'Delete')) {
-        if (canMutate && selectedDoc !== null && onDelete !== undefined) {
+        if (canMutate && selectedDocs.length > 0 && onDelete !== undefined) {
           event.preventDefault();
-          onDelete(selectedDoc);
+          onDelete(selectedDocs);
         }
         return;
       }
       if (modifier && event.shiftKey && !event.altKey && key === 'c') {
-        if (selectedDoc !== null) {
+        if (selectedDocs.length > 0) {
           event.preventDefault();
-          copyToClipboard(JSON.stringify(selectedDoc, null, 2));
+          copyToClipboard(docsAsJson(selectedDocs));
         }
         return;
       }
       if (modifier && !event.shiftKey && !event.altKey && key === 'c') {
-        if (selectedCell !== null && selectedDoc !== null && isRecord(selectedDoc)) {
+        if (selectedCell !== null && singleSelectedDoc !== null && isRecord(singleSelectedDoc)) {
           event.preventDefault();
-          copyToClipboard(formatCell(selectedDoc[selectedCell.column]));
+          copyToClipboard(formatCell(singleSelectedDoc[selectedCell.column]));
           return;
         }
-        if (selectedDoc !== null) {
+        if (selectedDocs.length === 1) {
           event.preventDefault();
-          copyToClipboard(rowValuesAsText(selectedDoc));
+          copyToClipboard(rowValuesAsText(selectedDocs[0]));
+          return;
+        }
+        if (selectedDocs.length > 1) {
+          event.preventDefault();
+          copyToClipboard(selectedDocs.map((doc) => rowValuesAsText(doc)).join('\n'));
         }
       }
     }
@@ -191,7 +261,8 @@ export default function DataTable({
   }, [
     active,
     columns,
-    selectedDoc,
+    selectedDocs,
+    singleSelectedDoc,
     selectedCell,
     canMutate,
     onInsert,
@@ -214,7 +285,8 @@ export default function DataTable({
     event.preventDefault();
     event.stopPropagation();
     const key = rowKey(document, index);
-    setSelectedKey(key);
+    if (!selectedKeys.has(key)) selectOnly(key);
+    else anchorKeyRef.current = key;
     const target = event.target as HTMLElement;
     const cell = target.closest('td');
     const column = cell?.getAttribute('data-column') ?? null;
@@ -224,8 +296,9 @@ export default function DataTable({
 
   function openBackgroundMenu(event: ReactMouseEvent) {
     event.preventDefault();
-    setSelectedKey(null);
+    setSelectedKeys(new Set());
     setSelectedCell(null);
+    anchorKeyRef.current = null;
     setMenu({ x: event.clientX, y: event.clientY, doc: null, column: null });
   }
 
@@ -243,11 +316,19 @@ export default function DataTable({
 
   const menuDoc = menu?.doc ?? null;
   const menuColumn = menu?.column ?? null;
+  const menuDocIndex = menuDoc !== null ? documents.indexOf(menuDoc) : -1;
+  const menuDocKey = menuDoc !== null && menuDocIndex !== -1 ? rowKey(menuDoc, menuDocIndex) : null;
+  const menuInSelection = menuDocKey !== null && selectedKeys.has(menuDocKey);
+  const multiCount = menuInSelection ? selectedDocs.length : menuDoc !== null ? 1 : 0;
+  const isMulti = multiCount > 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center gap-2 pb-1.5">
         <span className="text-xs text-label-secondary">{documents.length} documents</span>
+        {selectedKeys.size > 0 ? (
+          <span className="text-caption text-accent">{selectedKeys.size} selected</span>
+        ) : null}
         {truncated ? (
           <span className="text-caption text-label-tertiary">
             Showing first {documents.length} — narrow your query
@@ -285,11 +366,16 @@ export default function DataTable({
             <tbody>
               {documents.map((document, index) => {
                 const key = rowKey(document, index);
-                const selected = key === selectedKey;
+                const selected = selectedKeys.has(key);
+                const cellSelectedRow = selectedCell !== null && selectedCell.key === key;
                 return (
                   <tr
                     key={key}
                     onContextMenu={(event) => openRowMenu(event, document, index)}
+                    onClick={(event) => handleRowClick(event, key)}
+                    onDoubleClick={() => {
+                      if (onView !== undefined) onView(document);
+                    }}
                     className={
                       selected
                         ? 'cursor-default bg-accent text-white'
@@ -300,9 +386,7 @@ export default function DataTable({
                       const raw = isRecord(document) ? document[column] : undefined;
                       const text = displayCell(document, column);
                       const cellSelected =
-                        selectedCell !== null &&
-                        selectedCell.key === key &&
-                        selectedCell.column === column;
+                        cellSelectedRow && selectedCell?.column === column;
                       const colorClass = selected ? '' : cellColorClass(raw);
                       const baseClass =
                         'max-w-72 cursor-default truncate border-b border-border px-3 py-1.5';
@@ -313,7 +397,7 @@ export default function DataTable({
                           title={text}
                           onClick={(event) => {
                             event.stopPropagation();
-                            setSelectedKey(key);
+                            handleRowClick(event, key);
                             setSelectedCell({ key, column });
                           }}
                           className={
@@ -344,12 +428,12 @@ export default function DataTable({
             </MenuItem>
           ) : null}
           {menuDoc !== null && (canMutate || onView !== undefined) ? <MenuSeparator /> : null}
-          {menuDoc !== null && onView !== undefined ? (
+          {menuDoc !== null && isMulti ? null : menuDoc !== null && onView !== undefined ? (
             <MenuItem shortcut="F3" onClick={handleMenuItem(() => onView(menuDoc))}>
               View document
             </MenuItem>
           ) : null}
-          {menuDoc !== null && canMutate && onEdit !== undefined ? (
+          {menuDoc !== null && isMulti ? null : menuDoc !== null && canMutate && onEdit !== undefined ? (
             <MenuItem
               shortcut={shortcutLabel(MOD_KEY, 'J')}
               onClick={handleMenuItem(() => onEdit(menuDoc))}
@@ -361,9 +445,11 @@ export default function DataTable({
             <MenuItem
               danger
               shortcut="⇧⌫"
-              onClick={handleMenuItem(() => onDelete(menuDoc))}
+              onClick={handleMenuItem(() =>
+                onDelete(menuInSelection ? selectedDocs : [menuDoc])
+              )}
             >
-              Delete document
+              {isMulti ? `Delete ${multiCount} documents` : 'Delete document'}
             </MenuItem>
           ) : null}
           {menuDoc !== null ? (
@@ -371,11 +457,15 @@ export default function DataTable({
               <MenuSeparator />
               <MenuItem
                 shortcut={shortcutLabel(MOD_KEY, '⇧', 'C')}
-                onClick={handleMenuItem(() => copyToClipboard(JSON.stringify(menuDoc, null, 2)))}
+                onClick={handleMenuItem(() =>
+                  copyToClipboard(
+                    JSON.stringify(menuInSelection && isMulti ? selectedDocs : menuDoc, null, 2)
+                  )
+                )}
               >
-                Copy document
+                {isMulti ? `Copy ${multiCount} documents` : 'Copy document'}
               </MenuItem>
-              {menuColumn !== null ? (
+              {menuColumn !== null && !isMulti ? (
                 <>
                   <MenuItem
                     onClick={handleMenuItem(() =>

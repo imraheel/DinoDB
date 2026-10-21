@@ -66,7 +66,7 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const [insertText, setInsertText] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ text: string; target: unknown } | null>(null);
   const [viewText, setViewText] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<{ target: unknown } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ targets: unknown[] } | null>(null);
   const ranRef = useRef<string | null>(null);
 
   async function runParsed(
@@ -449,14 +449,28 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     }
   }
 
-  async function deleteDocument(target: unknown) {
+  async function deleteDocuments(targets: unknown[]) {
     try {
-      await window.api.executeTab<'deleteOne'>(tab.id, {
-        kind: 'deleteOne',
-        database: tab.database,
-        collection: resultsCollection(),
-        target
-      });
+      if (targets.length === 1) {
+        await window.api.executeTab<'deleteOne'>(tab.id, {
+          kind: 'deleteOne',
+          database: tab.database,
+          collection: resultsCollection(),
+          target: targets[0]
+        });
+      } else {
+        const ids = targets.map((target) =>
+          target !== null && typeof target === 'object' && !Array.isArray(target)
+            ? (target as Record<string, unknown>)._id
+            : target
+        );
+        await window.api.executeTab<'deleteMany'>(tab.id, {
+          kind: 'deleteMany',
+          database: tab.database,
+          collection: resultsCollection(),
+          filter: { _id: { $in: ids } }
+        });
+      }
       refresh();
     } catch (err) {
       dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) });
@@ -523,7 +537,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             onEdit={(document) =>
               setEdit({ text: toShellJson(document), target: idTarget(document) })
             }
-            onDelete={(document) => setPendingDelete({ target: idTarget(document) })}
+            onDelete={(docs) =>
+              setPendingDelete({ targets: docs.map((document) => idTarget(document)) })
+            }
             onRefresh={refresh}
           />
         )}
@@ -556,13 +572,17 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       ) : null}
       <ConfirmDialog
         open={pendingDelete !== null}
-        title="Delete document"
-        message={`Delete this document from ${resultsCollection()}? This cannot be undone.`}
+        title={pendingDelete !== null && pendingDelete.targets.length > 1 ? 'Delete documents' : 'Delete document'}
+        message={
+          pendingDelete !== null && pendingDelete.targets.length > 1
+            ? `Delete ${pendingDelete.targets.length} documents from ${resultsCollection()}? This cannot be undone.`
+            : `Delete this document from ${resultsCollection()}? This cannot be undone.`
+        }
         confirmLabel="Delete"
         danger
         onConfirm={() => {
           if (pendingDelete === null) return;
-          void deleteDocument(pendingDelete.target);
+          void deleteDocuments(pendingDelete.targets);
         }}
         onClose={() => setPendingDelete(null)}
       />
