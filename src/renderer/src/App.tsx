@@ -3,6 +3,7 @@ import ConnectionModal from './components/ConnectionModal';
 import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
 import TabBar from './components/TabBar';
+import TabIndexManager from './components/TabIndexManager';
 import TabWorkspace from './components/TabWorkspace';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
@@ -93,9 +94,13 @@ export default function AppShell() {
             onNewConnection={() => setModal({ open: true, editing: null })}
           />
         ) : (
-          state.tabs.map((tab) => (
-            <TabWorkspace key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
-          ))
+          state.tabs.map((tab) =>
+            tab.kind === 'indexes' ? (
+              <TabIndexManager key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+            ) : (
+              <TabWorkspace key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+            )
+          )
         )}
       </main>
       <ConnectionModal

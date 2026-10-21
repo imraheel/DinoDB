@@ -1,5 +1,11 @@
 import type { FindResult } from '../../../shared/ipc';
-import type { AppSettings, ConnectionConfig, QueryInput, SchemaField } from '../../../shared/types';
+import type {
+  AppSettings,
+  ConnectionConfig,
+  QueryInput,
+  SchemaField,
+  TabKind
+} from '../../../shared/types';
 import { DEFAULT_SETTINGS } from '../../../shared/types';
 
 export interface SessionState {
@@ -17,6 +23,7 @@ export interface TabMeta {
   database: string;
   collection: string;
   title: string;
+  kind?: TabKind;
   pinned?: boolean;
 }
 

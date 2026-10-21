@@ -28,6 +28,15 @@ export class TabManager {
         { role: 'tab', connection, database: input.database, collection: input.collection },
         20000
       );
+      if (input.kind === 'indexes') {
+        this.tabs.set(tabId, {
+          client,
+          connectionId: input.connectionId,
+          database: input.database,
+          collection: input.collection
+        });
+        return { tabId, fields: [] };
+      }
       const result = await client.request(
         { kind: 'inferSchema', database: input.database, collection: input.collection, sampleSize },
         { timeoutMs: 15000, maxTimeMs: 15000 }
