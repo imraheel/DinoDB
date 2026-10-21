@@ -66,6 +66,9 @@ export default function Sidebar({
   const [menu, setMenu] = useState<SidebarMenu | null>(null);
   const [prompt, setPrompt] = useState<SidebarPrompt | null>(null);
   const [confirm, setConfirm] = useState<SidebarConfirm | null>(null);
+  const [filterText, setFilterText] = useState('');
+  const prefetchingRef = useRef<Set<string>>(new Set());
+  const filter = filterText.trim().toLowerCase();
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -106,6 +109,33 @@ export default function Sidebar({
   const connectedConnections = allConnections.filter(
     (c: ConnectionConfig) => state.sessions[c.id]?.status === 'connected'
   );
+
+  useEffect(() => {
+    if (filter === '') {
+      prefetchingRef.current.clear();
+      return;
+    }
+    for (const connection of connectedConnections) {
+      const session = state.sessions[connection.id] ?? emptySession();
+      for (const database of session.databases) {
+        if (session.collections[database] !== undefined) continue;
+        const key = connection.id + ':' + database;
+        if (prefetchingRef.current.has(key)) continue;
+        prefetchingRef.current.add(key);
+        void window.api
+          .listCollections(connection.id, database)
+          .then(({ collections }) =>
+            dispatch({ type: 'session/collections', connectionId: connection.id, database, collections })
+          )
+          .catch(() => {
+            dispatch({ type: 'session/collections', connectionId: connection.id, database, collections: [] });
+          })
+          .finally(() => {
+            prefetchingRef.current.delete(key);
+          });
+      }
+    }
+  }, [filter, connectedConnections, state.sessions, dispatch]);
 
   async function handleConnect(connection: ConnectionConfig) {
     dispatch({ type: 'session/connecting', connectionId: connection.id });
@@ -380,6 +410,52 @@ export default function Sidebar({
           Connect
         </Button>
       </div>
+      <div className="window-no-drag shrink-0 border-b border-border px-2 py-1.5">
+        <div className="relative">
+          <svg
+            className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-label-tertiary"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            aria-hidden="true"
+          >
+            <circle cx="5" cy="5" r="3.5" />
+            <path d="M7.5 7.5L10.5 10.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={filterText}
+            onChange={(event) => setFilterText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setFilterText('');
+            }}
+            placeholder="Search collections…"
+            aria-label="Search collections"
+            className="h-[26px] w-full rounded-field border border-border-strong bg-surface pr-6 pl-7 text-ui text-label shadow-[inset_0_1px_1px_rgba(0,0,0,0.04)] placeholder:text-label-tertiary focus:border-accent focus:ring-2 focus:ring-accent-ring focus:outline-none"
+          />
+          {filterText !== '' ? (
+            <button
+              type="button"
+              onClick={() => setFilterText('')}
+              aria-label="Clear search"
+              className="absolute top-1/2 right-1.5 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-label-tertiary hover:bg-well hover:text-label-secondary"
+            >
+              <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true">
+                <path
+                  d="M1.5 1.5l7 7M8.5 1.5l-7 7"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          ) : null}
+        </div>
+      </div>
       <ManageConnectionsPopup
         open={manageOpen}
         onClose={onManageClose}
@@ -397,142 +473,170 @@ export default function Sidebar({
             No connections yet. Use &quot;Connect&quot; to add one.
           </p>
         ) : null}
-        {connectedConnections.map((connection: ConnectionConfig) => {
-          const session = state.sessions[connection.id] ?? emptySession();
-          return (
-            <div
-              key={connection.id}
-              className="group px-2 py-1 hover:bg-sidebar-hover"
-            >
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                    session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
-                  }`}
-                />
-                <span className="min-w-0 flex-1 truncate text-ui text-label">
-                  {connection.name}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 flex-1 truncate pl-[13px] text-caption text-label-tertiary">
-                  {connection.host}:{connection.port}
-                </span>
+        {(() => {
+          let anyMatch = false;
+          const blocks = connectedConnections.map((connection: ConnectionConfig) => {
+            const session = state.sessions[connection.id] ?? emptySession();
+            const databaseRows = session.databases
+              .map((database) => {
+                const collections = session.collections[database];
+                const collectionList = Array.isArray(collections) ? collections : [];
+                const matchedCollections =
+                  filter === ''
+                    ? collectionList
+                    : collectionList.filter((name) => name.toLowerCase().includes(filter));
+                if (filter !== '' && matchedCollections.length === 0) return null;
+                anyMatch = anyMatch || matchedCollections.length > 0;
+                return { database, matchedCollections, collections };
+              })
+              .filter((row): row is NonNullable<typeof row> => row !== null);
+            if (databaseRows.length === 0) return null;
+            return (
+              <div
+                key={connection.id}
+                className="group px-2 py-1 hover:bg-sidebar-hover"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                      session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
+                    }`}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-ui text-label">
+                    {connection.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 flex-1 truncate pl-[13px] text-caption text-label-tertiary">
+                    {connection.host}:{connection.port}
+                  </span>
+                  {session.status === 'connected' ? (
+                    <Button
+                      variant="quiet"
+                      size="sm"
+                      onClick={() => void handleDisconnect(connection)}
+                      aria-label={`Disconnect ${connection.name}`}
+                    >
+                      Disconnect
+                    </Button>
+                  ) : null}
+                </div>
                 {session.status === 'connected' ? (
-                  <Button
-                    variant="quiet"
-                    size="sm"
-                    onClick={() => void handleDisconnect(connection)}
-                    aria-label={`Disconnect ${connection.name}`}
-                  >
-                    Disconnect
-                  </Button>
+                  <div className="mt-0.5">
+                    {databaseRows.map(({ database, matchedCollections, collections }) => {
+                      const expanded =
+                        filter !== '' ? true : (session.expanded[database] ?? false);
+                      const dbSelected =
+                        selection !== null &&
+                        selection.kind === 'database' &&
+                        selection.connectionId === connection.id &&
+                        selection.database === database;
+                      return (
+                        <div key={database}>
+                          <div
+                            className={`flex w-full items-center gap-0.5 rounded-[5px] pr-1 pl-0.5 text-left text-ui${
+                              dbSelected
+                                ? ` ${SELECTED_CLASS}`
+                                : ' text-label-secondary hover:bg-sidebar-hover'
+                            }`}
+                          >
+                          <button
+                            type="button"
+                            onClick={() => void handleToggle(connection.id, database, session)}
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center ${
+                              dbSelected ? 'text-white/80' : 'text-label-tertiary'
+                            }`}
+                            aria-label={expanded ? `Collapse ${database}` : `Expand ${database}`}
+                          >
+                            <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+                              {expanded ? (
+                                <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
+                              ) : (
+                                <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
+                              )}
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelection({ kind: 'database', connectionId: connection.id, database })
+                            }
+                            onDoubleClick={() => void handleToggle(connection.id, database, session)}
+                            onContextMenu={(event) => openDatabaseMenu(event, connection, database)}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <span className="min-w-0 flex-1 truncate">{database}</span>
+                          </button>
+                          </div>
+                          {expanded ? (
+                            <div>
+                              {collections === undefined || collections === 'loading' ? (
+                                <p className="px-1 py-0.5 text-caption text-label-tertiary">
+                                  Loading…
+                                </p>
+                              ) : collections.length === 0 ? (
+                                <p className="px-1 py-0.5 text-caption text-label-tertiary">
+                                  No collections
+                                </p>
+                              ) : (
+                                (filter !== '' ? matchedCollections : collections)
+                                  .slice()
+                                  .sort()
+                                  .map((collection) => {
+                                    const collectionSelected =
+                                      selection !== null &&
+                                      selection.kind === 'collection' &&
+                                      selection.connectionId === connection.id &&
+                                      selection.database === database &&
+                                      selection.collection === collection;
+                                    return (
+                                      <button
+                                        key={collection}
+                                        type="button"
+                                        onClick={() =>
+                                          setSelection({
+                                            kind: 'collection',
+                                            connectionId: connection.id,
+                                            database,
+                                            collection
+                                          })
+                                        }
+                                        onDoubleClick={() =>
+                                          void handleOpenCollection(connection, database, collection)
+                                        }
+                                        onContextMenu={(event) =>
+                                          openCollectionMenu(event, connection, database, collection)
+                                        }
+                                        className={`block w-full truncate rounded-[5px] py-[3px] pr-1 pl-7 text-left text-ui${
+                                          collectionSelected
+                                            ? ` ${SELECTED_CLASS}`
+                                            : ' text-label-secondary hover:bg-sidebar-hover'
+                                        }`}
+                                      >
+                                        {collection}
+                                      </button>
+                                    );
+                                  })
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : null}
               </div>
-              {session.status === 'connected' ? (
-                <div className="mt-0.5">
-                  {session.databases.map((database) => {
-                    const expanded = session.expanded[database] ?? false;
-                    const collections = session.collections[database];
-                    const dbSelected =
-                      selection !== null &&
-                      selection.kind === 'database' &&
-                      selection.connectionId === connection.id &&
-                      selection.database === database;
-                    return (
-                      <div key={database}>
-                        <div
-                          className={`flex w-full items-center gap-0.5 rounded-[5px] pr-1 pl-0.5 text-left text-ui${
-                            dbSelected
-                              ? ` ${SELECTED_CLASS}`
-                              : ' text-label-secondary hover:bg-sidebar-hover'
-                          }`}
-                        >
-                        <button
-                          type="button"
-                          onClick={() => void handleToggle(connection.id, database, session)}
-                          className={`flex h-5 w-5 shrink-0 items-center justify-center ${
-                            dbSelected ? 'text-white/80' : 'text-label-tertiary'
-                          }`}
-                          aria-label={expanded ? `Collapse ${database}` : `Expand ${database}`}
-                        >
-                          <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
-                            {expanded ? (
-                              <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
-                            ) : (
-                              <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
-                            )}
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelection({ kind: 'database', connectionId: connection.id, database })
-                          }
-                          onDoubleClick={() => void handleToggle(connection.id, database, session)}
-                          onContextMenu={(event) => openDatabaseMenu(event, connection, database)}
-                          className="min-w-0 flex-1 text-left"
-                        >
-                          <span className="min-w-0 flex-1 truncate">{database}</span>
-                        </button>
-                        </div>
-                        {expanded ? (
-                          <div>
-                            {collections === undefined || collections === 'loading' ? (
-                              <p className="px-1 py-0.5 text-caption text-label-tertiary">
-                                Loading…
-                              </p>
-                            ) : collections.length === 0 ? (
-                              <p className="px-1 py-0.5 text-caption text-label-tertiary">
-                                No collections
-                              </p>
-                            ) : (
-                              collections.slice().sort().map((collection) => {
-                                const collectionSelected =
-                                  selection !== null &&
-                                  selection.kind === 'collection' &&
-                                  selection.connectionId === connection.id &&
-                                  selection.database === database &&
-                                  selection.collection === collection;
-                                return (
-                                  <button
-                                    key={collection}
-                                    type="button"
-                                    onClick={() =>
-                                      setSelection({
-                                        kind: 'collection',
-                                        connectionId: connection.id,
-                                        database,
-                                        collection
-                                      })
-                                    }
-                                    onDoubleClick={() =>
-                                      void handleOpenCollection(connection, database, collection)
-                                    }
-                                    onContextMenu={(event) =>
-                                      openCollectionMenu(event, connection, database, collection)
-                                    }
-                                    className={`block w-full truncate rounded-[5px] py-[3px] pr-1 pl-7 text-left text-ui${
-                                      collectionSelected
-                                        ? ` ${SELECTED_CLASS}`
-                                        : ' text-label-secondary hover:bg-sidebar-hover'
-                                    }`}
-                                  >
-                                    {collection}
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
+            );
+          });
+          return (
+            <>
+              {blocks}
+              {filter !== '' && !anyMatch ? (
+                <p className="px-3 py-2 text-xs text-label-tertiary">No matches</p>
               ) : null}
-            </div>
+            </>
           );
-        })}
+        })()}
       </div>
       {menu !== null ? (
         <Menu x={menu.x} y={menu.y} onClose={closeMenu}>
