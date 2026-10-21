@@ -171,6 +171,12 @@ export default function ManageConnectionsPopup({
   const [error, setError] = useState<string | null>(null);
   const [rowMenu, setRowMenu] = useState<RowMenuState | null>(null);
   const [pendingDelete, setPendingDelete] = useState<ConnectionConfig | null>(null);
+  const [pendingDisconnect, setPendingDisconnect] = useState<ConnectionConfig | null>(null);
+
+  const pendingDisconnectTabCount =
+    pendingDisconnect === null
+      ? 0
+      : state.tabs.filter((tab) => tab.connectionId === pendingDisconnect.id).length;
 
   const allConnections = state.connections;
   const selected =
@@ -234,7 +240,24 @@ export default function ManageConnectionsPopup({
     }
   }
 
-  async function handleDisconnect(connection: ConnectionConfig) {
+  function closeConnectionTabs(connectionId: string) {
+    for (const tab of state.tabs) {
+      if (tab.connectionId !== connectionId) continue;
+      dispatch({ type: 'tab/removed', tabId: tab.id });
+      void window.api.closeTab(tab.id).catch(() => {});
+    }
+  }
+
+  function handleDisconnect(connection: ConnectionConfig) {
+    const tabCount = state.tabs.filter((tab) => tab.connectionId === connection.id).length;
+    if (tabCount === 0) {
+      void disconnectNow(connection);
+      return;
+    }
+    setPendingDisconnect(connection);
+  }
+
+  async function disconnectNow(connection: ConnectionConfig) {
     try {
       await window.api.disconnectSession(connection.id);
     } catch (err) {
@@ -463,6 +486,23 @@ export default function ManageConnectionsPopup({
           void handleDelete(pendingDelete);
         }}
         onClose={() => setPendingDelete(null)}
+      />
+      <ConfirmDialog
+        open={pendingDisconnect !== null}
+        title={pendingDisconnect === null ? '' : `Disconnect "${pendingDisconnect.name}"?`}
+        message={
+          pendingDisconnect === null
+            ? ''
+            : `${pendingDisconnectTabCount === 1 ? '1 open tab' : `${pendingDisconnectTabCount} open tabs`} will be closed.`
+        }
+        confirmLabel="Disconnect"
+        danger
+        onConfirm={() => {
+          if (pendingDisconnect === null) return;
+          closeConnectionTabs(pendingDisconnect.id);
+          void disconnectNow(pendingDisconnect);
+        }}
+        onClose={() => setPendingDisconnect(null)}
       />
     </Modal>
   );

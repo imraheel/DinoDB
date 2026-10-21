@@ -154,7 +154,32 @@ export default function Sidebar({
     }
   }
 
-  async function handleDisconnect(connection: ConnectionConfig) {
+  function closeConnectionTabs(connectionId: string) {
+    for (const tab of state.tabs) {
+      if (tab.connectionId !== connectionId) continue;
+      dispatch({ type: 'tab/removed', tabId: tab.id });
+      void window.api.closeTab(tab.id).catch(() => {});
+    }
+  }
+
+  function handleDisconnect(connection: ConnectionConfig) {
+    const tabCount = state.tabs.filter((tab) => tab.connectionId === connection.id).length;
+    if (tabCount === 0) {
+      void disconnectNow(connection);
+      return;
+    }
+    setConfirm({
+      title: `Disconnect "${connection.name}"?`,
+      message: `${tabCount === 1 ? '1 open tab' : `${tabCount} open tabs`} will be closed.`,
+      confirmLabel: 'Disconnect',
+      confirm: async () => {
+        closeConnectionTabs(connection.id);
+        await disconnectNow(connection);
+      }
+    });
+  }
+
+  async function disconnectNow(connection: ConnectionConfig) {
     try {
       await window.api.disconnectSession(connection.id);
     } catch (err) {
