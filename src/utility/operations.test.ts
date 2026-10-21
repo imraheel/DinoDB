@@ -1,6 +1,13 @@
-import { BSONRegExp, ObjectId } from 'mongodb';
+import { BSON, BSONRegExp, ObjectId } from 'mongodb';
 import { describe, expect, it } from 'vitest';
-import { buildFindOptions, buildPipeline, fromWire, hasOutputStage, toWire } from './operations';
+import {
+  buildFindOptions,
+  buildPipeline,
+  fromWire,
+  hasOutputStage,
+  toIndexCount,
+  toWire
+} from './operations';
 
 describe('toWire / fromWire', () => {
   it('roundtrips ObjectId and Date values', () => {
@@ -101,5 +108,23 @@ describe('buildPipeline', () => {
       { $match: { _id: expect.any(ObjectId) } },
       { $limit: 10 }
     ]);
+  });
+});
+
+describe('toIndexCount', () => {
+  it('passes through finite numbers', () => {
+    expect(toIndexCount(0)).toBe(0);
+    expect(toIndexCount(1234)).toBe(1234);
+  });
+
+  it('converts BSON Long values', () => {
+    expect(toIndexCount(BSON.Long.fromNumber(42))).toBe(42);
+  });
+
+  it('converts numeric strings and rejects garbage', () => {
+    expect(toIndexCount('17')).toBe(17);
+    expect(toIndexCount(undefined)).toBe(0);
+    expect(toIndexCount(null)).toBe(0);
+    expect(toIndexCount(Number.NaN)).toBe(0);
   });
 });

@@ -17,14 +17,15 @@ export function indexTypeLabel(key: Record<string, unknown>): string {
 
 export function indexProperties(index: CollectionIndexInfo): string {
   const props: string[] = [];
-  if (index.unique === true) props.push('unique');
-  if (index.sparse === true) props.push('sparse');
-  if (index.hidden === true) props.push('hidden');
+  props.push(Object.keys(index.key).length > 1 ? 'Compound' : 'Single');
+  if (index.unique === true) props.push('Unique');
+  if (index.sparse === true) props.push('Sparse');
+  if (index.hidden === true) props.push('Hidden');
   if (index.expireAfterSeconds !== undefined) {
-    props.push(`expireAfterSeconds=${index.expireAfterSeconds}`);
+    props.push(`TTL (${index.expireAfterSeconds}s)`);
   }
-  if (index.partialFilterExpression !== undefined) props.push('partial');
-  return props.length > 0 ? props.join(', ') : '—';
+  if (index.partialFilterExpression !== undefined) props.push('Partial');
+  return props.join(', ');
 }
 
 export function formatIndexSize(bytes: number | undefined): string {
@@ -37,4 +38,12 @@ export function formatIndexSize(bytes: number | undefined): string {
 export function formatIndexUsage(count: number | undefined): string {
   if (count === undefined) return '—';
   return count.toLocaleString('en-US');
+}
+
+export function indexUsageLabel(count: number | undefined, since?: string): string {
+  if (count === undefined) return '—';
+  const base = formatIndexUsage(count);
+  const sinceLabel =
+    since !== undefined && since.length >= 10 ? ` since ${since.slice(0, 10)}` : '';
+  return `${base}${sinceLabel}`;
 }

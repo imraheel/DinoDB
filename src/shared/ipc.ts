@@ -33,6 +33,7 @@ export interface CollectionIndexInfo {
   partialFilterExpression?: Record<string, unknown>;
   sizeBytes?: number;
   usageCount?: number;
+  usageSince?: string;
 }
 
 export interface UtilityResponses {

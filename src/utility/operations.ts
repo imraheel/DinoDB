@@ -14,6 +14,20 @@ export function clampLimit(limit: number): number {
   return Math.min(1000, Math.max(1, limit));
 }
 
+export function toIndexCount(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    'toNumber' in value &&
+    typeof (value as { toNumber: unknown }).toNumber === 'function'
+  ) {
+    return (value as { toNumber(): number }).toNumber();
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function hasOutputStage(pipeline: unknown): boolean {
   if (!Array.isArray(pipeline)) return false;
   return pipeline.some(
@@ -285,23 +299,36 @@ export async function executeRequest(
         const stats = await ctx.client
           .db(request.database)
           .command({ collStats: request.collection, scale: 1 });
-        sizes = (stats.indexSizes ?? {}) as Record<string, number>;
+        const rawSizes = (stats.indexSizes ?? {}) as Record<string, unknown>;
+        for (const [name, value] of Object.entries(rawSizes)) {
+          sizes[name] = toIndexCount(value);
+        }
       } catch {
         sizes = {};
       }
       let usage: Record<string, number> = {};
+      let usageSince: Record<string, string> = {};
       try {
         const statRows = await collection
           .aggregate([{ $indexStats: {} }], { maxTimeMS: maxTimeMs })
           .toArray();
         for (const row of statRows) {
           const name = (row as Record<string, unknown>).name;
-          if (typeof name === 'string') {
-            usage[name] = Number((row as Record<string, unknown>).accessOps ?? 0);
+          if (typeof name !== 'string') continue;
+          const accesses = (row as Record<string, unknown>).accesses;
+          if (accesses !== null && typeof accesses === 'object') {
+            const accessRecord = accesses as Record<string, unknown>;
+            usage[name] = toIndexCount(accessRecord.ops);
+            const since = accessRecord.since;
+            if (since instanceof Date) usageSince[name] = since.toISOString();
+            else if (typeof since === 'string') usageSince[name] = since;
+            continue;
           }
+          usage[name] = toIndexCount((row as Record<string, unknown>).accessOps);
         }
       } catch {
         usage = {};
+        usageSince = {};
       }
       const indexes: CollectionIndexInfo[] = specs.map((spec) => {
         const record = spec as Record<string, unknown>;
@@ -321,7 +348,8 @@ export async function executeRequest(
               ? (toWire(record.partialFilterExpression) as Record<string, unknown>)
               : undefined,
           sizeBytes: sizes[name],
-          usageCount: usage[name]
+          usageCount: usage[name],
+          usageSince: usageSince[name]
         };
       });
       return { indexes };

@@ -3,9 +3,9 @@ import type { TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import {
   formatIndexSize,
-  formatIndexUsage,
   indexProperties,
-  indexTypeLabel
+  indexTypeLabel,
+  indexUsageLabel
 } from '../lib/indexes';
 import { toShellJson, parseShellJson } from '../lib/shell-json';
 import type { CollectionIndexInfo } from '../../../shared/ipc';
@@ -293,7 +293,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
                         {formatIndexSize(index.sizeBytes)}
                       </td>
                       <td className="border-b border-border px-3 py-1.5">
-                        {formatIndexUsage(index.usageCount)}
+                        {indexUsageLabel(index.usageCount, index.usageSince)}
                       </td>
                     </tr>
                   );
