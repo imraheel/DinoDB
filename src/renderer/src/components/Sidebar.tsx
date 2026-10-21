@@ -14,7 +14,6 @@ interface SidebarProps {
   onAdd: () => void;
   onEdit: (connection: ConnectionConfig) => void;
   manageOpen: boolean;
-  onManageOpen: () => void;
   onManageClose: () => void;
 }
 
@@ -54,7 +53,6 @@ export default function Sidebar({
   onAdd,
   onEdit,
   manageOpen,
-  onManageOpen,
   onManageClose
 }: SidebarProps) {
   const { state, dispatch } = useApp();
@@ -430,19 +428,8 @@ export default function Sidebar({
         onMouseDown={handleResizeMouseDown}
         className="window-no-drag absolute inset-y-0 -right-0.5 z-10 w-1 cursor-col-resize hover:bg-accent/40"
       />
-      <div className="traffic-gutter window-drag flex h-9 shrink-0 items-center justify-end border-b border-border pr-2">
-        <Button
-          variant="quiet"
-          size="sm"
-          className="window-no-drag font-medium text-accent"
-          onClick={onManageOpen}
-          aria-label="Manage connections"
-        >
-          Connect
-        </Button>
-      </div>
-      <div className="window-no-drag shrink-0 border-b border-border px-2 py-1.5">
-        <div className="relative">
+      <div className="flex h-9 shrink-0 items-center border-b border-border px-2">
+        <div className="relative w-full">
           <svg
             className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-label-tertiary"
             width="12"

@@ -4,3 +4,4 @@ dist/
 docs/
 *.log
 .DS_Store
+.superpowers/

@@ -5,12 +5,15 @@ import Sidebar from './components/Sidebar';
 import TabBar from './components/TabBar';
 import TabIndexManager from './components/TabIndexManager';
 import TabWorkspace from './components/TabWorkspace';
+import Titlebar from './components/Titlebar';
 import WelcomeScreen from './components/WelcomeScreen';
 import { useApp } from './context/AppState';
 import { setMonacoAccent, setMonacoTheme } from './lib/monaco';
 import { applyAppearance } from './lib/appearance';
 import { applyTheme, resolveTheme } from './lib/theme';
 import type { ConnectionConfig } from '../../shared/types';
+
+const IS_MACOS = /Macintosh|Mac OS X/.test(navigator.userAgent);
 
 export default function AppShell() {
   const { state, dispatch } = useApp();
@@ -78,31 +81,38 @@ export default function AppShell() {
   ]);
 
   return (
-    <div className="flex h-screen">
-      <Sidebar
-        onAdd={() => setModal({ open: true, editing: null })}
-        onEdit={(connection) => setModal({ open: true, editing: connection })}
-        manageOpen={connectionsOpen}
-        onManageOpen={() => setConnectionsOpen(true)}
-        onManageClose={() => setConnectionsOpen(false)}
-      />
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
-        <TabBar />
-        {state.tabs.length === 0 ? (
-          <WelcomeScreen
-            onOpenManager={() => setConnectionsOpen(true)}
-            onNewConnection={() => setModal({ open: true, editing: null })}
-          />
-        ) : (
-          state.tabs.map((tab) =>
-            tab.kind === 'indexes' ? (
-              <TabIndexManager key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
-            ) : (
-              <TabWorkspace key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+    <div className="flex h-screen flex-col">
+      {IS_MACOS ? (
+        <Titlebar
+          onConnect={() => setConnectionsOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      ) : null}
+      <div className="flex min-h-0 flex-1">
+        <Sidebar
+          onAdd={() => setModal({ open: true, editing: null })}
+          onEdit={(connection) => setModal({ open: true, editing: connection })}
+          manageOpen={connectionsOpen}
+          onManageClose={() => setConnectionsOpen(false)}
+        />
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
+          <TabBar />
+          {state.tabs.length === 0 ? (
+            <WelcomeScreen
+              onOpenManager={() => setConnectionsOpen(true)}
+              onNewConnection={() => setModal({ open: true, editing: null })}
+            />
+          ) : (
+            state.tabs.map((tab) =>
+              tab.kind === 'indexes' ? (
+                <TabIndexManager key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+              ) : (
+                <TabWorkspace key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+              )
             )
-          )
-        )}
-      </main>
+          )}
+        </main>
+      </div>
       <ConnectionModal
         open={modal.open}
         editing={modal.editing}

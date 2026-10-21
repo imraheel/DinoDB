@@ -337,7 +337,7 @@ export default function TabBar() {
   return (
     <div
       ref={barRef}
-      className="window-drag flex h-9 shrink-0 items-end border-b border-border bg-chrome select-none"
+      className="flex h-9 shrink-0 items-end border-b border-border bg-chrome select-none"
     >
       {pinnedTabs.length > 0 ? (
         <div className="flex shrink-0 items-end gap-1 px-2 pt-1">{pinnedTabs.map(renderTab)}</div>

@@ -171,10 +171,6 @@ body {
 }
 
 @layer components {
-  .traffic-gutter {
-    padding-left: 70px;
-  }
-
   .button-neutral {
     background-image: linear-gradient(to bottom, #fefefe, #f2f2f5);
     border: 1px solid var(--color-border-strong);
