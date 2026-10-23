@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createDefaultQuery,
-  emptySession,
-  initialState,
-  reducer
-} from './reducer';
+import { createDefaultQuery, emptySession, initialState, reducer } from './reducer';
 import type { AppStateState, SessionState, TabMeta } from './reducer';
 import type { FindResult } from '../../../shared/ipc';
 import type { ConnectionConfig } from '../../../shared/types';
@@ -30,7 +25,14 @@ function makeConnection(id: string): ConnectionConfig {
 }
 
 function makeTab(id: string, connectionId = 'c1'): TabMeta {
-  return { id, connectionId, connectionName: `Conn ${connectionId}`, database: 'db', collection: 'coll', title: 'db.coll' };
+  return {
+    id,
+    connectionId,
+    connectionName: `Conn ${connectionId}`,
+    database: 'db',
+    collection: 'coll',
+    title: 'db.coll'
+  };
 }
 
 function stateWithTabs(tabs: TabMeta[]): AppStateState {
@@ -119,7 +121,11 @@ describe('reducer tab actions', () => {
 
   it('tab/query patches the query and tab/loading, tab/errored, tab/errorCleared update the tab data', () => {
     let state = stateWithTabs([makeTab('t1')]);
-    state = reducer(state, { type: 'tab/query', tabId: 't1', patch: { text: 'find({a: 1})', limit: '5' } });
+    state = reducer(state, {
+      type: 'tab/query',
+      tabId: 't1',
+      patch: { text: 'find({a: 1})', limit: '5' }
+    });
     expect(state.tabData.t1.query.text).toBe('find({a: 1})');
     expect(state.tabData.t1.query.limit).toBe('5');
     expect(state.tabData.t1.query.skip).toBe('0');
@@ -196,7 +202,12 @@ describe('reducer tab actions', () => {
 
   it('tab/reordered moves a tab before and after a target', () => {
     let state = stateWithTabs([makeTab('a'), makeTab('b'), makeTab('c'), makeTab('d')]);
-    state = reducer(state, { type: 'tab/reordered', tabId: 'd', targetId: 'b', position: 'before' });
+    state = reducer(state, {
+      type: 'tab/reordered',
+      tabId: 'd',
+      targetId: 'b',
+      position: 'before'
+    });
     expect(state.tabs.map((t) => t.id)).toEqual(['a', 'd', 'b', 'c']);
     state = reducer(state, { type: 'tab/reordered', tabId: 'd', targetId: 'b', position: 'after' });
     expect(state.tabs.map((t) => t.id)).toEqual(['a', 'b', 'd', 'c']);
@@ -206,7 +217,12 @@ describe('reducer tab actions', () => {
 
   it('tab/reordered ignores self drops and unknown ids', () => {
     const state = stateWithTabs([makeTab('a'), makeTab('b')]);
-    const self = reducer(state, { type: 'tab/reordered', tabId: 'a', targetId: 'a', position: 'before' });
+    const self = reducer(state, {
+      type: 'tab/reordered',
+      tabId: 'a',
+      targetId: 'a',
+      position: 'before'
+    });
     expect(self.tabs.map((t) => t.id)).toEqual(['a', 'b']);
     const unknown = reducer(state, {
       type: 'tab/reordered',
@@ -220,7 +236,10 @@ describe('reducer tab actions', () => {
 
 describe('reducer connection actions', () => {
   it('connections/upserted adds then replaces by id', () => {
-    let state = reducer(initialState, { type: 'connections/loaded', connections: [makeConnection('c1')] });
+    let state = reducer(initialState, {
+      type: 'connections/loaded',
+      connections: [makeConnection('c1')]
+    });
     state = reducer(state, { type: 'connections/upserted', connection: makeConnection('c2') });
     expect(state.connections.map((c) => c.id)).toEqual(['c1', 'c2']);
     const renamed: ConnectionConfig = { ...makeConnection('c1'), name: 'Renamed' };
@@ -262,7 +281,11 @@ describe('reducer session actions', () => {
   it('session lifecycle transitions', () => {
     let state = reducer(initialState, { type: 'session/connecting', connectionId: 'c1' });
     expect(state.sessions.c1.status).toBe('connecting');
-    state = reducer(state, { type: 'session/connected', connectionId: 'c1', databases: ['a', 'b'] });
+    state = reducer(state, {
+      type: 'session/connected',
+      connectionId: 'c1',
+      databases: ['a', 'b']
+    });
     expect(state.sessions.c1.status).toBe('connected');
     expect(state.sessions.c1.databases).toEqual(['a', 'b']);
     expect(state.sessions.c1.error).toBeUndefined();
@@ -274,7 +297,11 @@ describe('reducer session actions', () => {
   });
 
   it('session/expand toggles the database entry', () => {
-    let state = reducer(initialState, { type: 'session/connected', connectionId: 'c1', databases: ['a', 'b'] });
+    let state = reducer(initialState, {
+      type: 'session/connected',
+      connectionId: 'c1',
+      databases: ['a', 'b']
+    });
     state = reducer(state, { type: 'session/expand', connectionId: 'c1', database: 'a' });
     expect(state.sessions.c1.expanded.a).toBe(true);
     expect(state.sessions.c1.expanded.b).toBeUndefined();
@@ -296,7 +323,12 @@ describe('reducer session actions', () => {
 
 describe('reducer settings actions', () => {
   it('settings/loaded replaces settings and settings/patched merges a partial', () => {
-    const loaded = { ...DEFAULT_SETTINGS, theme: 'dark' as const, maxTimeMs: 10000, defaultLimit: 10 };
+    const loaded = {
+      ...DEFAULT_SETTINGS,
+      theme: 'dark' as const,
+      maxTimeMs: 10000,
+      defaultLimit: 10
+    };
     let state = reducer(initialState, {
       type: 'settings/loaded',
       settings: loaded

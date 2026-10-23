@@ -20,9 +20,8 @@ export function toShellJson(value: unknown): string {
 }
 
 export function parseShellJson(text: string): unknown {
-  const withPlaceholders = text.replace(
-    /ObjectId\(\s*"([^"]+)"\s*\)/g,
-    (_match, hex: string) => JSON.stringify({ $oid: hex })
+  const withPlaceholders = text.replace(/ObjectId\(\s*"([^"]+)"\s*\)/g, (_match, hex: string) =>
+    JSON.stringify({ $oid: hex })
   );
   return JSON.parse(withPlaceholders);
 }

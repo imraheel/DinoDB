@@ -58,9 +58,7 @@ export type ParsedQuery =
       options?: Record<string, unknown>;
     });
 
-export type ShellQueryResult =
-  | { ok: true; value: ParsedQuery }
-  | { ok: false; message: string };
+export type ShellQueryResult = { ok: true; value: ParsedQuery } | { ok: false; message: string };
 
 function isIdentStart(ch: string): boolean {
   return /[A-Za-z_$]/.test(ch);
@@ -574,9 +572,7 @@ function buildParsed(name: QueryMethod, args: string[], tail: string): ShellQuer
       expectArgs(args, 1, 2, 'createIndex() usage: createIndex(key, options?)');
       const key = readObject(args[0], 'createIndex() key');
       if (key === undefined) {
-        throw new Error(
-          'createIndex() requires a key pattern, e.g. createIndex({ companyId: 1 })'
-        );
+        throw new Error('createIndex() requires a key pattern, e.g. createIndex({ companyId: 1 })');
       }
       const options = args.length > 1 ? readObject(args[1], 'createIndex() options') : undefined;
       return {

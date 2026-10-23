@@ -102,9 +102,11 @@ export default function DataTable({
   onDelete,
   onRefresh
 }: DataTableProps) {
-  const columns =
-    documents.length > 0 ? getColumns([], documents) : getColumns(fields, []);
-  const keys = useMemo(() => documents.map((document, index) => rowKey(document, index)), [documents]);
+  const columns = documents.length > 0 ? getColumns([], documents) : getColumns(fields, []);
+  const keys = useMemo(
+    () => documents.map((document, index) => rowKey(document, index)),
+    [documents]
+  );
   const [selectedKeys, setSelectedKeys] = useState<ReadonlySet<string>>(() => new Set());
   const anchorKeyRef = useRef<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
@@ -177,8 +179,7 @@ export default function DataTable({
     function isEditableTarget(target: EventTarget | null): boolean {
       if (!(target instanceof HTMLElement)) return false;
       return (
-        target.closest('input, textarea, select, [contenteditable="true"], .monaco-editor') !==
-        null
+        target.closest('input, textarea, select, [contenteditable="true"], .monaco-editor') !== null
       );
     }
 
@@ -385,8 +386,7 @@ export default function DataTable({
                     {columns.map((column) => {
                       const raw = isRecord(document) ? document[column] : undefined;
                       const text = displayCell(document, column);
-                      const cellSelected =
-                        cellSelectedRow && selectedCell?.column === column;
+                      const cellSelected = cellSelectedRow && selectedCell?.column === column;
                       const colorClass = selected ? '' : cellColorClass(raw);
                       const baseClass =
                         'max-w-72 cursor-default truncate border-b border-border px-3 py-1.5';
@@ -433,7 +433,9 @@ export default function DataTable({
               View document
             </MenuItem>
           ) : null}
-          {menuDoc !== null && isMulti ? null : menuDoc !== null && canMutate && onEdit !== undefined ? (
+          {menuDoc !== null && isMulti ? null : menuDoc !== null &&
+            canMutate &&
+            onEdit !== undefined ? (
             <MenuItem
               shortcut={shortcutLabel(MOD_KEY, 'J')}
               onClick={handleMenuItem(() => onEdit(menuDoc))}
@@ -445,9 +447,7 @@ export default function DataTable({
             <MenuItem
               danger
               shortcut="⇧⌫"
-              onClick={handleMenuItem(() =>
-                onDelete(menuInSelection ? selectedDocs : [menuDoc])
-              )}
+              onClick={handleMenuItem(() => onDelete(menuInSelection ? selectedDocs : [menuDoc]))}
             >
               {isMulti ? `Delete ${multiCount} documents` : 'Delete document'}
             </MenuItem>
@@ -489,10 +489,7 @@ export default function DataTable({
           {onRefresh !== undefined ? (
             <>
               <MenuSeparator />
-              <MenuItem
-                shortcut={shortcutLabel(MOD_KEY, 'R')}
-                onClick={handleMenuItem(onRefresh)}
-              >
+              <MenuItem shortcut={shortcutLabel(MOD_KEY, 'R')} onClick={handleMenuItem(onRefresh)}>
                 Refresh
               </MenuItem>
             </>

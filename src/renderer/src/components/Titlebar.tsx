@@ -53,8 +53,7 @@ export default function Titlebar({
   onOpenSettings
 }: TitlebarProps) {
   const { state } = useApp();
-  const title =
-    state.tabs.find((tab) => tab.id === state.activeTabId)?.title ?? 'NexDB';
+  const title = state.tabs.find((tab) => tab.id === state.activeTabId)?.title ?? 'NexDB';
 
   return (
     <div className="window-drag relative flex h-9 shrink-0 items-center border-b border-border bg-chrome select-none">

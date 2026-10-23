@@ -193,7 +193,10 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
       const session = state.sessions[action.connectionId] ?? emptySession();
       const next: SessionState = {
         ...session,
-        expanded: { ...session.expanded, [action.database]: !(session.expanded[action.database] ?? false) }
+        expanded: {
+          ...session.expanded,
+          [action.database]: !(session.expanded[action.database] ?? false)
+        }
       };
       return { ...state, sessions: { ...state.sessions, [action.connectionId]: next } };
     }

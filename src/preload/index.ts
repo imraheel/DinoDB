@@ -12,7 +12,10 @@ const api: MongoExplorerApi = {
     ipcRenderer.invoke(IPC.sessionsCollections, { connectionId, database }),
   disconnectSession: (id) => ipcRenderer.invoke(IPC.sessionsDisconnect, id),
   adminSession: ((connectionId: string, request: UtilityRequest) =>
-    ipcRenderer.invoke(IPC.sessionsAdmin, { connectionId, request })) as MongoExplorerApi['adminSession'],
+    ipcRenderer.invoke(IPC.sessionsAdmin, {
+      connectionId,
+      request
+    })) as MongoExplorerApi['adminSession'],
   createTab: (input) => ipcRenderer.invoke(IPC.tabsCreate, input),
   executeTab: ((tabId: string, request: UtilityRequest) =>
     ipcRenderer.invoke(IPC.tabsExecute, { tabId, request })) as MongoExplorerApi['executeTab'],

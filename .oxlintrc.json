@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "oxc", "unicorn", "promise"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/set-state-in-effect": "off",
+    "react/refs": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "react/jsx-no-constructed-context-values": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/no-await-in-loop": "off",
+    "eslint/preserve-caught-error": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/require-post-message-target-origin": "off",
+    "unicorn/require-module-specifiers": "off",
+    "promise/always-return": "off"
+  },
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "ignorePatterns": ["out", "dist", "release"],
+  "overrides": [
+    {
+      "files": ["**/utility-client.test.ts"],
+      "rules": {
+        "unicorn/no-useless-spread": "off"
+      }
+    }
+  ]
+}

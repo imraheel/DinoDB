@@ -17,11 +17,11 @@ Every collection tab runs in its own forked worker process with a hard timeout, 
 
 ## Supported Platforms
 
-| Platform | Artifact |
-| --- | --- |
-| macOS 12+ (Intel & Apple Silicon) | `.dmg`, `.zip` |
-| Windows 10/11 (x64) | NSIS installer (`.exe`) |
-| Linux | Planned |
+| Platform                          | Artifact                |
+| --------------------------------- | ----------------------- |
+| macOS 12+ (Intel & Apple Silicon) | `.dmg`, `.zip`          |
+| Windows 10/11 (x64)               | NSIS installer (`.exe`) |
+| Linux                             | Planned                 |
 
 ## Download
 
@@ -29,17 +29,17 @@ Grab the latest build from the [Releases](https://github.com/imraheel/mongo-clie
 
 ## Development
 
-| Command | Description |
-| --- | --- |
-| `pnpm install` | Install dependencies |
-| `pnpm dev` | Launch the app with hot reload |
-| `pnpm test` | Run unit tests |
-| `pnpm typecheck` | Type-check all TypeScript projects |
-| `pnpm build` | Production build |
-| `pnpm clean` | Remove `dist/` and `out/` |
-| `pnpm package:mac` | Build macOS installers |
-| `pnpm package:win` | Build Windows installer (x64) |
-| `pnpm package:all` | Build for macOS and Windows |
+| Command            | Description                        |
+| ------------------ | ---------------------------------- |
+| `pnpm install`     | Install dependencies               |
+| `pnpm dev`         | Launch the app with hot reload     |
+| `pnpm test`        | Run unit tests                     |
+| `pnpm typecheck`   | Type-check all TypeScript projects |
+| `pnpm build`       | Production build                   |
+| `pnpm clean`       | Remove `dist/` and `out/`          |
+| `pnpm package:mac` | Build macOS installers             |
+| `pnpm package:win` | Build Windows installer (x64)      |
+| `pnpm package:all` | Build for macOS and Windows        |
 
 To cut a release, push a tag — CI builds both platforms and publishes a GitHub Release with the installers attached:
 

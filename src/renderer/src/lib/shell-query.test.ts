@@ -289,13 +289,15 @@ describe('parseShellQuery', () => {
   });
 
   it('parses createIndex with a key and optional options', () => {
-    expect(parseOk("db.getCollection('crm_leads').createIndex( { \"companyId\": 1 } )")).toEqual({
+    expect(parseOk('db.getCollection(\'crm_leads\').createIndex( { "companyId": 1 } )')).toEqual({
       op: 'createIndex',
       key: { companyId: 1 },
       collection: 'crm_leads'
     });
     expect(
-      parseOk("db.crm_leads.createIndex({ companyId: 1, externalId: 1 }, { unique: true, name: 'company_external' })")
+      parseOk(
+        "db.crm_leads.createIndex({ companyId: 1, externalId: 1 }, { unique: true, name: 'company_external' })"
+      )
     ).toEqual({
       op: 'createIndex',
       key: { companyId: 1, externalId: 1 },
@@ -376,7 +378,9 @@ db.getCollection("users").find({
     const segments = splitQueries(script);
     expect(segments).toHaveLength(2);
     expect(segments[0].text).toBe(`db.getCollection("users").find({ email: 'test@agent.com' })`);
-    expect(segments[1].text).toBe(`db.getCollection("users").find({\n  email: 'demo@company.com'\n})`);
+    expect(segments[1].text).toBe(
+      `db.getCollection("users").find({\n  email: 'demo@company.com'\n})`
+    );
     expect(script.slice(segments[0].start, segments[0].end)).toBe(segments[0].text);
     expect(script.slice(segments[1].start, segments[1].end)).toBe(segments[1].text);
   });

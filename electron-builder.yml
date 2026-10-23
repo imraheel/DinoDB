@@ -7,12 +7,12 @@ files:
   - out/**/*
   - build/icon.png
   - build/icon.ico
-  - "!src/**/*"
-  - "!docs/**/*"
-  - "!scripts/**/*"
-  - "!electron.vite.config.mts"
-  - "!tsconfig*.json"
-  - "!vitest.config.ts"
+  - '!src/**/*'
+  - '!docs/**/*'
+  - '!scripts/**/*'
+  - '!electron.vite.config.mts'
+  - '!tsconfig*.json'
+  - '!vitest.config.ts'
 asar: true
 asarUnpack:
   - node_modules/better-sqlite3/**/*

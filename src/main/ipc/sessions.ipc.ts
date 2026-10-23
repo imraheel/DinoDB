@@ -11,12 +11,18 @@ export function registerSessionsIpc(deps: IpcDeps): void {
     })
   );
 
-  ipcMain.handle(IPC.sessionsCollections, (_event, payload: { connectionId: string; database: string }) =>
-    deps.sessions.listCollections(payload.connectionId, payload.database).then((collections) => ({ collections }))
+  ipcMain.handle(
+    IPC.sessionsCollections,
+    (_event, payload: { connectionId: string; database: string }) =>
+      deps.sessions
+        .listCollections(payload.connectionId, payload.database)
+        .then((collections) => ({ collections }))
   );
 
-  ipcMain.handle(IPC.sessionsAdmin, (_event, payload: { connectionId: string; request: AdminUtilityRequest }) =>
-    deps.sessions.admin(payload.connectionId, payload.request)
+  ipcMain.handle(
+    IPC.sessionsAdmin,
+    (_event, payload: { connectionId: string; request: AdminUtilityRequest }) =>
+      deps.sessions.admin(payload.connectionId, payload.request)
   );
 
   ipcMain.handle(IPC.sessionsDisconnect, (_event, connectionId: string) => {

@@ -20,9 +20,7 @@ describe('indexTypeLabel', () => {
   });
 
   it('joins compound key parts with commas', () => {
-    expect(indexTypeLabel({ a: 1, b: -1, c: 'text' })).toBe(
-      'ascending, descending, text'
-    );
+    expect(indexTypeLabel({ a: 1, b: -1, c: 'text' })).toBe('ascending, descending, text');
   });
 });
 
@@ -87,9 +85,7 @@ describe('indexUsageLabel', () => {
 
   it('appends the since date when provided', () => {
     expect(indexUsageLabel(99, '2026-08-04T07:23:45.049Z')).toBe('99 since 2026-08-04');
-    expect(indexUsageLabel(1546806, '2026-08-04T07:23:45.049Z')).toBe(
-      '1,546,806 since 2026-08-04'
-    );
+    expect(indexUsageLabel(1546806, '2026-08-04T07:23:45.049Z')).toBe('1,546,806 since 2026-08-04');
     expect(indexUsageLabel(99, undefined)).toBe('99');
     expect(indexUsageLabel(99, '')).toBe('99');
   });

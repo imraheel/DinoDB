@@ -1,14 +1,25 @@
 import type { ConnectionConfig } from './types';
 
-export type UriSource = Pick<ConnectionConfig,
-  'host' | 'port' | 'defaultDatabase' | 'username' | 'password' |
-  'authMechanism' | 'authSource' | 'authMechanismProperties' | 'extraOptions'>;
+export type UriSource = Pick<
+  ConnectionConfig,
+  | 'host'
+  | 'port'
+  | 'defaultDatabase'
+  | 'username'
+  | 'password'
+  | 'authMechanism'
+  | 'authSource'
+  | 'authMechanismProperties'
+  | 'extraOptions'
+>;
 
 export function isJsonObject(text: string): boolean {
   try {
     const value: unknown = JSON.parse(text);
     return typeof value === 'object' && value !== null && !Array.isArray(value);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 export function buildMongoUri(cfg: UriSource): string {
@@ -19,11 +30,14 @@ export function buildMongoUri(cfg: UriSource): string {
 
   if (cfg.username) {
     if (cfg.authSource) params.push(`authSource=${encodeURIComponent(cfg.authSource)}`);
-    if (cfg.authMechanism && cfg.authMechanism !== 'DEFAULT') params.push(`authMechanism=${cfg.authMechanism}`);
+    if (cfg.authMechanism && cfg.authMechanism !== 'DEFAULT')
+      params.push(`authMechanism=${cfg.authMechanism}`);
     const props = cfg.authMechanismProperties.trim();
     if (props) {
       if (!isJsonObject(props)) throw new Error('authMechanismProperties must be a JSON object');
-      const pairs = Object.entries(JSON.parse(props) as Record<string, unknown>).map(([k, v]) => `${k}:${String(v)}`);
+      const pairs = Object.entries(JSON.parse(props) as Record<string, unknown>).map(
+        ([k, v]) => `${k}:${String(v)}`
+      );
       params.push(`authMechanismProperties=${encodeURIComponent(pairs.join(','))}`);
     }
   }

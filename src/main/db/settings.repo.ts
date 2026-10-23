@@ -39,11 +39,7 @@ function isInRangeInt(value: unknown, min: number, max: number): value is number
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
 }
 
-function oneOf<T extends string>(
-  value: unknown,
-  allowed: readonly string[],
-  fallback: T
-): T {
+function oneOf<T extends string>(value: unknown, allowed: readonly string[], fallback: T): T {
   return typeof value === 'string' && allowed.includes(value) ? (value as T) : fallback;
 }
 
@@ -76,7 +72,9 @@ export function getSettings(db: DatabaseHandle): AppSettings {
     ? stored.editorFontSize
     : DEFAULT_SETTINGS.editorFontSize;
   const maxTimeMs = isPositiveInt(stored.maxTimeMs) ? stored.maxTimeMs : DEFAULT_SETTINGS.maxTimeMs;
-  const defaultLimit = isValidLimit(stored.defaultLimit) ? stored.defaultLimit : DEFAULT_SETTINGS.defaultLimit;
+  const defaultLimit = isValidLimit(stored.defaultLimit)
+    ? stored.defaultLimit
+    : DEFAULT_SETTINGS.defaultLimit;
   return {
     theme,
     accent,

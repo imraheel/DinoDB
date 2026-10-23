@@ -1,4 +1,10 @@
-import { BSON, type Document, type FindOptions, type IndexSpecification, type MongoClient } from 'mongodb';
+import {
+  BSON,
+  type Document,
+  type FindOptions,
+  type IndexSpecification,
+  type MongoClient
+} from 'mongodb';
 import type { CollectionIndexInfo, UtilityRequest, UtilityResponses } from '../shared/ipc';
 import { inferSchema } from './schema';
 
@@ -141,11 +147,10 @@ export async function executeRequest(
       const result = await ctx.client
         .db(request.database)
         .collection(request.collection)
-        .replaceOne(
-          fromWire(request.target) as Document,
-          fromWire(request.document) as Document,
-          { upsert: request.upsert ?? false, maxTimeMS: maxTimeMs }
-        );
+        .replaceOne(fromWire(request.target) as Document, fromWire(request.document) as Document, {
+          upsert: request.upsert ?? false,
+          maxTimeMS: maxTimeMs
+        });
       return {
         matched: result.matchedCount,
         modified: result.modifiedCount,
@@ -169,7 +174,12 @@ export async function executeRequest(
           { maxTimeMS: maxTimeMs }
         );
       const first = result.insertedIds[0];
-      return { matched: 0, modified: 0, deleted: 0, insertedId: first != null ? toWire(first) : null };
+      return {
+        matched: 0,
+        modified: 0,
+        deleted: 0,
+        insertedId: first != null ? toWire(first) : null
+      };
     }
     case 'deleteMany': {
       const result = await ctx.client
@@ -257,15 +267,13 @@ export async function executeRequest(
       return { ok: true };
     }
     case 'renameCollection': {
-      await ctx.client
-        .db('admin')
-        .command(
-          {
-            renameCollection: `${request.database}.${request.collection}`,
-            to: `${request.database}.${request.newName}`
-          },
-          { timeoutMS: maxTimeMs }
-        );
+      await ctx.client.db('admin').command(
+        {
+          renameCollection: `${request.database}.${request.collection}`,
+          to: `${request.database}.${request.newName}`
+        },
+        { timeoutMS: maxTimeMs }
+      );
       return { ok: true };
     }
     case 'duplicateCollection': {
@@ -340,9 +348,7 @@ export async function executeRequest(
           sparse: record.sparse === true,
           hidden: record.hidden === true,
           expireAfterSeconds:
-            typeof record.expireAfterSeconds === 'number'
-              ? record.expireAfterSeconds
-              : undefined,
+            typeof record.expireAfterSeconds === 'number' ? record.expireAfterSeconds : undefined,
           partialFilterExpression:
             record.partialFilterExpression !== undefined
               ? (toWire(record.partialFilterExpression) as Record<string, unknown>)

@@ -231,7 +231,12 @@ export default function TabBar() {
       dragState.drop = drop;
       setDropTarget((prev) => {
         if (prev === null && drop === null) return prev;
-        if (prev !== null && drop !== null && prev.id === drop.id && prev.position === drop.position) {
+        if (
+          prev !== null &&
+          drop !== null &&
+          prev.id === drop.id &&
+          prev.position === drop.position
+        ) {
           return prev;
         }
         return drop;
@@ -278,9 +283,7 @@ export default function TabBar() {
         onContextMenu={(event) => openTabMenu(event, tab.id)}
         className={`window-no-drag group relative flex items-center rounded-t-[6px] ${
           pinned ? 'w-40 shrink-0' : 'min-w-40 max-w-52 flex-1'
-        } ${
-          dragging ? 'opacity-50' : ''
-        } ${
+        } ${dragging ? 'opacity-50' : ''} ${
           active ? 'bg-surface shadow-[0_-1px_2px_rgba(0,0,0,0.04)]' : 'hover:bg-sidebar-hover'
         }`}
       >
@@ -298,9 +301,7 @@ export default function TabBar() {
           }`}
         >
           {pinned ? (
-            <span
-              className={`shrink-0 ${active ? 'text-label-secondary' : 'text-label-tertiary'}`}
-            >
+            <span className={`shrink-0 ${active ? 'text-label-secondary' : 'text-label-tertiary'}`}>
               <PinIcon size={11} />
             </span>
           ) : null}
@@ -342,10 +343,7 @@ export default function TabBar() {
       {pinnedTabs.length > 0 ? (
         <div className="flex shrink-0 items-end gap-1 px-2 pt-1">{pinnedTabs.map(renderTab)}</div>
       ) : null}
-      <div
-        ref={containerRef}
-        className="relative flex min-w-0 flex-1 items-end overflow-hidden"
-      >
+      <div ref={containerRef} className="relative flex min-w-0 flex-1 items-end overflow-hidden">
         <div className="flex min-w-0 flex-1 items-end gap-1 px-2 pt-1">
           {unpinnedTabs.map(renderTab)}
         </div>

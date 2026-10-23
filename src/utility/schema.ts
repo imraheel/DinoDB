@@ -59,8 +59,6 @@ export function inferSchema(docs: Record<string, unknown>[]): SchemaField[] {
   }
   return Array.from(seen, ([path, types]) => ({
     path,
-    type: Array.from(types)
-      .sort()
-      .join(' | ')
+    type: Array.from(types).sort().join(' | ')
   }));
 }

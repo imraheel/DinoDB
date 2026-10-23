@@ -1,4 +1,9 @@
-import type { AccentSetting, AppSettings, CodeFontSetting, UiFontSetting } from '../../../shared/types';
+import type {
+  AccentSetting,
+  AppSettings,
+  CodeFontSetting,
+  UiFontSetting
+} from '../../../shared/types';
 import { resolveTheme } from './theme';
 
 export interface AccentPalette {

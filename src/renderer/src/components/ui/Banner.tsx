@@ -12,7 +12,12 @@ const TONE_CLASS = {
   success: 'bg-success-soft text-success'
 };
 
-export default function Banner({ tone = 'error', children, onDismiss, className = '' }: BannerProps) {
+export default function Banner({
+  tone = 'error',
+  children,
+  onDismiss,
+  className = ''
+}: BannerProps) {
   return (
     <div className={`flex items-start gap-2 px-3 py-1.5 text-xs ${TONE_CLASS[tone]} ${className}`}>
       <span className="min-w-0 flex-1 break-words">{children}</span>

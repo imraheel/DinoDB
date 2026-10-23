@@ -41,9 +41,12 @@ export default function DocumentModal({
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 680, height: 480 });
   const [dragging, setDragging] = useState(false);
-  const dragRef = useRef<{ startX: number; startY: number; startWidth: number; startHeight: number } | null>(
-    null
-  );
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    startWidth: number;
+    startHeight: number;
+  } | null>(null);
   const error = validate(text);
 
   function handleResizeMouseDown(event: ReactMouseEvent<HTMLDivElement>) {

@@ -119,11 +119,23 @@ export function ModalCloseButton({ onClick }: { onClick(): void }) {
   );
 }
 
-export function ModalBody({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function ModalBody({
+  children,
+  className = ''
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return <div className={`min-h-0 flex-1 overflow-y-auto px-5 py-4 ${className}`}>{children}</div>;
 }
 
-export function ModalFooter({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function ModalFooter({
+  children,
+  className = ''
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
       className={`flex shrink-0 items-center justify-end gap-2 border-t border-border px-5 py-3.5 ${className}`}

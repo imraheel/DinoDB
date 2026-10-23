@@ -14,7 +14,10 @@ export class SessionManager {
   async connect(connectionId: string): Promise<{ databases: string[] }> {
     const existing = this.sessions.get(connectionId);
     if (existing) {
-      const result = await existing.request({ kind: 'listDatabases' }, { timeoutMs: 10000, maxTimeMs: 10000 });
+      const result = await existing.request(
+        { kind: 'listDatabases' },
+        { timeoutMs: 10000, maxTimeMs: 10000 }
+      );
       return { databases: result.databases };
     }
     const connection = this.getConnection(connectionId);
@@ -22,7 +25,10 @@ export class SessionManager {
     const client = new UtilityClient(`session:${connectionId}`, this.deps);
     try {
       await client.start({ role: 'session', connection }, 20000);
-      const result = await client.request({ kind: 'listDatabases' }, { timeoutMs: 10000, maxTimeMs: 10000 });
+      const result = await client.request(
+        { kind: 'listDatabases' },
+        { timeoutMs: 10000, maxTimeMs: 10000 }
+      );
       this.sessions.set(connectionId, client);
       return { databases: result.databases };
     } catch (error) {

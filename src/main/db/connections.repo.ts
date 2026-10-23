@@ -39,7 +39,9 @@ function toConnection(row: ConnectionRow): ConnectionConfig {
 }
 
 export function listConnections(db: DatabaseHandle): ConnectionConfig[] {
-  const rows = db.prepare<[], ConnectionRow>('SELECT * FROM connections ORDER BY name COLLATE NOCASE').all();
+  const rows = db
+    .prepare<[], ConnectionRow>('SELECT * FROM connections ORDER BY name COLLATE NOCASE')
+    .all();
   return rows.map(toConnection);
 }
 
@@ -71,22 +73,24 @@ export function saveConnection(db: DatabaseHandle, input: ConnectionInput): Conn
       now
     );
   } else {
-    const result = db.prepare(
-      'UPDATE connections SET name = ?, host = ?, port = ?, default_database = ?, username = ?, password = ?, auth_mechanism = ?, auth_source = ?, auth_mechanism_properties = ?, extra_options = ?, updated_at = ? WHERE id = ?'
-    ).run(
-      input.name,
-      input.host,
-      input.port,
-      input.defaultDatabase,
-      input.username,
-      input.password,
-      input.authMechanism,
-      input.authSource,
-      input.authMechanismProperties,
-      input.extraOptions,
-      now,
-      id
-    );
+    const result = db
+      .prepare(
+        'UPDATE connections SET name = ?, host = ?, port = ?, default_database = ?, username = ?, password = ?, auth_mechanism = ?, auth_source = ?, auth_mechanism_properties = ?, extra_options = ?, updated_at = ? WHERE id = ?'
+      )
+      .run(
+        input.name,
+        input.host,
+        input.port,
+        input.defaultDatabase,
+        input.username,
+        input.password,
+        input.authMechanism,
+        input.authSource,
+        input.authMechanismProperties,
+        input.extraOptions,
+        now,
+        id
+      );
     if (result.changes === 0) throw new Error(`Connection not found: ${id}`);
   }
   const saved = getConnection(db, id);

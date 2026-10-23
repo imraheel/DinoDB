@@ -16,8 +16,12 @@ class FakeProcess implements ForkedProcess {
 
   on(event: 'message', listener: (message: UtilityToMain) => void): void;
   on(event: 'exit', listener: (code: number | null) => void): void;
-  on(event: 'message' | 'exit', listener: ((message: UtilityToMain) => void) | ((code: number | null) => void)): void {
-    if (event === 'message') this.messageListeners.push(listener as (message: UtilityToMain) => void);
+  on(
+    event: 'message' | 'exit',
+    listener: ((message: UtilityToMain) => void) | ((code: number | null) => void)
+  ): void {
+    if (event === 'message')
+      this.messageListeners.push(listener as (message: UtilityToMain) => void);
     else this.exitListeners.push(listener as (code: number | null) => void);
   }
 
@@ -80,7 +84,9 @@ function initMessage(): InitMessage {
   return { role: 'session', connection: baseConnection() };
 }
 
-async function startedClient(harness: Harness): Promise<{ client: UtilityClient; proc: FakeProcess }> {
+async function startedClient(
+  harness: Harness
+): Promise<{ client: UtilityClient; proc: FakeProcess }> {
   const client = new UtilityClient('test', harness.deps);
   const promise = client.start(initMessage());
   const proc = harness.process();
@@ -119,7 +125,12 @@ describe('utility-client', () => {
     const second = client.request({ kind: 'listDatabases' }, { timeoutMs: 1000, maxTimeMs: 1000 });
     expect(proc.posted[1]).toMatchObject({ kind: 'request', id: 1 });
     expect(proc.posted[2]).toMatchObject({ kind: 'request', id: 2 });
-    proc.emitMessage({ kind: 'response', id: 2, ok: true, result: { databases: ['alpha', 'beta'] } });
+    proc.emitMessage({
+      kind: 'response',
+      id: 2,
+      ok: true,
+      result: { databases: ['alpha', 'beta'] }
+    });
     proc.emitMessage({ kind: 'response', id: 1, ok: true, result: { version: '8.0.0' } });
     await expect(first).resolves.toEqual({ version: '8.0.0' });
     await expect(second).resolves.toEqual({ databases: ['alpha', 'beta'] });

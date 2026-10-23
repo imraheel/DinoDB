@@ -1,4 +1,10 @@
-import type { InitMessage, MainToUtility, UtilityRequest, UtilityResponses, UtilityToMain } from '../../shared/ipc';
+import type {
+  InitMessage,
+  MainToUtility,
+  UtilityRequest,
+  UtilityResponses,
+  UtilityToMain
+} from '../../shared/ipc';
 
 export interface ForkedProcess {
   postMessage(message: MainToUtility): void;
@@ -18,14 +24,20 @@ interface PendingRequest {
   timer: ReturnType<typeof setTimeout>;
 }
 
-export interface RequestOptions { timeoutMs: number; maxTimeMs: number }
+export interface RequestOptions {
+  timeoutMs: number;
+  maxTimeMs: number;
+}
 
 export class UtilityClient {
   private process: ForkedProcess | null = null;
   private nextId = 1;
   private readonly pending = new Map<number, PendingRequest>();
 
-  constructor(private readonly label: string, private readonly deps: UtilityClientDeps) {}
+  constructor(
+    private readonly label: string,
+    private readonly deps: UtilityClientDeps
+  ) {}
 
   async start(init: InitMessage, timeoutMs = 20000): Promise<void> {
     if (this.process) throw new Error(`Utility client "${this.label}" already started`);
@@ -46,13 +58,16 @@ export class UtilityClient {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        if (error) reject(error); else resolve();
+        if (error) reject(error);
+        else resolve();
       };
 
       proc.on('message', (message) => {
         if (message.kind === 'ready') settleStart();
-        else if (message.kind === 'fatal') { settleStart(new Error(message.error)); this.failAll(new Error(message.error)); }
-        else if (message.kind === 'response') {
+        else if (message.kind === 'fatal') {
+          settleStart(new Error(message.error));
+          this.failAll(new Error(message.error));
+        } else if (message.kind === 'response') {
           const request = this.pending.get(message.id);
           if (!request) return;
           this.pending.delete(message.id);
@@ -63,7 +78,9 @@ export class UtilityClient {
       });
 
       proc.on('exit', (code) => {
-        const error = new Error(`Utility process "${this.label}" exited (code ${code ?? 'unknown'})`);
+        const error = new Error(
+          `Utility process "${this.label}" exited (code ${code ?? 'unknown'})`
+        );
         settleStart(error);
         this.failAll(error);
         this.process = null;
@@ -87,13 +104,20 @@ export class UtilityClient {
         reject(new Error(`Operation timed out after ${options.timeoutMs}ms`));
       }, options.timeoutMs);
 
-      this.pending.set(id, { resolve: (value) => resolve(value as UtilityResponses[K]), reject, timer });
+      this.pending.set(id, {
+        resolve: (value) => resolve(value as UtilityResponses[K]),
+        reject,
+        timer
+      });
       proc.postMessage({ kind: 'request', id, request, maxTimeMs: options.maxTimeMs });
     });
   }
 
   private failAll(error: Error): void {
-    for (const [, entry] of this.pending) { clearTimeout(entry.timer); entry.reject(error); }
+    for (const [, entry] of this.pending) {
+      clearTimeout(entry.timer);
+      entry.reject(error);
+    }
     this.pending.clear();
   }
 

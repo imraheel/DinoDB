@@ -1,6 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useApp } from '../context/AppState';
-import type { AccentSetting, AppSettings, CodeFontSetting, UiFontSetting } from '../../../shared/types';
+import type {
+  AccentSetting,
+  AppSettings,
+  CodeFontSetting,
+  UiFontSetting
+} from '../../../shared/types';
 import Button from './ui/Button';
 import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
 import SegmentedControl from './ui/SegmentedControl';
@@ -92,7 +97,15 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 
 function AppearanceIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden="true"
+    >
       <circle cx="8" cy="8" r="5.5" />
       <path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" fill="currentColor" stroke="none" />
     </svg>
@@ -101,7 +114,15 @@ function AppearanceIcon() {
 
 function KeymapIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden="true"
+    >
       <rect x="1.5" y="4" width="13" height="8" rx="1.5" />
       <path d="M4 7h.01M6.5 7h.01M9 7h.01M11.5 7h.01M5 9.5h6" strokeLinecap="round" />
     </svg>
@@ -110,7 +131,15 @@ function KeymapIcon() {
 
 function AdvancedIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      aria-hidden="true"
+    >
       <path d="M2 4.5h12M2 8h12M2 11.5h12" strokeLinecap="round" />
       <circle cx="5.5" cy="4.5" r="1.4" fill="var(--color-surface-raised)" />
       <circle cx="10" cy="8" r="1.4" fill="var(--color-surface-raised)" />
@@ -268,7 +297,11 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
 
                 <div>
                   <PaneTitle>Accent color</PaneTitle>
-                  <div className="flex items-center gap-2" role="radiogroup" aria-label="Accent color">
+                  <div
+                    className="flex items-center gap-2"
+                    role="radiogroup"
+                    aria-label="Accent color"
+                  >
                     {ACCENT_OPTIONS.map((option) => {
                       const selected = option.value === form.accent;
                       return (
@@ -392,9 +425,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                         aria-label="Query timeout (ms)"
                         className="w-full"
                         value={form.maxTimeMs}
-                        onChange={(event) =>
-                          patchForm({ maxTimeMs: Number(event.target.value) })
-                        }
+                        onChange={(event) => patchForm({ maxTimeMs: Number(event.target.value) })}
                       />
                       <p className="mt-1 text-caption text-label-tertiary">
                         Query timeout (ms) — hard cap enforced per tab

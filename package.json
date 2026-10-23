@@ -1,8 +1,9 @@
 {
   "name": "nexdb",
   "version": "0.1.7-alpha",
-  "description": "NexDB — a fast MongoDB client",
   "private": true,
+  "description": "NexDB — a fast MongoDB client",
+  "license": "GPL-3.0-only",
   "author": "NexDB <dev@nexdb.app>",
   "main": "out/main/index.js",
   "scripts": {
@@ -11,6 +12,9 @@
     "build": "pnpm run build:utility && electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.utility.json --noEmit",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "test": "node scripts/run-tests.mjs",
     "clean": "rm -rf dist out",
     "package": "pnpm build && electron-builder --publish never",
@@ -19,7 +23,6 @@
     "package:win": "pnpm build && electron-builder --win --publish never",
     "package:all": "pnpm build && electron-builder --mac --win --publish never"
   },
-  "license": "GPL-3.0-only",
   "dependencies": {
     "better-sqlite3": "^13.0.3",
     "mongodb": "^7.7.0"
@@ -35,6 +38,8 @@
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "monaco-editor": "^0.57.0",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",

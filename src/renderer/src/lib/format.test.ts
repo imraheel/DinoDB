@@ -28,7 +28,9 @@ describe('formatCell', () => {
   });
 
   it('formats $binary with a base64 payload', () => {
-    expect(formatCell({ $binary: { base64: 'AQID', subType: '00' } })).toBe('Binary(4 base64 chars)');
+    expect(formatCell({ $binary: { base64: 'AQID', subType: '00' } })).toBe(
+      'Binary(4 base64 chars)'
+    );
     expect(formatCell({ $binary: 'AQIDBA==' })).toBe('Binary(8 base64 chars)');
   });
 
@@ -46,11 +48,15 @@ describe('formatCell', () => {
 });
 
 describe('getColumns', () => {
-  const schema = (paths: string[]): SchemaField[] => paths.map((path) => ({ path, type: 'string' }));
+  const schema = (paths: string[]): SchemaField[] =>
+    paths.map((path) => ({ path, type: 'string' }));
 
   it('returns top-level schema paths first in field order, excluding dotted paths', () => {
     const fields = schema(['_id', 'name', 'address.city', 'tags']);
-    const documents = [{ _id: 1, name: 'a', age: 3 }, { name: 'b', email: 'e' }];
+    const documents = [
+      { _id: 1, name: 'a', age: 3 },
+      { name: 'b', email: 'e' }
+    ];
     expect(getColumns(fields, documents)).toEqual(['_id', 'name', 'tags', 'age', 'email']);
   });
 
@@ -65,7 +71,10 @@ describe('getColumns', () => {
 
   it('skips document keys already provided by the schema', () => {
     const fields = schema(['status']);
-    const documents = [{ status: 'a', extra: 1 }, { status: 'b', other: 2 }];
+    const documents = [
+      { status: 'a', extra: 1 },
+      { status: 'b', other: 2 }
+    ];
     expect(getColumns(fields, documents)).toEqual(['status', 'extra', 'other']);
   });
 
@@ -76,6 +85,9 @@ describe('getColumns', () => {
 
   it('skips non-object documents', () => {
     const fields = schema(['name']);
-    expect(getColumns(fields, [null, 'str', 42, { name: 'a', extra: 1 }])).toEqual(['name', 'extra']);
+    expect(getColumns(fields, [null, 'str', 42, { name: 'a', extra: 1 }])).toEqual([
+      'name',
+      'extra'
+    ]);
   });
 });

@@ -15,7 +15,11 @@ export function validateConnection(input: ConnectionInput): string[] {
     errors.push('extraOptions must be a JSON object');
   }
   if (errors.length === 0) {
-    try { buildMongoUri(input); } catch (err) { errors.push(err instanceof Error ? err.message : String(err)); }
+    try {
+      buildMongoUri(input);
+    } catch (err) {
+      errors.push(err instanceof Error ? err.message : String(err));
+    }
   }
   return errors;
 }

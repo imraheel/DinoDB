@@ -14,9 +14,7 @@ interface TextInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function TextInput({ className = '', label, hint, id, ...rest }: TextInputProps) {
-  const input = (
-    <input id={id} className={`${BASE_INPUT_CLASS} ${className}`} {...rest} />
-  );
+  const input = <input id={id} className={`${BASE_INPUT_CLASS} ${className}`} {...rest} />;
   if (label === undefined) return input;
   return (
     <label className="flex flex-col gap-1" htmlFor={id}>

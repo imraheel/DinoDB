@@ -69,8 +69,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 export const SCHEMA_SAMPLE_SIZE = 50;
 
-export interface SchemaField { path: string; type: string }
+export interface SchemaField {
+  path: string;
+  type: string;
+}
 
-export interface QueryInput { text: string; skip: string; limit: string }
+export interface QueryInput {
+  text: string;
+  skip: string;
+  limit: string;
+}
 
 export type TabKind = 'workspace' | 'indexes';

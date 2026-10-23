@@ -72,7 +72,9 @@ describe('connections.repo', () => {
 
   it('throws when updating a missing id', () => {
     const db = makeDb();
-    expect(() => saveConnection(db, { ...baseInput(), id: 'missing-id' })).toThrow(/Connection not found/);
+    expect(() => saveConnection(db, { ...baseInput(), id: 'missing-id' })).toThrow(
+      /Connection not found/
+    );
   });
 
   it('lists connections ordered by name case-insensitively', () => {

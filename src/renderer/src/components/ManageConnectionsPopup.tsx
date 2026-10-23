@@ -189,11 +189,7 @@ export default function ManageConnectionsPopup({
     setSelectedId(null);
   }
 
-  function openRowMenu(
-    event: ReactMouseEvent,
-    connection: ConnectionConfig,
-    connected: boolean
-  ) {
+  function openRowMenu(event: ReactMouseEvent, connection: ConnectionConfig, connected: boolean) {
     event.preventDefault();
     event.stopPropagation();
     setSelectedId(connection.id);
@@ -294,11 +290,21 @@ export default function ManageConnectionsPopup({
   }
 
   return (
-    <Modal open={open} onClose={closeAndReset} className="max-w-3xl" aria-label="Connection Manager">
+    <Modal
+      open={open}
+      onClose={closeAndReset}
+      className="max-w-3xl"
+      aria-label="Connection Manager"
+    >
       <ModalHeader title="Connection Manager" />
       <ModalBody className="flex flex-col gap-3">
         <div className="flex items-start gap-2">
-          <button type="button" onClick={onAdd} className={ICON_BUTTON_CLASS} aria-label="New connection">
+          <button
+            type="button"
+            onClick={onAdd}
+            className={ICON_BUTTON_CLASS}
+            aria-label="New connection"
+          >
             <PlusIcon />
             <span className={ICON_LABEL_CLASS}>New</span>
           </button>
@@ -351,7 +357,9 @@ export default function ManageConnectionsPopup({
             <table className="w-full border-collapse text-left text-[13px]">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">Name</th>
+                  <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">
+                    Name
+                  </th>
                   <th className="px-2 py-1.5 text-caption font-medium text-label-secondary">
                     Host:Port
                   </th>
@@ -438,9 +446,7 @@ export default function ManageConnectionsPopup({
       {rowMenu !== null ? (
         <Menu x={rowMenu.x} y={rowMenu.y} onClose={() => setRowMenu(null)}>
           <MenuItem
-            icon={
-              rowMenu.connected ? <DatabaseXIcon size={14} /> : <DatabaseCheckIcon size={14} />
-            }
+            icon={rowMenu.connected ? <DatabaseXIcon size={14} /> : <DatabaseCheckIcon size={14} />}
             onClick={handleMenuItem(() => {
               if (rowMenu.connected) void handleDisconnect(rowMenu.connection);
               else void handleConnect(rowMenu.connection);

@@ -58,7 +58,13 @@ export default function PromptDialog({
           <Button size="md" className="flex-1" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="md" disabled={value.trim() === ''} className="flex-1">
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={value.trim() === ''}
+            className="flex-1"
+          >
             {confirmLabel}
           </Button>
         </div>

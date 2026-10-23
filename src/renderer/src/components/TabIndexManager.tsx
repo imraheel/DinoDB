@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
-import {
-  formatIndexSize,
-  indexProperties,
-  indexTypeLabel,
-  indexUsageLabel
-} from '../lib/indexes';
+import { formatIndexSize, indexProperties, indexTypeLabel, indexUsageLabel } from '../lib/indexes';
 import { toShellJson, parseShellJson } from '../lib/shell-json';
 import type { CollectionIndexInfo } from '../../../shared/ipc';
 import Banner from './ui/Banner';
@@ -223,9 +218,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
   }
 
   function copyIndexName(name: string) {
-    navigator.clipboard
-      .writeText(name)
-      .catch((err: unknown) => setError(messageOf(err)));
+    navigator.clipboard.writeText(name).catch((err: unknown) => setError(messageOf(err)));
   }
 
   function optionsOf(index: CollectionIndexInfo): Record<string, unknown> {
@@ -266,12 +259,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
           <Button variant="accentOutline" size="sm" onClick={openAdd}>
             Add Index
           </Button>
-          <Button
-            variant="quiet"
-            size="sm"
-            disabled={selectedIndex === null}
-            onClick={openEdit}
-          >
+          <Button variant="quiet" size="sm" disabled={selectedIndex === null} onClick={openEdit}>
             Edit Index
           </Button>
           <Button
@@ -384,9 +372,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
               : `Edit index ${selectedIndex?.name ?? ''} in ${tab.collection}`
           }
           initialText={editor.text}
-          onSave={(text) =>
-            void (editor.mode === 'add' ? addIndex(text) : editIndex(text))
-          }
+          onSave={(text) => void (editor.mode === 'add' ? addIndex(text) : editIndex(text))}
           onClose={() => setEditor(null)}
         />
       ) : null}
@@ -422,9 +408,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
       />
       {menu !== null && menuIndex !== null ? (
         <Menu x={menu.x} y={menu.y} onClose={() => setMenu(null)}>
-          <MenuItem onClick={handleMenuItem(() => setDetailsFor(menuIndex))}>
-            View details
-          </MenuItem>
+          <MenuItem onClick={handleMenuItem(() => setDetailsFor(menuIndex))}>View details</MenuItem>
           <MenuItem onClick={handleMenuItem(openEdit)}>Edit index</MenuItem>
           <MenuItem
             disabled={menuIndex.name === '_id_'}

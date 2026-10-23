@@ -6,7 +6,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function summaryOf(value: unknown): string {
   if (Array.isArray(value)) return `[${value.length} item${value.length === 1 ? '' : 's'}]`;
-  if (isPlainObject(value)) return `{${Object.keys(value).length} key${Object.keys(value).length === 1 ? '' : 's'}}`;
+  if (isPlainObject(value))
+    return `{${Object.keys(value).length} key${Object.keys(value).length === 1 ? '' : 's'}}`;
   return '';
 }
 
@@ -44,7 +45,10 @@ function JsonNode({
 
   if (!container) {
     return (
-      <div className="flex items-baseline gap-1.5 py-px text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)]" style={{ paddingLeft: depth * 14 }}>
+      <div
+        className="flex items-baseline gap-1.5 py-px text-[length:var(--dt-font-size,12px)] [font-family:var(--font-code,ui-monospace)]"
+        style={{ paddingLeft: depth * 14 }}
+      >
         {label !== null ? <span className={keyClass(label)}>{label}</span> : null}
         {label !== null ? <span className="text-label-tertiary">:</span> : null}
         <span className={scalarClass(value)}>{scalarText(value)}</span>

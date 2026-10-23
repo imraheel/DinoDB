@@ -63,10 +63,7 @@ let completionFields: string[] = [];
 let monacoDark = false;
 let currentAccent: AccentSetting = 'blue';
 
-function wordRange(
-  model: monaco.editor.ITextModel,
-  position: monaco.Position
-): monaco.IRange {
+function wordRange(model: monaco.editor.ITextModel, position: monaco.Position): monaco.IRange {
   const word = model.getWordUntilPosition(position);
   return {
     startLineNumber: position.lineNumber,

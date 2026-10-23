@@ -36,7 +36,9 @@ describe('buildMongoUri', () => {
   });
 
   it('includes the default database path', () => {
-    expect(buildMongoUri({ ...base, defaultDatabase: 'mydb' })).toBe('mongodb://localhost:27017/mydb');
+    expect(buildMongoUri({ ...base, defaultDatabase: 'mydb' })).toBe(
+      'mongodb://localhost:27017/mydb'
+    );
   });
 
   it('encodes credentials and includes authSource', () => {
@@ -50,11 +52,23 @@ describe('buildMongoUri', () => {
   });
 
   it('adds authMechanism only when non-default', () => {
-    const withDefault = buildMongoUri({ ...base, username: 'u', authMechanism: 'DEFAULT', authSource: 'admin' });
+    const withDefault = buildMongoUri({
+      ...base,
+      username: 'u',
+      authMechanism: 'DEFAULT',
+      authSource: 'admin'
+    });
     expect(withDefault).toBe('mongodb://u@localhost:27017/?authSource=admin');
 
-    const x509 = buildMongoUri({ ...base, username: 'u', authMechanism: 'MONGODB-X509', authSource: '$external' });
-    expect(x509).toBe('mongodb://u@localhost:27017/?authSource=%24external&authMechanism=MONGODB-X509');
+    const x509 = buildMongoUri({
+      ...base,
+      username: 'u',
+      authMechanism: 'MONGODB-X509',
+      authSource: '$external'
+    });
+    expect(x509).toBe(
+      'mongodb://u@localhost:27017/?authSource=%24external&authMechanism=MONGODB-X509'
+    );
   });
 
   it('encodes authMechanismProperties JSON pairs', () => {
@@ -73,17 +87,23 @@ describe('buildMongoUri', () => {
   });
 
   it('throws on non-JSON or array extraOptions', () => {
-    expect(() => buildMongoUri({ ...base, extraOptions: 'not-json' })).toThrow('extraOptions must be a JSON object');
-    expect(() => buildMongoUri({ ...base, extraOptions: '[1]' })).toThrow('extraOptions must be a JSON object');
+    expect(() => buildMongoUri({ ...base, extraOptions: 'not-json' })).toThrow(
+      'extraOptions must be a JSON object'
+    );
+    expect(() => buildMongoUri({ ...base, extraOptions: '[1]' })).toThrow(
+      'extraOptions must be a JSON object'
+    );
   });
 
   it('throws on invalid extra option names', () => {
-    expect(() => buildMongoUri({ ...base, extraOptions: '{"bad-name":"x"}' })).toThrow('Invalid extra option name: bad-name');
+    expect(() => buildMongoUri({ ...base, extraOptions: '{"bad-name":"x"}' })).toThrow(
+      'Invalid extra option name: bad-name'
+    );
   });
 
   it('throws on non-JSON authMechanismProperties', () => {
-    expect(() => buildMongoUri({ ...base, username: 'u', authMechanismProperties: 'oops' })).toThrow(
-      'authMechanismProperties must be a JSON object'
-    );
+    expect(() =>
+      buildMongoUri({ ...base, username: 'u', authMechanismProperties: 'oops' })
+    ).toThrow('authMechanismProperties must be a JSON object');
   });
 });

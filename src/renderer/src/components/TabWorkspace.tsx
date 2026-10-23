@@ -305,7 +305,10 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       } else {
         const limit = Math.min(
           1000,
-          Math.max(1, (parsed.op === 'find' ? parsed.limit : undefined) ?? (Number(data.query.limit) || 50))
+          Math.max(
+            1,
+            (parsed.op === 'find' ? parsed.limit : undefined) ?? (Number(data.query.limit) || 50)
+          )
         );
         const skip = Math.max(
           0,
@@ -596,7 +599,11 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
       ) : null}
       <ConfirmDialog
         open={pendingDelete !== null}
-        title={pendingDelete !== null && pendingDelete.targets.length > 1 ? 'Delete documents' : 'Delete document'}
+        title={
+          pendingDelete !== null && pendingDelete.targets.length > 1
+            ? 'Delete documents'
+            : 'Delete document'
+        }
         message={
           pendingDelete !== null && pendingDelete.targets.length > 1
             ? `Delete ${pendingDelete.targets.length} documents from ${resultsCollection()}? This cannot be undone.`

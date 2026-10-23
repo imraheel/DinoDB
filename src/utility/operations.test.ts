@@ -91,7 +91,10 @@ describe('hasOutputStage', () => {
 
 describe('buildPipeline', () => {
   it('appends a clamped $limit guard when there is no output stage', () => {
-    expect(buildPipeline([{ $match: { a: 1 } }], 50)).toEqual([{ $match: { a: 1 } }, { $limit: 50 }]);
+    expect(buildPipeline([{ $match: { a: 1 } }], 50)).toEqual([
+      { $match: { a: 1 } },
+      { $limit: 50 }
+    ]);
     expect(buildPipeline([], 0)).toEqual([{ $limit: 1 }]);
     expect(buildPipeline([], 99999)).toEqual([{ $limit: 1000 }]);
   });

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent as ReactMouseEvent
+} from 'react';
 import * as monaco from 'monaco-editor';
 import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
@@ -138,8 +144,7 @@ export default function QueryBar({
       return model.getValueInRange(selection);
     }
     const position = editor.getPosition();
-    const offset =
-      position === null ? 0 : model.getOffsetAt(position);
+    const offset = position === null ? 0 : model.getOffsetAt(position);
     const segment = queryAtOffset(model.getValue(), offset);
     return segment?.text ?? model.getValue();
   }
@@ -350,7 +355,11 @@ export default function QueryBar({
           Explain
         </Button>
       </div>
-      <div ref={containerRef} style={{ height: editorHeight }} className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`} />
+      <div
+        ref={containerRef}
+        style={{ height: editorHeight }}
+        className={`w-full ${FRAME_CLASS}${dragging ? ' select-none' : ''}`}
+      />
       <div
         role="separator"
         aria-orientation="horizontal"

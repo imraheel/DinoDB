@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { ConnectionConfig } from '../../shared/types';
-import type { CreateTabInput, CreateTabResult, UtilityRequest, UtilityResponses } from '../../shared/ipc';
+import type {
+  CreateTabInput,
+  CreateTabResult,
+  UtilityRequest,
+  UtilityResponses
+} from '../../shared/ipc';
 import { UtilityClient } from './utility-client';
 import type { UtilityClientDeps } from './utility-client';
 

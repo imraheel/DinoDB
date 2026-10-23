@@ -34,10 +34,8 @@
   --radius-menu: 6px;
   --radius-modal: 10px;
 
-  --shadow-modal:
-    0 10px 38px -10px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-menu:
-    0 6px 20px -4px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 10px 38px -10px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-menu: 0 6px 20px -4px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
   --shadow-raise: 0 1px 2px rgba(0, 0, 0, 0.12);
 
   --text-caption: 0.6875rem;
@@ -47,8 +45,7 @@
   --text-ui: var(--ui-font-size, 13px);
   --text-ui--line-height: 1.35;
 
-  --font-ui:
-    ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   --font-code: ui-monospace, 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
 
   --animate-modal-in: modal-in 150ms ease-out;
@@ -134,10 +131,8 @@
   --color-success: #30d158;
   --color-success-soft: rgba(48, 209, 88, 0.14);
 
-  --shadow-modal:
-    0 12px 40px -10px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.4);
-  --shadow-menu:
-    0 8px 24px -6px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-modal: 0 12px 40px -10px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.4);
+  --shadow-menu: 0 8px 24px -6px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-raise: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
