@@ -7,6 +7,7 @@ import { resolveTheme } from '../lib/theme';
 import { parseShellQuery, splitQueries, type ParsedQuery } from '../lib/shell-query';
 import { parseShellJson, toShellJson } from '../lib/shell-json';
 import { lastPageSkip } from '../lib/pagination';
+import { exportRead, openTransfer } from '../lib/transfers';
 import type { WriteResult } from '../../../shared/ipc';
 import DataTable from './DataTable';
 import Banner from './ui/Banner';
@@ -99,7 +100,12 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             skip,
             limit
           });
-          dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+          dispatch({
+            type: 'tab/results',
+            tabId: tab.id,
+            results: result,
+            exportRead: exportRead(parsed, tab.collection)
+          });
           break;
         }
         case 'findOne': {
@@ -113,7 +119,12 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             skip: 0,
             limit: 1
           });
-          dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+          dispatch({
+            type: 'tab/results',
+            tabId: tab.id,
+            results: result,
+            exportRead: exportRead(parsed, tab.collection)
+          });
           break;
         }
         case 'countDocuments': {
@@ -156,7 +167,12 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
               }
             });
           } else {
-            dispatch({ type: 'tab/results', tabId: tab.id, results: result });
+            dispatch({
+              type: 'tab/results',
+              tabId: tab.id,
+              results: result,
+              exportRead: exportRead(parsed, tab.collection)
+            });
           }
           break;
         }
@@ -559,6 +575,19 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
             loading={data.loading}
             readOnly={false}
             active={active}
+            canExportQuery={data.exportRead !== undefined}
+            onExport={(documents) => {
+              const read = data.exportRead;
+              if (documents === undefined && read === undefined) return;
+              void openTransfer(
+                dispatch,
+                { ...tab, collection: read?.collection ?? tab.collection },
+                'export',
+                documents === undefined ? read?.source : { kind: 'selected', documents }
+              ).catch((err: unknown) =>
+                dispatch({ type: 'tab/errored', tabId: tab.id, error: messageOf(err) })
+              );
+            }}
             onInsert={() => setInsertText('{}')}
             onView={(document) => setViewText(toShellJson(document))}
             onEdit={(document) =>

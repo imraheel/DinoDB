@@ -80,4 +80,4 @@ export interface QueryInput {
   limit: string;
 }
 
-export type TabKind = 'workspace' | 'indexes';
+export type TabKind = 'workspace' | 'indexes' | 'import' | 'export';

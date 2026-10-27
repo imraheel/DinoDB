@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useApp } from '../context/AppState';
+import { openTransfer } from '../lib/transfers';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
@@ -806,6 +807,42 @@ export default function Sidebar({
                 }}
               >
                 Duplicate collection…
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
+                onClick={() => {
+                  void openTransfer(
+                    dispatch,
+                    {
+                      connectionId: menu.connection.id,
+                      connectionName: menu.connection.name,
+                      database: menu.database,
+                      collection: menu.collection
+                    },
+                    'import'
+                  ).catch((err: unknown) => setError(messageOf(err)));
+                  closeMenu();
+                }}
+              >
+                Import data…
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  void openTransfer(
+                    dispatch,
+                    {
+                      connectionId: menu.connection.id,
+                      connectionName: menu.connection.name,
+                      database: menu.database,
+                      collection: menu.collection
+                    },
+                    'export',
+                    { kind: 'collection' }
+                  ).catch((err: unknown) => setError(messageOf(err)));
+                  closeMenu();
+                }}
+              >
+                Export collection…
               </MenuItem>
               <MenuSeparator />
               <MenuItem

@@ -11,6 +11,8 @@ interface DataTableProps {
   loading: boolean;
   readOnly: boolean;
   active: boolean;
+  canExportQuery?: boolean;
+  onExport?(documents?: unknown[]): void;
   onInsert?(): void;
   onView?(doc: unknown): void;
   onEdit?(doc: unknown): void;
@@ -96,6 +98,8 @@ export default function DataTable({
   loading,
   readOnly,
   active,
+  canExportQuery,
+  onExport,
   onInsert,
   onView,
   onEdit,
@@ -111,6 +115,7 @@ export default function DataTable({
   const anchorKeyRef = useRef<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ key: string; column: string } | null>(null);
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
+  const [exportMenu, setExportMenu] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setSelectedKeys((previous) => {
@@ -336,12 +341,46 @@ export default function DataTable({
           </span>
         ) : null}
         <span className="flex-1" />
+        {onExport !== undefined ? (
+          <Button
+            size="sm"
+            disabled={loading}
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setExportMenu({ x: rect.left, y: rect.bottom + 4 });
+            }}
+          >
+            Export…
+          </Button>
+        ) : null}
         {canMutate && onInsert !== undefined ? (
           <Button variant="accentOutline" size="sm" onClick={onInsert}>
             Insert document
           </Button>
         ) : null}
       </div>
+      {exportMenu !== null ? (
+        <Menu x={exportMenu.x} y={exportMenu.y} onClose={() => setExportMenu(null)}>
+          <MenuItem
+            disabled={selectedDocs.length === 0}
+            onClick={() => {
+              onExport?.(selectedDocs);
+              setExportMenu(null);
+            }}
+          >
+            Export selected rows…
+          </MenuItem>
+          <MenuItem
+            disabled={!canExportQuery}
+            onClick={() => {
+              onExport?.();
+              setExportMenu(null);
+            }}
+          >
+            Export all query results…
+          </MenuItem>
+        </Menu>
+      ) : null}
       <div
         className="flex min-h-0 flex-1 flex-col overflow-auto rounded-field border border-border"
         onContextMenu={openBackgroundMenu}

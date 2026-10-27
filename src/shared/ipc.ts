@@ -1,3 +1,4 @@
+import type { TransferFormat, TransferSource, TransferProgress } from './transfer';
 import type { AppSettings, ConnectionConfig, ConnectionInput, SchemaField, TabKind } from './types';
 
 export const IPC = {
@@ -14,6 +15,11 @@ export const IPC = {
   tabsClose: 'tabs:close',
   settingsGet: 'settings:get',
   settingsSave: 'settings:save',
+  transferChooseFile: 'transfers:choose-file',
+  transferStart: 'transfers:start',
+  transferCancel: 'transfers:cancel',
+  transferSnapshot: 'transfers:snapshot',
+  transferProgress: 'transfers:progress',
   menuAction: 'menu:action'
 } as const;
 
@@ -181,6 +187,7 @@ export interface CreateTabInput {
   database: string;
   collection: string;
   kind?: TabKind;
+  source?: TransferSource;
 }
 export interface CreateTabResult {
   tabId: string;
@@ -210,6 +217,11 @@ export interface MongoExplorerApi {
     request: Extract<UtilityRequest, { kind: K }>
   ): Promise<UtilityResponses[K]>;
   closeTab(tabId: string): Promise<void>;
+  chooseTransferFile(tabId: string, format: TransferFormat): Promise<TransferProgress>;
+  startTransfer(tabId: string, format: TransferFormat): Promise<TransferProgress>;
+  cancelTransfer(tabId: string): Promise<void>;
+  transferSnapshot(tabId: string): Promise<TransferProgress>;
+  onTransferProgress(callback: (progress: TransferProgress) => void): () => void;
   getSettings(): Promise<AppSettings>;
   saveSettings(patch: Partial<AppSettings>): Promise<AppSettings>;
   onMenuAction(callback: (action: MenuAction) => void): () => void;

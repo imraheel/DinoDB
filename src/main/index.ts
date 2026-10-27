@@ -1,3 +1,4 @@
+import { TransfersManager } from './services/transfers-manager';
 import { app, BrowserWindow, nativeTheme } from 'electron';
 import * as path from 'node:path';
 import { getConnection } from './db/connections.repo';
@@ -15,13 +16,15 @@ app.whenReady().then(() => {
   const utilityDeps = createUtilityDeps();
   const sessions = new SessionManager(utilityDeps, (id) => getConnection(db, id));
   const tabs = new TabManager(utilityDeps);
-  registerAllIpc({ db: () => db, sessions, tabs, utilityDeps });
+  const transfers = new TransfersManager();
+  registerAllIpc({ db: () => db, sessions, tabs, transfers, utilityDeps });
   const settings = getSettings(db);
   nativeTheme.themeSource = settings.theme;
   createMainWindow(settings.theme);
   createApplicationMenu();
 
   app.on('will-quit', () => {
+    transfers.disposeAll();
     tabs.disposeAll();
     sessions.disposeAll();
     closeDb();

@@ -1,4 +1,5 @@
 import type { FindResult } from '../../../shared/ipc';
+import type { ExportRead } from '../lib/transfers';
 import type {
   AppSettings,
   ConnectionConfig,
@@ -25,6 +26,7 @@ export interface TabMeta {
   title: string;
   kind?: TabKind;
   pinned?: boolean;
+  transferScope?: string;
 }
 
 export type ResultCard =
@@ -46,6 +48,7 @@ export interface TabData {
   fields: SchemaField[];
   loading: boolean;
   findResults?: FindResult;
+  exportRead?: ExportRead;
   card?: ResultCard;
   lastRead?: string;
   error?: string;
@@ -81,7 +84,7 @@ export type AppAction =
   | { type: 'tab/reordered'; tabId: string; targetId: string; position: 'before' | 'after' }
   | { type: 'tab/query'; tabId: string; patch: Partial<QueryInput> }
   | { type: 'tab/loading'; tabId: string; loading: boolean }
-  | { type: 'tab/results'; tabId: string; results: FindResult }
+  | { type: 'tab/results'; tabId: string; results: FindResult; exportRead?: ExportRead }
   | { type: 'tab/card'; tabId: string; card: ResultCard }
   | { type: 'tab/read'; tabId: string; text: string }
   | { type: 'tab/errored'; tabId: string; error: string }
@@ -303,7 +306,7 @@ export function reducer(state: AppStateState, action: AppAction): AppStateState 
     case 'tab/results': {
       const data = state.tabData[action.tabId];
       if (!data) return state;
-      const next: TabData = { ...data, findResults: action.results };
+      const next: TabData = { ...data, findResults: action.results, exportRead: action.exportRead };
       delete next.card;
       return { ...state, tabData: { ...state.tabData, [action.tabId]: next } };
     }

@@ -1,3 +1,4 @@
+import type { TransferProgress } from '../shared/transfer';
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
 import type { MenuAction, MongoExplorerApi, UtilityRequest } from '../shared/ipc';
@@ -20,6 +21,17 @@ const api: MongoExplorerApi = {
   executeTab: ((tabId: string, request: UtilityRequest) =>
     ipcRenderer.invoke(IPC.tabsExecute, { tabId, request })) as MongoExplorerApi['executeTab'],
   closeTab: (id) => ipcRenderer.invoke(IPC.tabsClose, id),
+  chooseTransferFile: (tabId, format) =>
+    ipcRenderer.invoke(IPC.transferChooseFile, { tabId, format }),
+  startTransfer: (tabId, format) => ipcRenderer.invoke(IPC.transferStart, { tabId, format }),
+  cancelTransfer: (tabId) => ipcRenderer.invoke(IPC.transferCancel, tabId),
+  transferSnapshot: (tabId) => ipcRenderer.invoke(IPC.transferSnapshot, tabId),
+  onTransferProgress: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: TransferProgress) =>
+      callback(progress);
+    ipcRenderer.on(IPC.transferProgress, handler);
+    return () => ipcRenderer.removeListener(IPC.transferProgress, handler);
+  },
   getSettings: () => ipcRenderer.invoke(IPC.settingsGet),
   saveSettings: (patch) => ipcRenderer.invoke(IPC.settingsSave, patch),
   onMenuAction: (callback) => {

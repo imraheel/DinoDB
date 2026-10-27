@@ -1,3 +1,5 @@
+import type { TransfersManager } from '../services/transfers-manager';
+import { registerTransfersIpc } from './transfers.ipc';
 import type { DatabaseHandle } from '../db/database';
 import type { UtilityClientDeps } from '../services/utility-client';
 import type { SessionManager } from '../services/sessions-manager';
@@ -11,6 +13,7 @@ export interface IpcDeps {
   db: () => DatabaseHandle;
   sessions: SessionManager;
   tabs: TabManager;
+  transfers: TransfersManager;
   utilityDeps: UtilityClientDeps;
 }
 
@@ -18,5 +21,6 @@ export function registerAllIpc(deps: IpcDeps): void {
   registerConnectionsIpc(deps);
   registerSessionsIpc(deps);
   registerTabsIpc(deps);
+  registerTransfersIpc(deps);
   registerSettingsIpc(deps);
 }
