@@ -27,6 +27,7 @@ export function registerSessionsIpc(deps: IpcDeps): void {
 
   ipcMain.handle(IPC.sessionsDisconnect, (_event, connectionId: string) => {
     deps.transfers.closeForConnection(connectionId);
+    deps.databaseTransfers.closeForConnection(connectionId);
     deps.sessions.disconnect(connectionId);
     return null;
   });

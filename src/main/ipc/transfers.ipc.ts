@@ -11,6 +11,15 @@ export function registerTransfersIpc(deps: IpcDeps): void {
       deps.transfers.chooseFile(input.tabId, event.sender, input.format)
   );
   ipcMain.handle(IPC.transferStart, (event, input: { tabId: string; format: TransferFormat }) => {
+    const target = deps.transfers.target(input.tabId, event.sender);
+    if (
+      target.direction === 'import' &&
+      deps.databaseTransfers.hasActiveRestore(target.connectionId, target.database)
+    ) {
+      throw new Error(
+        'A database restore is using this target. Wait for it to finish before importing.'
+      );
+    }
     const connectionId = deps.transfers.connectionId(input.tabId, event.sender);
     const connection = getConnection(deps.db(), connectionId);
     if (!connection) throw new Error('Connection no longer exists.');

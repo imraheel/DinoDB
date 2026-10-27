@@ -6,6 +6,7 @@ import type {
   UiFontSetting
 } from '../../shared/types';
 import { DEFAULT_SETTINGS } from '../../shared/types';
+import { normalizeToolPath } from '../../shared/database-tools';
 import type { DatabaseHandle } from './database';
 
 interface SettingRow {
@@ -84,7 +85,9 @@ export function getSettings(db: DatabaseHandle): AppSettings {
     tableFontSize,
     editorFontSize,
     maxTimeMs,
-    defaultLimit
+    defaultLimit,
+    mongodumpPath: typeof stored.mongodumpPath === 'string' ? stored.mongodumpPath : '',
+    mongorestorePath: typeof stored.mongorestorePath === 'string' ? stored.mongorestorePath : ''
   };
 }
 
@@ -99,7 +102,9 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
     tableFontSize: patch.tableFontSize ?? current.tableFontSize,
     editorFontSize: patch.editorFontSize ?? current.editorFontSize,
     maxTimeMs: patch.maxTimeMs ?? current.maxTimeMs,
-    defaultLimit: patch.defaultLimit ?? current.defaultLimit
+    defaultLimit: patch.defaultLimit ?? current.defaultLimit,
+    mongodumpPath: normalizeToolPath(patch.mongodumpPath ?? current.mongodumpPath),
+    mongorestorePath: normalizeToolPath(patch.mongorestorePath ?? current.mongorestorePath)
   };
   const upsert = db.prepare(
     'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
@@ -116,7 +121,9 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
     ['tableFontSize', JSON.stringify(merged.tableFontSize)],
     ['editorFontSize', JSON.stringify(merged.editorFontSize)],
     ['maxTimeMs', JSON.stringify(merged.maxTimeMs)],
-    ['defaultLimit', JSON.stringify(merged.defaultLimit)]
+    ['defaultLimit', JSON.stringify(merged.defaultLimit)],
+    ['mongodumpPath', JSON.stringify(merged.mongodumpPath)],
+    ['mongorestorePath', JSON.stringify(merged.mongorestorePath)]
   ]);
   return getSettings(db);
 }

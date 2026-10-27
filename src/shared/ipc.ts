@@ -1,4 +1,10 @@
 import type { TransferFormat, TransferSource, TransferProgress } from './transfer';
+import type { DatabaseToolName, DatabaseToolsPaths, DatabaseToolsStatus } from './database-tools';
+import type {
+  DatabaseTransferInput,
+  DatabaseTransferOptions,
+  DatabaseTransferProgress
+} from './database-transfer';
 import type { AppSettings, ConnectionConfig, ConnectionInput, SchemaField, TabKind } from './types';
 
 export const IPC = {
@@ -15,6 +21,15 @@ export const IPC = {
   tabsClose: 'tabs:close',
   settingsGet: 'settings:get',
   settingsSave: 'settings:save',
+  databaseToolsBrowse: 'database-tools:browse',
+  databaseToolsTest: 'database-tools:test',
+  databaseToolsDetect: 'database-tools:detect',
+  databaseTransferCreate: 'database-transfers:create',
+  databaseTransferChoose: 'database-transfers:choose',
+  databaseTransferStart: 'database-transfers:start',
+  databaseTransferSnapshot: 'database-transfers:snapshot',
+  databaseTransferCancel: 'database-transfers:cancel',
+  databaseTransferProgress: 'database-transfers:progress',
   transferChooseFile: 'transfers:choose-file',
   transferStart: 'transfers:start',
   transferCancel: 'transfers:cancel',
@@ -200,6 +215,19 @@ export interface TestConnectionResult {
 }
 
 export interface MongoExplorerApi {
+  browseDatabaseTool(name: DatabaseToolName): Promise<string | null>;
+  testDatabaseTools(paths: DatabaseToolsPaths): Promise<DatabaseToolsStatus>;
+  detectDatabaseTools(): Promise<DatabaseToolsStatus>;
+  createDatabaseTransfer(input: DatabaseTransferInput): Promise<string>;
+  chooseDatabaseTransferPath(
+    tabId: string,
+    inputKind: 'archive' | 'directory',
+    gzip: boolean
+  ): Promise<string | null>;
+  startDatabaseTransfer(tabId: string, options: DatabaseTransferOptions): Promise<void>;
+  databaseTransferSnapshot(tabId: string): Promise<DatabaseTransferProgress>;
+  cancelDatabaseTransfer(tabId: string): Promise<void>;
+  onDatabaseTransferProgress(callback: (progress: DatabaseTransferProgress) => void): () => void;
   listConnections(): Promise<ConnectionConfig[]>;
   saveConnection(input: ConnectionInput): Promise<ConnectionConfig>;
   deleteConnection(id: string): Promise<void>;

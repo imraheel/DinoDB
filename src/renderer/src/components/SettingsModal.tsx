@@ -7,6 +7,7 @@ import type {
   UiFontSetting
 } from '../../../shared/types';
 import Button from './ui/Button';
+import DatabaseToolsSettings from './DatabaseToolsSettings';
 import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
 import SegmentedControl from './ui/SegmentedControl';
 import { BASE_INPUT_CLASS, TextInput } from './ui/Input';
@@ -16,7 +17,7 @@ interface SettingsModalProps {
   onClose(): void;
 }
 
-type SectionId = 'appearance' | 'keymap' | 'advanced';
+type SectionId = 'appearance' | 'keymap' | 'advanced' | 'database-tools';
 
 const THEME_OPTIONS: { value: AppSettings['theme']; label: string }[] = [
   { value: 'light', label: 'Light' },
@@ -151,7 +152,8 @@ function AdvancedIcon() {
 const SECTIONS: { id: SectionId; label: string; icon: ReactNode }[] = [
   { id: 'appearance', label: 'Appearance', icon: <AppearanceIcon /> },
   { id: 'keymap', label: 'Keymap', icon: <KeymapIcon /> },
-  { id: 'advanced', label: 'Advance Settings', icon: <AdvancedIcon /> }
+  { id: 'advanced', label: 'Advance Settings', icon: <AdvancedIcon /> },
+  { id: 'database-tools', label: 'Database Tools', icon: <AdvancedIcon /> }
 ];
 
 function PaneTitle({ children }: { children: ReactNode }) {
@@ -217,6 +219,11 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
   const [form, setForm] = useState<AppSettings>({ ...state.settings });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = () => setSection('database-tools');
+    window.addEventListener('open-database-tools', handler);
+    return () => window.removeEventListener('open-database-tools', handler);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -282,6 +289,9 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           </nav>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {section === 'database-tools' ? (
+              <DatabaseToolsSettings paths={form} onChange={patchForm} />
+            ) : null}
             {section === 'appearance' ? (
               <div className="space-y-5">
                 <div>

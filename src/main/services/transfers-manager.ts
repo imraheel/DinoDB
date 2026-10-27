@@ -31,6 +31,7 @@ export const TRANSFER_PROGRESS_CHANNEL = 'transfers:progress';
 export class TransfersManager {
   private readonly records = new Map<string, RecordState>();
   private readonly owners = new Set<number>();
+  private readonly activeImports = new Map<string, { connectionId: string; database: string }>();
   constructor(
     private readonly fork: () => TransferWorker = () =>
       utilityProcess.fork(path.join(__dirname, '..', 'utility', 'transfer.js'), [], {
@@ -84,6 +85,18 @@ export class TransfersManager {
   }
   connectionId(tabId: string, owner: WebContents): string {
     return this.record(tabId, owner).input.connectionId;
+  }
+  target(
+    tabId: string,
+    owner: WebContents
+  ): { connectionId: string; database: string; direction: string } {
+    const { connectionId, database, direction } = this.record(tabId, owner).input;
+    return { connectionId, database, direction };
+  }
+  hasActiveImport(connectionId: string, database: string): boolean {
+    return [...this.activeImports.values()].some(
+      (target) => target.connectionId === connectionId && target.database === database
+    );
   }
   private publish(record: RecordState) {
     if (!record.owner.isDestroyed()) record.owner.send(TRANSFER_PROGRESS_CHANNEL, record.progress);
@@ -168,6 +181,7 @@ export class TransfersManager {
       throw error;
     }
     record.worker = worker;
+    if (record.input.direction === 'import') this.activeImports.set(runId, record.input);
     worker.on('message', (message) => {
       if (record.worker !== worker || message.kind !== 'progress') return;
       const cancelling = record.progress.status === 'cancelling';
@@ -184,6 +198,7 @@ export class TransfersManager {
       }
     });
     worker.on('exit', () => {
+      this.activeImports.delete(runId);
       if (record.input.direction === 'export') {
         void Promise.all(
           transferTempPaths({ tabId, filePath, runId }).map((temp) =>

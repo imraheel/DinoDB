@@ -23,7 +23,8 @@ export function registerTabsIpc(deps: IpcDeps): void {
   });
 
   ipcMain.handle(IPC.tabsClose, (event, tabId: string) => {
-    if (deps.transfers.owns(tabId, event.sender)) deps.transfers.close(tabId);
+    if (deps.databaseTransfers.owns(tabId, event.sender)) deps.databaseTransfers.close(tabId);
+    else if (deps.transfers.owns(tabId, event.sender)) deps.transfers.close(tabId);
     else deps.tabs.close(tabId);
     return null;
   });

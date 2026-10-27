@@ -54,6 +54,8 @@ export interface AppSettings {
   editorFontSize: number;
   maxTimeMs: number;
   defaultLimit: number;
+  mongodumpPath: string;
+  mongorestorePath: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -65,7 +67,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   tableFontSize: 12,
   editorFontSize: 13,
   maxTimeMs: 30000,
-  defaultLimit: 50
+  defaultLimit: 50,
+  mongodumpPath: '',
+  mongorestorePath: ''
 };
 export const SCHEMA_SAMPLE_SIZE = 50;
 
@@ -80,4 +84,10 @@ export interface QueryInput {
   limit: string;
 }
 
-export type TabKind = 'workspace' | 'indexes' | 'import' | 'export';
+export type TabKind =
+  | 'workspace'
+  | 'indexes'
+  | 'import'
+  | 'export'
+  | 'database-backup'
+  | 'database-restore';

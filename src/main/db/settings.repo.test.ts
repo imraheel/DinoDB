@@ -33,6 +33,7 @@ describe('settings.repo', () => {
   it('roundtrips a full save', () => {
     const db = makeDb();
     const full = {
+      ...DEFAULT_SETTINGS,
       theme: 'light' as const,
       accent: 'purple' as const,
       uiFont: 'serif' as const,
@@ -92,6 +93,26 @@ describe('settings.repo', () => {
     saveSettings(db, { maxTimeMs: 15000 });
     expect(getSettings(db).maxTimeMs).toBe(15000);
     const row = db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM settings').get();
-    expect(row?.count).toBe(9);
+    expect(row?.count).toBe(11);
   });
+});
+
+it('persists independent tool paths, preserves them during other saves and resets to automatic', () => {
+  const db = makeDb();
+  expect(getSettings(db)).toMatchObject({ mongodumpPath: '', mongorestorePath: '' });
+  saveSettings(db, {
+    mongodumpPath: ' /opt/Mongo Tools/mongodump ',
+    mongorestorePath: '/opt/tools/mongorestore'
+  });
+  saveSettings(db, { theme: 'dark' });
+  expect(getSettings(db)).toMatchObject({
+    mongodumpPath: '/opt/Mongo Tools/mongodump',
+    mongorestorePath: '/opt/tools/mongorestore'
+  });
+  saveSettings(db, { mongodumpPath: '' });
+  expect(getSettings(db)).toMatchObject({
+    mongodumpPath: '',
+    mongorestorePath: '/opt/tools/mongorestore'
+  });
+  expect(() => saveSettings(db, { mongodumpPath: 'relative/tool' })).toThrow();
 });

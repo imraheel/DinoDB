@@ -1,9 +1,26 @@
 import type { TransferProgress } from '../shared/transfer';
+import type { DatabaseTransferProgress } from '../shared/database-transfer';
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
 import type { MenuAction, MongoExplorerApi, UtilityRequest } from '../shared/ipc';
 
 const api: MongoExplorerApi = {
+  browseDatabaseTool: (name) => ipcRenderer.invoke(IPC.databaseToolsBrowse, name),
+  testDatabaseTools: (paths) => ipcRenderer.invoke(IPC.databaseToolsTest, paths),
+  detectDatabaseTools: () => ipcRenderer.invoke(IPC.databaseToolsDetect),
+  createDatabaseTransfer: (input) => ipcRenderer.invoke(IPC.databaseTransferCreate, input),
+  chooseDatabaseTransferPath: (tabId, inputKind, gzip) =>
+    ipcRenderer.invoke(IPC.databaseTransferChoose, { tabId, inputKind, gzip }),
+  startDatabaseTransfer: (tabId, options) =>
+    ipcRenderer.invoke(IPC.databaseTransferStart, { tabId, options }),
+  databaseTransferSnapshot: (id) => ipcRenderer.invoke(IPC.databaseTransferSnapshot, id),
+  cancelDatabaseTransfer: (id) => ipcRenderer.invoke(IPC.databaseTransferCancel, id),
+  onDatabaseTransferProgress: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: DatabaseTransferProgress) =>
+      callback(progress);
+    ipcRenderer.on(IPC.databaseTransferProgress, handler);
+    return () => ipcRenderer.removeListener(IPC.databaseTransferProgress, handler);
+  },
   listConnections: () => ipcRenderer.invoke(IPC.connectionsList),
   saveConnection: (input) => ipcRenderer.invoke(IPC.connectionsSave, input),
   deleteConnection: (id) => ipcRenderer.invoke(IPC.connectionsDelete, id),
