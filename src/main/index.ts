@@ -13,6 +13,12 @@ import { TabManager } from './services/tabs-manager';
 import { createApplicationMenu } from './menu';
 import { createMainWindow } from './window';
 
+app.on('web-contents-created', (_event, contents) => {
+  contents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  contents.on('will-frame-navigate', (event) => event.preventDefault());
+  contents.on('will-redirect', (event) => event.preventDefault());
+});
+
 app.whenReady().then(() => {
   const db = getDb(path.join(app.getPath('userData'), 'nexdb.db'));
   const utilityDeps = createUtilityDeps();

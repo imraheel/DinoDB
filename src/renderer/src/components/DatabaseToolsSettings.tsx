@@ -8,6 +8,8 @@ import { messageOf } from '../lib/errors';
 import { TextInput } from './ui/Input';
 import Button from './ui/Button';
 
+const DATABASE_TOOLS_URL = 'https://www.mongodb.com/try/download/database-tools';
+
 export default function DatabaseToolsSettings({
   paths,
   onChange
@@ -18,6 +20,7 @@ export default function DatabaseToolsSettings({
   const [status, setStatus] = useState<DatabaseToolsStatus | null>(null);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     setStatus(null);
   }, [paths.mongodumpPath, paths.mongorestorePath]);
@@ -39,6 +42,16 @@ export default function DatabaseToolsSettings({
         onChange(
           name === 'mongodump' ? { mongodumpPath: selected } : { mongorestorePath: selected }
         );
+    } catch (err) {
+      setError(messageOf(err));
+    }
+  }
+  async function copyDownloadUrl() {
+    setError(null);
+    setCopied(false);
+    try {
+      await navigator.clipboard.writeText(DATABASE_TOOLS_URL);
+      setCopied(true);
     } catch (err) {
       setError(messageOf(err));
     }
@@ -96,14 +109,23 @@ export default function DatabaseToolsSettings({
         Testing checks the executables and supported options without connecting to a database. No
         tools are bundled or installed automatically.
       </p>
-      <a
-        href="https://www.mongodb.com/try/download/database-tools"
-        target="_blank"
-        rel="noreferrer"
-        className="text-xs text-accent underline"
-      >
-        MongoDB Database Tools downloads
-      </a>
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-label">MongoDB Database Tools downloads</p>
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 select-text break-all text-xs text-label-secondary">
+            {DATABASE_TOOLS_URL}
+          </p>
+          <Button
+            onClick={() => void copyDownloadUrl()}
+            aria-label="Copy Database Tools download URL"
+          >
+            {copied ? 'Copied' : 'Copy URL'}
+          </Button>
+        </div>
+        <span className="sr-only" role="status">
+          {copied ? 'Download URL copied to clipboard.' : ''}
+        </span>
+      </div>
       {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
