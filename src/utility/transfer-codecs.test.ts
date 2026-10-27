@@ -3,7 +3,15 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BSON } from 'mongodb';
-import { csvCell, csvRows, jsonDocuments, jsonText, readDocuments } from './transfer-codecs';
+import {
+  csvCell,
+  csvRows,
+  jsonDocuments,
+  jsonText,
+  simpleJsonText,
+  simpleValue,
+  readDocuments
+} from './transfer-codecs';
 
 async function* chunks(text: string, size = 1) {
   for (let i = 0; i < text.length; i += size) yield text.slice(i, i + size);
@@ -71,15 +79,15 @@ describe('streaming CSV', () => {
       await expect(collect(csvRows(chunks(text)))).rejects.toThrow();
     }
   );
-  it('preserves ordinary strings and decodes structured Extended JSON cells', async () => {
+  it('preserves scalar strings and reads nested JSON without inferring BSON types', async () => {
     const path = await file(
       'id,empty,nested,oid\n001,,"{""a"":1}","{""$oid"":""507f1f77bcf86cd799439011""}"\n'
     );
     const [doc] = await collect(readDocuments(path, 'csv', () => {}, new AbortController().signal));
     expect(doc.id).toBe('001');
     expect(doc.empty).toBe('');
-    expect(doc.oid).toBeInstanceOf(BSON.ObjectId);
-    expect(doc.nested.a.valueOf()).toBe(1);
+    expect(doc.oid).toEqual({ $oid: '507f1f77bcf86cd799439011' });
+    expect(doc.nested.a).toBe(1);
   });
   it.each(['a,a\n1,2', ',b\n1,2', 'a,b\n1', ''])(
     'rejects invalid headers/row widths %j',
@@ -138,4 +146,90 @@ it('rejects Extended JSON scalar wrappers at the document root', async () => {
   await expect(
     collect(jsonDocuments(chunks('{"$oid":"507f1f77bcf86cd799439011"}')))
   ).rejects.toThrow('Expected a document object');
+});
+
+describe('readable BSON values', () => {
+  const id = new BSON.ObjectId('66901fb06e1ab4190a7bd102');
+  const date = new Date('2026-10-27T10:30:00.000Z');
+  it('recursively converts scalars and preserves Long/Decimal128 digits', () => {
+    const input = {
+      _id: id,
+      date,
+      int: new BSON.Int32(42),
+      double: new BSON.Double(1.25),
+      long: BSON.Long.fromString('9223372036854775807'),
+      decimal: BSON.Decimal128.fromString('123456789.1234567890123456789'),
+      nested: { items: [id, date, new BSON.Int32(7), true, null] },
+      literal: { $oid: 'literal' }
+    };
+    expect(JSON.parse(simpleJsonText(input))).toEqual({
+      _id: '66901fb06e1ab4190a7bd102',
+      date: '2026-10-27T10:30:00.000Z',
+      int: 42,
+      double: 1.25,
+      long: '9223372036854775807',
+      decimal: '123456789.1234567890123456789',
+      nested: { items: ['66901fb06e1ab4190a7bd102', '2026-10-27T10:30:00.000Z', 7, true, null] },
+      literal: { $oid: 'literal' }
+    });
+    expect(input._id).toBeInstanceOf(BSON.ObjectId);
+  });
+  it('exports readable CSV scalars and plain JSON for nested cells', async () => {
+    expect(csvCell(id)).toBe('66901fb06e1ab4190a7bd102');
+    expect(csvCell(date)).toBe('2026-10-27T10:30:00.000Z');
+    expect(csvCell(new BSON.Int32(42))).toBe('42');
+    expect(csvCell(new BSON.Double(1.25))).toBe('1.25');
+    expect(csvCell(BSON.Long.fromString('9223372036854775807'))).toBe('9223372036854775807');
+    const [row] = await collect(
+      csvRows(chunks(csvCell({ id, values: [new BSON.Int32(7), date] })))
+    );
+    expect(JSON.parse(row[0])).toEqual({ id: id.toHexString(), values: [7, date.toISOString()] });
+  });
+  it('gives uncommon BSON values readable JSON representations', () => {
+    const uuid = new BSON.UUID('00112233-4455-6677-8899-aabbccddeeff');
+    expect(
+      simpleValue({
+        uuid,
+        binary: new BSON.Binary(Buffer.from([1, 2])),
+        regex: new BSON.BSONRegExp('hello', 'i'),
+        code: new BSON.Code('x', { n: new BSON.Int32(2) }),
+        symbol: new BSON.BSONSymbol('name'),
+        min: new BSON.MinKey(),
+        max: new BSON.MaxKey(),
+        timestamp: new BSON.Timestamp({ t: 10, i: 3 }),
+        ref: new BSON.DBRef('col', id),
+        nonfinite: [new BSON.Double(NaN), Infinity, -Infinity]
+      })
+    ).toEqual({
+      uuid: '00112233-4455-6677-8899-aabbccddeeff',
+      binary: 'AQI=',
+      regex: '/hello/i',
+      code: { code: 'x', scope: { n: 2 } },
+      symbol: 'name',
+      min: 'MinKey',
+      max: 'MaxKey',
+      timestamp: new BSON.Timestamp({ t: 10, i: 3 }).toString(),
+      ref: { $ref: 'col', $id: id.toHexString() },
+      nonfinite: ['NaN', 'Infinity', '-Infinity']
+    });
+  });
+  it('imports Simple JSON as plain values without recognising Extended JSON wrappers', async () => {
+    const text =
+      '[{"_id":"66901fb06e1ab4190a7bd102","date":"2026-10-27T10:30:00.000Z","n":42,"literal":{"$oid":"66901fb06e1ab4190a7bd102"}}]';
+    const path = await file(text);
+    const docs = await collect(
+      readDocuments(path, 'simple-json', () => {}, new AbortController().signal)
+    );
+    expect(docs).toEqual(JSON.parse(text));
+    expect(typeof docs[0]._id).toBe('string');
+    expect(typeof docs[0].n).toBe('number');
+  });
+  it('supports streamed Simple JSON objects and NDJSON and rejects malformed input', async () => {
+    expect(await collect(jsonDocuments(chunks('{"n":1}\n{"n":2}'), false))).toEqual([
+      { n: 1 },
+      { n: 2 }
+    ]);
+    await expect(collect(jsonDocuments(chunks('[{},]'), false))).rejects.toThrow();
+    await expect(collect(jsonDocuments(chunks('[null]'), false))).rejects.toThrow();
+  });
 });

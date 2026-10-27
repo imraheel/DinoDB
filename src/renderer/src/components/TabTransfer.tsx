@@ -121,7 +121,8 @@ export default function TabTransfer({ tab, active }: { tab: TabMeta; active: boo
               onChange={(event) => setFormat(event.target.value as TransferFormat)}
               className="rounded-field border border-border-strong bg-surface px-3 py-1 text-ui text-label"
             >
-              <option value="json">JSON (Extended JSON)</option>
+              <option value="json">Extended JSON</option>
+              <option value="simple-json">Simple JSON</option>
               <option value="csv">CSV</option>
               <option value="bson">BSON</option>
             </select>
@@ -135,15 +136,18 @@ export default function TabTransfer({ tab, active }: { tab: TabMeta; active: boo
           </p>
           {progress.format !== undefined && progress.format !== format ? (
             <p className="text-xs text-label-secondary">
-              Choose a new file for {format.toUpperCase()}.
+              Choose a new file for{' '}
+              {format === 'simple-json' ? 'Simple JSON' : format.toUpperCase()}.
             </p>
           ) : null}
           <p className="text-xs leading-relaxed text-label-tertiary">
             {format === 'csv'
-              ? 'CSV uses top-level fields as columns. Nested values use Extended JSON. Ordinary CSV values import as strings; scalar types may change.'
-              : format === 'bson'
-                ? 'BSON preserves MongoDB document types. Use an uncompressed collection BSON file.'
-                : 'Extended JSON preserves MongoDB types. Import accepts an object, an array of documents, or newline-delimited documents.'}
+              ? 'CSV exports readable values: ObjectIds as hex, dates as ISO text, and numbers as digits. Nested values use plain JSON. Scalar cells import as strings.'
+              : format === 'simple-json'
+                ? 'Simple JSON converts ObjectIds and dates to strings, and keeps ordinary numbers and booleans. Long and Decimal128 values use strings to preserve their digits. Import does not infer MongoDB types from strings.'
+                : format === 'bson'
+                  ? 'BSON preserves MongoDB document types. Use an uncompressed collection BSON file.'
+                  : 'Extended JSON preserves MongoDB types. Import accepts an object, an array of documents, or newline-delimited documents.'}
           </p>
           {importing ? (
             <p className="text-xs text-label-tertiary">

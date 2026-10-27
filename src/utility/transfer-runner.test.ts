@@ -11,14 +11,14 @@ import {
   type MongoClient
 } from 'mongodb';
 import { runTransfer } from './transfer-runner';
-import type { TransferJob, TransferProgress } from '../shared/transfer';
+import type { TransferFormat, TransferJob, TransferProgress } from '../shared/transfer';
 import { jsonText } from './transfer-codecs';
 
 const dirs: string[] = [];
 afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true })));
 });
-async function setup(direction: 'import' | 'export', format: 'json' | 'csv' | 'bson' = 'json') {
+async function setup(direction: 'import' | 'export', format: TransferFormat = 'json') {
   const dir = await mkdtemp(join(tmpdir(), 'nexdb-transfer-'));
   dirs.push(dir);
   const job = {
@@ -242,7 +242,7 @@ it('keeps uncertainty when the driver wraps a network failure as a bulk write er
   expect(ctx.events.at(-1)).toMatchObject({ status: 'failed', documents: 0, uncertainBatch: true });
 });
 
-it.each(['json', 'csv', 'bson'] as const)(
+it.each(['json', 'simple-json', 'csv', 'bson'] as const)(
   'round-trips an empty collection through %s',
   async (format) => {
     const ctx = await setup('export', format);
@@ -259,5 +259,50 @@ it.each(['json', 'csv', 'bson'] as const)(
     await ctx.run();
     expect(ctx.events.at(-1)).toMatchObject({ status: 'completed', documents: 0 });
     expect(ctx.insertMany).not.toHaveBeenCalled();
+  }
+);
+
+it.each(['simple-json', 'csv'] as const)(
+  'exports readable BSON values through the %s worker path',
+  async (format) => {
+    const ctx = await setup('export', format);
+    const doc = {
+      _id: new BSON.ObjectId('66901fb06e1ab4190a7bd102'),
+      date: new Date('2026-10-27T10:30:00.000Z'),
+      n: new BSON.Int32(42),
+      long: BSON.Long.fromString('9223372036854775807'),
+      nested: { n: new BSON.Int32(7) }
+    };
+    ctx.job.source = {
+      kind: 'selected',
+      documents: [BSON.EJSON.serialize(doc, { relaxed: false })]
+    };
+    await ctx.run();
+    expect(ctx.events.at(-1)).toMatchObject({ status: 'completed', documents: 1 });
+    const output = await readFile(ctx.job.filePath, 'utf8');
+    expect(output).toContain('66901fb06e1ab4190a7bd102');
+    expect(output).toContain('2026-10-27T10:30:00.000Z');
+    expect(output).toContain('9223372036854775807');
+    expect(output).not.toContain('$oid');
+    expect(output).not.toContain('$numberInt');
+    if (format === 'simple-json')
+      expect(JSON.parse(output)).toEqual([
+        {
+          _id: doc._id.toHexString(),
+          date: doc.date.toISOString(),
+          n: 42,
+          long: '9223372036854775807',
+          nested: { n: 7 }
+        }
+      ]);
+    ctx.job.direction = 'import';
+    await ctx.run();
+    expect(ctx.events.at(-1)).toMatchObject({ status: 'completed', documents: 1 });
+    const imported = ctx.insertMany.mock.calls[0][0][0];
+    expect(imported._id).toBe(doc._id.toHexString());
+    expect(imported.date).toBe(doc.date.toISOString());
+    expect(imported.n).toBe(format === 'csv' ? '42' : 42);
+    expect(imported.long).toBe('9223372036854775807');
+    expect(imported.nested).toEqual({ n: 7 });
   }
 );

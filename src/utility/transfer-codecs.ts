@@ -21,13 +21,45 @@ export function jsonDocument(text: string): Document {
 export function jsonText(document: Document): string {
   return BSON.EJSON.stringify(document, { relaxed: false });
 }
+
+/** Readable, deliberately lossy BSON conversion shared by CSV and Simple JSON. */
+export function simpleValue(value: unknown): unknown {
+  if (value instanceof BSON.ObjectId) return value.toHexString();
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  if (value instanceof BSON.Int32 || value instanceof BSON.Double) return simpleValue(value.value);
+  // Strings preserve all digits, including values outside JavaScript's safe numeric range.
+  if (value instanceof BSON.Long || value instanceof BSON.Decimal128) return value.toString();
+  if (value instanceof BSON.UUID) return value.toHexString();
+  if (value instanceof BSON.Binary) return value.toString('base64');
+  if (value instanceof BSON.BSONRegExp) return `/${value.pattern}/${value.options}`;
+  if (value instanceof RegExp) return value.toString();
+  if (value instanceof BSON.BSONSymbol) return value.value;
+  if (value instanceof BSON.MinKey) return 'MinKey';
+  if (value instanceof BSON.MaxKey) return 'MaxKey';
+  if (value instanceof BSON.Code) {
+    return value.scope ? { code: value.code, scope: simpleValue(value.scope) } : value.code;
+  }
+  if (value instanceof BSON.DBRef) return simpleValue(value.toJSON());
+  if (typeof value === 'number' && !Number.isFinite(value)) return String(value);
+  if (Array.isArray(value)) return value.map(simpleValue);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, simpleValue(item)]));
+  }
+  return value;
+}
+
+export function simpleJsonText(document: Document): string {
+  return JSON.stringify(simpleValue(document));
+}
+
 export function csvCell(value: unknown): string {
+  const plain = simpleValue(value);
   const text =
-    value === undefined
+    plain === undefined
       ? ''
-      : value !== null && typeof value === 'object'
-        ? BSON.EJSON.stringify(value, { relaxed: false })
-        : String(value);
+      : plain !== null && typeof plain === 'object'
+        ? JSON.stringify(plain)
+        : String(plain);
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
@@ -89,7 +121,10 @@ export async function* csvRows(chunks: AsyncIterable<string>): AsyncGenerator<st
 }
 
 /** Tokenize top-level objects without buffering a complete JSON file. */
-export async function* jsonDocuments(chunks: AsyncIterable<string>): AsyncGenerator<Document> {
+export async function* jsonDocuments(
+  chunks: AsyncIterable<string>,
+  extended = true
+): AsyncGenerator<Document> {
   let mode: 'start' | 'array' | 'sequence' | 'done' = 'start';
   let expect: 'valueOrEnd' | 'value' | 'separator' = 'valueOrEnd';
   let text = '';
@@ -118,7 +153,7 @@ export async function* jsonDocuments(chunks: AsyncIterable<string>): AsyncGenera
         if (depth === 0) {
           count++;
           try {
-            yield jsonDocument(text);
+            yield extended ? jsonDocument(text) : documentOf(JSON.parse(text));
           } catch (error) {
             throw new Error(
               `JSON document ${count}: ${error instanceof Error ? error.message : String(error)}`
@@ -218,8 +253,8 @@ export async function* readDocuments(
     }
   }
   try {
-    if (format === 'json') {
-      yield* jsonDocuments(chunks());
+    if (format === 'json' || format === 'simple-json') {
+      yield* jsonDocuments(chunks(), format === 'json');
       return;
     }
     let headers: string[] | undefined;
@@ -245,7 +280,7 @@ export async function* readDocuments(
         let value: unknown = cell;
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
           try {
-            value = BSON.EJSON.parse(trimmed, { relaxed: false });
+            value = JSON.parse(trimmed);
           } catch {
             /* Ordinary text remains text. */
           }

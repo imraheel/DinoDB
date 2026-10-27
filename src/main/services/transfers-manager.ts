@@ -93,17 +93,24 @@ export class TransfersManager {
     owner: WebContents,
     format: TransferFormat
   ): Promise<TransferProgress> {
-    if (!['json', 'csv', 'bson'].includes(format)) throw new Error('Unsupported file format.');
+    if (!['json', 'simple-json', 'csv', 'bson'].includes(format))
+      throw new Error('Unsupported file format.');
     const record = this.record(tabId, owner);
     if (transferActive(record.progress.status)) throw new Error('Transfer is already running.');
-    const filters = [{ name: format.toUpperCase(), extensions: [format] }];
+    const extension = format === 'simple-json' ? 'json' : format;
+    const filters = [
+      {
+        name: format === 'simple-json' ? 'Simple JSON' : format.toUpperCase(),
+        extensions: [extension]
+      }
+    ];
     const result =
       record.input.direction === 'import'
         ? await dialog.showOpenDialog({ title: 'Import data', filters, properties: ['openFile'] })
         : await dialog.showSaveDialog({
             title: 'Export data',
             filters,
-            defaultPath: `${record.input.collection.replace(/[^\w.-]/g, '_')}.${format}`
+            defaultPath: `${record.input.collection.replace(/[^\w.-]/g, '_')}.${extension}`
           });
     if (result.canceled) return this.snapshot(tabId, owner);
     this.record(tabId, owner);

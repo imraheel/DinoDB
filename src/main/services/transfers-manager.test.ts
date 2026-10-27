@@ -154,3 +154,34 @@ it('reports startup failures and allows selecting a file again', async () => {
     status: 'configuring'
   });
 });
+
+it('uses the .json extension for Simple JSON export dialogs and passes the format to its worker', async () => {
+  const ctx = setup();
+  vi.mocked(dialog.showSaveDialog).mockResolvedValueOnce({
+    canceled: false,
+    filePath: '/tmp/simple.json'
+  });
+  const id = ctx.manager.create({ ...input, direction: 'export' }, ctx.sender);
+  await ctx.manager.chooseFile(id, ctx.sender, 'simple-json');
+  expect(dialog.showSaveDialog).toHaveBeenCalledWith(
+    expect.objectContaining({
+      defaultPath: 'col.json',
+      filters: [{ name: 'Simple JSON', extensions: ['json'] }]
+    })
+  );
+  ctx.manager.start(id, ctx.sender, 'simple-json', {} as ConnectionConfig);
+  expect(ctx.workers[0].messages[0]).toMatchObject({
+    kind: 'start',
+    job: { format: 'simple-json', filePath: '/tmp/simple.json' }
+  });
+});
+it('accepts Simple JSON imports through a .json native file filter', async () => {
+  const ctx = setup();
+  const id = ctx.manager.create(input, ctx.sender);
+  await ctx.manager.chooseFile(id, ctx.sender, 'simple-json');
+  expect(dialog.showOpenDialog).toHaveBeenCalledWith(
+    expect.objectContaining({
+      filters: [{ name: 'Simple JSON', extensions: ['json'] }]
+    })
+  );
+});

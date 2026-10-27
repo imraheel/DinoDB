@@ -12,7 +12,7 @@ Every collection tab runs in its own forked worker process with a hard timeout, 
 - **Document CRUD** — insert, edit, and delete documents with live JSON validation
 - **Schema-aware results** — columns inferred from your data; Extended JSON rendered readably; pagination with first/prev/next/last and skip/limit
 - **Collections sidebar** — databases → collections tree; create, rename, duplicate, drop, and clear collections
-- **Import/export** — BSON, Extended JSON and CSV; export selected rows, all query results or a whole collection. Dedicated transfer tabs show progress and cancellation, with each operation running in its own Electron utility process.
+- **Import/export** — BSON, Extended JSON, Simple JSON and CSV; export selected rows, all query results or a whole collection. Simple JSON and CSV use readable values; BSON and Extended JSON preserve MongoDB types. Dedicated transfer tabs show progress and cancellation, with each operation running in its own Electron utility process.
 - **Tabs** — pin, rename, drag-to-reorder, close others; clipped tabs collected in an overflow menu
 - **Settings** — dark/light/system theme, query timeout, default row limit
 

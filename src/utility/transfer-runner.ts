@@ -2,7 +2,7 @@ import { open, rename, rm, stat } from 'node:fs/promises';
 import { BSON, MongoBulkWriteError, type Document, type MongoClient } from 'mongodb';
 import type { TransferJob, TransferProgress } from '../shared/transfer';
 import { assertReadOnlyPipeline, transferTempPaths } from '../shared/transfer';
-import { csvCell, documentOf, jsonText, readDocuments } from './transfer-codecs';
+import { csvCell, documentOf, jsonText, simpleJsonText, readDocuments } from './transfer-codecs';
 
 export async function runTransfer(
   job: TransferJob,
@@ -184,10 +184,16 @@ export async function runTransfer(
             await output.close();
           }
         } else {
-          phase(job.format === 'bson' ? 'Writing BSON' : 'Writing JSON');
+          phase(
+            job.format === 'bson'
+              ? 'Writing BSON'
+              : job.format === 'simple-json'
+                ? 'Writing Simple JSON'
+                : 'Writing Extended JSON'
+          );
           const output = await open(partial, 'wx');
           try {
-            if (job.format === 'json') {
+            if (job.format !== 'bson') {
               await output.writeFile('[\n');
               progress.bytes += 2;
             }
@@ -196,14 +202,14 @@ export async function runTransfer(
               const encoded =
                 job.format === 'bson'
                   ? BSON.serialize(document)
-                  : `${progress.documents === 0 ? '' : ',\n'}${jsonText(document)}`;
+                  : `${progress.documents === 0 ? '' : ',\n'}${job.format === 'simple-json' ? simpleJsonText(document) : jsonText(document)}`;
               await output.writeFile(encoded);
               progress.bytes +=
                 typeof encoded === 'string' ? Buffer.byteLength(encoded) : encoded.length;
               progress.documents++;
               emit();
             }
-            if (job.format === 'json') {
+            if (job.format !== 'bson') {
               await output.writeFile('\n]\n');
               progress.bytes += 3;
             }

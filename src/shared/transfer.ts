@@ -1,6 +1,6 @@
 import type { ConnectionConfig } from './types';
 
-export type TransferFormat = 'json' | 'csv' | 'bson';
+export type TransferFormat = 'json' | 'simple-json' | 'csv' | 'bson';
 export type TransferDirection = 'import' | 'export';
 export type TransferSource =
   | { kind: 'collection' }
