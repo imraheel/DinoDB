@@ -1,6 +1,6 @@
 {
   "name": "nexdb",
-  "version": "0.1.7-alpha",
+  "version": "0.1.8-alpha",
   "private": true,
   "description": "NexDB — a fast MongoDB client",
   "license": "GPL-3.0-only",

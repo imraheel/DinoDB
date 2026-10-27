@@ -4,6 +4,31 @@ All notable changes to NexDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8-alpha] - 2026-10-27
+
+### Added
+
+- Collection import and export in BSON, Extended JSON, Simple JSON, and CSV formats, available from collection context menus
+- Export controls before Insert Document in the data table, supporting selected rows or all results from the query beyond the displayed page
+- Dedicated import/export tabs with progress and cancellation; each operation runs in a separate Electron utility process to keep the main process and other tabs responsive
+- Whole-database backup and restore through locally installed or user-selected `mongodump` and `mongorestore`, available from database context menus
+- Database archive backups with optional gzip compression; restore from archives, dump roots, or named database directories, with source database selection and destination renaming
+- Restore modes for a new database, inserting into an existing database, or replacing backed-up collections with confirmation while preserving unrelated collections
+- Dedicated database operation tabs with progress, elapsed time, diagnostic logs, cancellation, and partial-restore status
+- Database Tools preferences with independent executable paths, Browse, Test tools, automatic installed-tool discovery, and version/capability validation; tools are supplied separately
+- Restore preflight checks, per-database import/restore write locks, protected temporary connection credentials, and cleanup of owned processes and temporary files on cancellation, disconnect, tab close, or application quit
+
+### Changed
+
+- CSV exports use readable BSON values such as ObjectId hex strings and ISO dates; Simple JSON provides readable values recursively, while BSON and Extended JSON retain MongoDB type information
+- Database Tools downloads appear as a selectable URL with a Copy URL button and copied feedback in Preferences
+- Database Tools now appears above Advance Settings in the settings sidebar with a dedicated database backup icon
+- Added Oxlint and Oxfmt scripts and applied lint fixes and consistent formatting across the codebase
+
+### Fixed
+
+- Blocked renderer-created popup windows, page navigation, and redirects so external links cannot open inside the application
+
 ## [0.1.7-alpha] - 2026-10-22
 
 ### Added
