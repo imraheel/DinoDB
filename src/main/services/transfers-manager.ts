@@ -35,7 +35,7 @@ export class TransfersManager {
   constructor(
     private readonly fork: () => TransferWorker = () =>
       utilityProcess.fork(path.join(__dirname, '..', 'utility', 'transfer.js'), [], {
-        serviceName: 'nexdb-transfer'
+        serviceName: 'dinodb-transfer'
       })
   ) {}
 

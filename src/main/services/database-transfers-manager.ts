@@ -54,7 +54,7 @@ export class DatabaseTransfersManager {
     private readonly hasImport: (connectionId: string, database: string) => boolean,
     private readonly fork: () => DatabaseWorker = () =>
       utilityProcess.fork(path.join(__dirname, '..', 'utility', 'database-transfer.js'), [], {
-        serviceName: 'nexdb-database-transfer'
+        serviceName: 'dinodb-database-transfer'
       })
   ) {}
   create(input: DatabaseTransferInput, owner: WebContents): string {
@@ -283,7 +283,7 @@ export class DatabaseTransfersManager {
     if (record.job) {
       await rm(record.job.workDir, { recursive: true, force: true }).catch(() => {});
       if (record.input.kind === 'database-backup')
-        await rm(`${record.job.filePath}.nexdb-${runId}.partial`, { force: true }).catch(() => {});
+        await rm(`${record.job.filePath}.dinodb-${runId}.partial`, { force: true }).catch(() => {});
     }
     if (databaseTransferActive(record.progress.state)) {
       const cancelled = record.closed || record.progress.state === 'cancelling';

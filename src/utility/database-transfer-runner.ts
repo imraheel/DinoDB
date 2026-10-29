@@ -22,7 +22,7 @@ export async function runDatabaseTransfer(
   deps: { spawn?: typeof spawn; createClient?: (uri: string) => MongoClient } = {}
 ): Promise<void> {
   const started = Date.now();
-  const partial = `${job.filePath}.nexdb-${job.runId}.partial`;
+  const partial = `${job.filePath}.dinodb-${job.runId}.partial`;
   const configPath = path.join(job.workDir, 'connection.yml');
   let uri = '';
   let lastSent = 0;

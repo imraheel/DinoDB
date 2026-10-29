@@ -234,14 +234,14 @@ function init(): void {
     }
   });
 
-  defineNexdbThemes();
+  defineDinoDBThemes();
 }
 
-function defineNexdbThemes(): void {
+function defineDinoDBThemes(): void {
   const light = getAccentPalette(currentAccent, 'light');
   const dark = getAccentPalette(currentAccent, 'dark');
 
-  monaco.editor.defineTheme('nexdb-light', {
+  monaco.editor.defineTheme('dinodb-light', {
     base: 'vs',
     inherit: true,
     rules: [
@@ -293,7 +293,7 @@ function defineNexdbThemes(): void {
     }
   });
 
-  monaco.editor.defineTheme('nexdb-dark', {
+  monaco.editor.defineTheme('dinodb-dark', {
     base: 'vs-dark',
     inherit: true,
     rules: [
@@ -355,13 +355,13 @@ export function setCompletionFields(fields: string[]): void {
 export function setMonacoAccent(accent: AccentSetting): void {
   if (accent === currentAccent) return;
   currentAccent = accent;
-  defineNexdbThemes();
-  monaco.editor.setTheme(monacoDark ? 'nexdb-dark' : 'nexdb-light');
+  defineDinoDBThemes();
+  monaco.editor.setTheme(monacoDark ? 'dinodb-dark' : 'dinodb-light');
 }
 
 export function setMonacoTheme(dark: boolean): void {
   monacoDark = dark;
-  monaco.editor.setTheme(dark ? 'nexdb-dark' : 'nexdb-light');
+  monaco.editor.setTheme(dark ? 'dinodb-dark' : 'dinodb-light');
 }
 
 export function isMonacoDark(): boolean {

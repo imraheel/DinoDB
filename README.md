@@ -1,4 +1,4 @@
-# NexDB
+# DinoDB
 
 A fast, native-feeling MongoDB desktop client for macOS and Windows. Built with Electron, React, and TypeScript, with hard process isolation so one slow query can never freeze the app.
 

@@ -39,7 +39,7 @@ const options: DatabaseTransferOptions = {
   mode: 'new-database'
 };
 async function setup() {
-  const dir = await mkdtemp(join(tmpdir(), 'nexdb-manager-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dinodb-manager-'));
   dirs.push(dir);
   state.dir = dir;
   const sender = Object.assign(new EventEmitter(), {

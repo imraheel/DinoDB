@@ -9,7 +9,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 async function fixture() {
-  const dir = await mkdtemp(join(tmpdir(), 'nexdb tools-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dinodb tools-'));
   dirs.push(dir);
   const file = join(dir, 'mongodump');
   await writeFile(file, 'fixture');
@@ -30,7 +30,7 @@ it('resolves installed tools from PATH and keeps absolute paths with spaces', as
     available: true,
     source: 'installed',
     version: '100.19.0',
-    path: expect.stringContaining('nexdb tools-')
+    path: expect.stringContaining('dinodb tools-')
   });
 });
 it('does not fall back from an invalid explicit override', async () => {

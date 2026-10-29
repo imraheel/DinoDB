@@ -22,7 +22,7 @@ export function createApplicationMenu(): void {
       label: app.name,
       submenu: [
         {
-          label: 'About NexDB',
+          label: 'About DinoDB',
           click: () => openAboutWindow()
         },
         { type: 'separator' },
@@ -77,7 +77,7 @@ export function createApplicationMenu(): void {
       role: 'help',
       submenu: [
         {
-          label: 'About NexDB',
+          label: 'About DinoDB',
           click: () => openAboutWindow()
         }
       ]

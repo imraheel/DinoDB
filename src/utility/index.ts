@@ -23,7 +23,7 @@ function messageOf(error: unknown): string {
 async function handleInit(init: InitMessage): Promise<void> {
   try {
     const next = new MongoClient(buildMongoUri(init.connection), {
-      appName: 'NexDB',
+      appName: 'DinoDB',
       serverSelectionTimeoutMS: 10000
     });
     await next.connect();

@@ -24,7 +24,7 @@ parent.on('message', ({ data }) => {
   started = true;
   const job = data.job;
   const client = new MongoClient(buildMongoUri(job.connection), {
-    appName: 'NexDB transfer',
+    appName: 'DinoDB transfer',
     serverSelectionTimeoutMS: 10000,
     connectTimeoutMS: 10000,
     socketTimeoutMS: 30000,

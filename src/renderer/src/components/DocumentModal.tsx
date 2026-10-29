@@ -96,7 +96,7 @@ export default function DocumentModal({
       automaticLayout: true,
       scrollBeyondLastLine: false,
       readOnly: viewOnly,
-      theme: isMonacoDark() ? 'nexdb-dark' : 'nexdb-light'
+      theme: isMonacoDark() ? 'dinodb-dark' : 'dinodb-light'
     });
     const subscription = editor.onDidChangeModelContent(() => {
       setText(editor.getValue());

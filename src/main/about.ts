@@ -10,7 +10,7 @@ function aboutHtml(version: string): string {
 <html>
 <head>
 <meta charset="utf-8" />
-<title>About NexDB</title>
+<title>About DinoDB</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
@@ -37,7 +37,7 @@ function aboutHtml(version: string): string {
 </head>
 <body>
   <div class="card">
-    <div class="name">NexDB</div>
+    <div class="name">DinoDB</div>
     <div class="version">Version ${version}</div>
     <p class="desc muted">A fast, native MongoDB client for the desktop.<br />Browse, query, and edit collections with ease.</p>
   </div>
@@ -60,7 +60,7 @@ export function openAboutWindow(): void {
     maximizable: false,
     fullscreenable: false,
     minimizable: process.platform === 'darwin',
-    title: 'About NexDB',
+    title: 'About DinoDB',
     center: true,
     show: false,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#252528' : '#ffffff',

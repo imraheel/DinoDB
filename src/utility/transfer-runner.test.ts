@@ -19,7 +19,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true })));
 });
 async function setup(direction: 'import' | 'export', format: TransferFormat = 'json') {
-  const dir = await mkdtemp(join(tmpdir(), 'nexdb-transfer-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dinodb-transfer-'));
   dirs.push(dir);
   const job = {
     tabId: 'test',

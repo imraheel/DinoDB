@@ -60,7 +60,7 @@ export default function WelcomeScreen({ onOpenManager, onNewConnection }: Welcom
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-7 overflow-y-auto px-6 py-8">
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight text-label">Welcome to NexDB</h1>
+        <h1 className="text-[22px] font-semibold tracking-tight text-label">Welcome to DinoDB</h1>
         <p className="mt-1.5 text-[13px] text-label-secondary">
           Open a collection from the sidebar to start working.
         </p>

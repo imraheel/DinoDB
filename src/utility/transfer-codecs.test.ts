@@ -23,7 +23,7 @@ async function collect<T>(items: AsyncIterable<T>): Promise<T[]> {
 }
 const directories: string[] = [];
 async function file(content: string | Uint8Array) {
-  const dir = await mkdtemp(join(tmpdir(), 'nexdb-codec-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dinodb-codec-'));
   directories.push(dir);
   const path = join(dir, 'data');
   await writeFile(path, content);

@@ -76,5 +76,5 @@ export function transferTempPaths(job: {
   runId?: string;
 }): string[] {
   const suffix = job.runId ?? job.tabId;
-  return [`${job.filePath}.nexdb-${suffix}.partial`, `${job.filePath}.nexdb-${suffix}.spool`];
+  return [`${job.filePath}.dinodb-${suffix}.partial`, `${job.filePath}.dinodb-${suffix}.spool`];
 }

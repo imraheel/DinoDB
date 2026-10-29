@@ -16,7 +16,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true })));
 });
 async function setup(restore = false) {
-  const dir = await mkdtemp(join(tmpdir(), 'nexdb-process-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dinodb-process-'));
   dirs.push(dir);
   const filePath = join(dir, 'backup.archive');
   await writeFile(filePath, 'existing backup');

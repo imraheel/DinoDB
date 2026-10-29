@@ -13,6 +13,8 @@ import { TabManager } from './services/tabs-manager';
 import { createApplicationMenu } from './menu';
 import { createMainWindow } from './window';
 
+app.setName('DinoDB');
+
 app.on('web-contents-created', (_event, contents) => {
   contents.setWindowOpenHandler(() => ({ action: 'deny' }));
   contents.on('will-frame-navigate', (event) => event.preventDefault());
@@ -20,7 +22,7 @@ app.on('web-contents-created', (_event, contents) => {
 });
 
 app.whenReady().then(() => {
-  const db = getDb(path.join(app.getPath('userData'), 'nexdb.db'));
+  const db = getDb(path.join(app.getPath('userData'), 'dinodb.db'));
   const utilityDeps = createUtilityDeps();
   const sessions = new SessionManager(utilityDeps, (id) => getConnection(db, id));
   const tabs = new TabManager(utilityDeps);

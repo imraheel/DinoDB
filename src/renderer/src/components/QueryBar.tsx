@@ -211,7 +211,7 @@ export default function QueryBar({
       automaticLayout: true,
       scrollBeyondLastLine: false,
       ariaLabel: 'Find query',
-      theme: isMonacoDark() ? 'nexdb-dark' : 'nexdb-light'
+      theme: isMonacoDark() ? 'dinodb-dark' : 'dinodb-light'
     });
     editorRef.current = editor;
     const subscription = editor.onDidChangeModelContent(() => {

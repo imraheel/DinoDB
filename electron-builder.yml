@@ -1,5 +1,5 @@
-appId: com.nexdb.app
-productName: NexDB
+appId: com.dinodb.app
+productName: DinoDB
 directories:
   output: dist
   buildResources: build

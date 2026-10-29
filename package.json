@@ -1,10 +1,13 @@
 {
-  "name": "nexdb",
+  "name": "dinodb",
   "version": "0.1.8-alpha",
   "private": true,
-  "description": "NexDB — a fast MongoDB client",
+  "description": "DinoDB — a fast MongoDB client",
   "license": "GPL-3.0-only",
-  "author": "NexDB <dev@nexdb.app>",
+  "author": {
+    "name": "Raheel Khan",
+    "url": "https://github.com/imraheel"
+  },
   "main": "out/main/index.js",
   "scripts": {
     "build:utility": "tsc -p tsconfig.utility.json && node -e \"const {rmSync,globSync}=require('node:fs');for(const f of globSync('out/**/*.test.js'))rmSync(f)\"",
