@@ -4,6 +4,19 @@ All notable changes to DinoDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9-alpha] - 2026-10-29
+
+### Added
+
+- New dinosaur app icon for macOS, Windows, and Linux, with matching renderer icons, favicons, and vector artwork
+- Light and dark app screenshot and a contributor guide covering setup, checks, and pull requests
+
+### Changed
+
+- Rebranded the application to DinoDB across the interface, menus, package metadata, and installer identity (`com.dinodb.app`)
+- DinoDB now uses a fresh `dinodb.db` in its new application data directory
+- Updated the README with the new branding, screenshot, highlights, supported platforms, GitHub Releases download link, source build instructions, contribution guidance, license, and DMCA notice
+
 ## [0.1.8-alpha] - 2026-10-27
 
 ### Added

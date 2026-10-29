@@ -1,6 +1,6 @@
 {
   "name": "dinodb",
-  "version": "0.1.8-alpha",
+  "version": "0.1.9-alpha",
   "private": true,
   "description": "DinoDB — a fast MongoDB client",
   "license": "GPL-3.0-only",
