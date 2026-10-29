@@ -1,66 +1,62 @@
-# DinoDB
+<p align="center">
+  <img src="./src/renderer/public/icon.png" alt="DinoDB app icon" width="96" height="96" />
+</p>
 
-A fast, native-feeling MongoDB desktop client for macOS and Windows. Built with Electron, React, and TypeScript, with hard process isolation so one slow query can never freeze the app.
+<h1 align="center">DinoDB</h1>
+<h3 align="center">A fast, native MongoDB client for the desktop.<br />Browse, query, and edit collections with ease.</h3>
 
-Every collection tab runs in its own forked worker process with a hard timeout, so the UI and other tabs stay fully responsive even when a query hangs.
+<p align="center">
+  <img src="./src/renderer/public/screenshot.png" alt="DinoDB welcome screen in light and dark themes" width="100%" />
+</p>
 
-## Features
+## About
 
-- **Connections** — save multiple connections with full auth support (SCRAM, X.509, AWS, GSSAPI, PLAIN), test before saving, stored locally in SQLite
-- **Shell-style query editor** — Monaco editor with `find`, `findOne`, `countDocuments`, `aggregate`, and full write ops; `ObjectId`/`ISODate` stubs converted to Extended JSON; multi-statement scripts with run-at-cursor (⌘⏎) or run-all
-- **Explain** — run `explain("executionStats")` from the toolbar or with `.explain()` syntax, shown in a collapsible plan tree
-- **Document CRUD** — insert, edit, and delete documents with live JSON validation
-- **Schema-aware results** — columns inferred from your data; Extended JSON rendered readably; pagination with first/prev/next/last and skip/limit
-- **Collections sidebar** — databases → collections tree; create, rename, duplicate, drop, and clear collections
-- **Import/export** — BSON, Extended JSON, Simple JSON and CSV; export selected rows, all query results or a whole collection. Simple JSON and CSV use readable values; BSON and Extended JSON preserve MongoDB types. Dedicated transfer tabs show progress and cancellation, with each operation running in its own Electron utility process.
-- **Database backup/restore** — use locally installed or user-selected MongoDB Database Tools to back up a database to an archive, or restore an archive/dump directory, with progress and cancellation in a separate tab.
-- **Tabs** — pin, rename, drag-to-reorder, close others; clipped tabs collected in an overflow menu
-- **Settings** — dark/light/system theme, query timeout, default row limit
+DinoDB is a free, open-source MongoDB desktop client for macOS and Windows. It brings connections, queries, document editing, and database tools into a native-feeling interface built with Electron, React, and TypeScript.
 
-## Database backup and restore
+Collection tabs run in separate utility processes, so a slow query does not block the rest of the app. Connection profiles and preferences are stored locally in SQLite.
 
-Install [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools) 100.3.0 or later. Open **Preferences → Database Tools** to test automatic detection or browse to `mongodump` and `mongorestore` separately. A configured path takes precedence; Reset to automatic restores installed-tool discovery. Only the tool needed for the chosen operation is required. No tools are bundled or downloaded by the app.
+## Highlights
 
-For an extracted tools download, select the actual executables inside its `bin` folder: `bin/mongodump` and `bin/mongorestore` on macOS, or `bin/mongodump.exe` and `bin/mongorestore.exe` on Windows. Select each file separately, use **Test tools** to check its version and required capabilities, then save Preferences to apply the paths. These choices are saved locally. Clearing a custom path enables automatic discovery through PATH and common installation directories. An invalid custom path is reported directly so another installed version is not silently substituted. Apps launched from Finder may have a different PATH from your terminal; choosing the executable explicitly avoids that dependency.
+- **Connect your way:** Save multiple MongoDB connections with SCRAM, X.509, AWS, GSSAPI, and PLAIN authentication support.
+- **Query with a familiar editor:** Use a Monaco-powered shell-style editor for reads, writes, aggregation, and explain plans.
+- **Explore and edit data:** Browse databases and collections, inspect schema-aware results, and create, update, or delete documents.
+- **Move data between systems:** Import and export BSON, Extended JSON, Simple JSON, and CSV, with progress and cancellation controls.
+- **Back up and restore databases:** Run `mongodump` and `mongorestore` through the app using separately installed [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools) 100.3.0 or later.
+- **Work your way:** Organize tabs and choose light, dark, or system appearance.
 
-Right-click a database and choose **Back Up Database…** or **Restore Database…**. Backup creates a MongoDB archive, optionally compressed with gzip. Restore accepts an archive or dump directory and requires the original database name plus a destination name. For directory input, choose the dump root or a database directory whose name matches the original database. Select gzip only when the source files were compressed.
+## Supported platforms
 
-Restore defaults to a new database. Inserting into existing collections stops on errors. Replacing backed-up collections requires confirmation and leaves unrelated collections intact. Cancelling or failing a restore does not undo changes already made. Database-only backups are not point-in-time snapshots while external applications continue writing. Tool/server compatibility and authentication support depend on the selected Database Tools release.
-
-Automated tests use isolated executable fixtures to verify process execution, cancellation and failures without a live server. Backup and restore have also been manually verified in the application. Real executable validation and PATH discovery were verified on macOS Intel with MongoDB Database Tools 100.20.0.
-
-## Supported Platforms
-
-| Platform                          | Artifact                |
-| --------------------------------- | ----------------------- |
-| macOS 12+ (Intel & Apple Silicon) | `.dmg`, `.zip`          |
-| Windows 10/11 (x64)               | NSIS installer (`.exe`) |
-| Linux                             | Planned                 |
+| Platform                            | Release format   |
+| ----------------------------------- | ---------------- |
+| macOS 12+ (Intel and Apple silicon) | `.dmg`, `.zip`   |
+| Windows 10/11 (x64)                 | `.exe` installer |
+| Linux                               | Planned          |
 
 ## Download
 
-Grab the latest build from the [Releases](https://github.com/imraheel/mongo-client/releases) page.
+Get DinoDB from [GitHub Releases](https://github.com/imraheel/DinoDB/releases). Choose the macOS `.dmg` or `.zip`, or the Windows `.exe` installer for your system.
 
-## Development
+## Build from source
 
-| Command            | Description                        |
-| ------------------ | ---------------------------------- |
-| `pnpm install`     | Install dependencies               |
-| `pnpm dev`         | Launch the app with hot reload     |
-| `pnpm test`        | Run unit tests                     |
-| `pnpm typecheck`   | Type-check all TypeScript projects |
-| `pnpm build`       | Production build                   |
-| `pnpm clean`       | Remove `dist/` and `out/`          |
-| `pnpm package:mac` | Build macOS installers             |
-| `pnpm package:win` | Build Windows installer (x64)      |
-| `pnpm package:all` | Build for macOS and Windows        |
+You need Node.js 22 and pnpm 10. From a terminal:
 
-To cut a release, push a tag — CI builds both platforms and publishes a GitHub Release with the installers attached:
-
+```sh
+git clone https://github.com/imraheel/DinoDB.git
+cd DinoDB
+pnpm install --frozen-lockfile
+pnpm dev
 ```
-git tag v0.2.0 && git push origin v0.2.0
-```
+
+To create a production build, run `pnpm build`. To package the app, run `pnpm package:mac` on macOS or `pnpm package:win` on Windows. Packages are written to `dist/`.
+
+## How to contribute
+
+Bug reports, ideas, documentation, and code contributions are welcome. Search [existing issues](https://github.com/imraheel/DinoDB/issues) before opening a new one, and see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, project layout, checks, and pull request guidance.
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](LICENSE).
+DinoDB is licensed under the [GNU General Public License v3.0](./LICENSE) (`GPL-3.0-only`).
+
+## DMCA notice
+
+If you believe material in this repository or its GitHub Releases infringes your copyright, follow [GitHub's guide to submitting a DMCA takedown notice](https://docs.github.com/en/site-policy/content-removal-policies/guide-to-submitting-a-dmca-takedown-notice). Identify the copyrighted work and the specific repository or release URLs in your notice. GitHub's guide explains the remaining information required and the counter-notice process.
