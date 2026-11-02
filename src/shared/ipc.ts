@@ -1,4 +1,5 @@
 import type { TransferFormat, TransferSource, TransferProgress } from './transfer';
+import type { ShellProgress } from './shell';
 import type { DatabaseToolName, DatabaseToolsPaths, DatabaseToolsStatus } from './database-tools';
 import type {
   DatabaseTransferInput,
@@ -19,6 +20,10 @@ export const IPC = {
   tabsCreate: 'tabs:create',
   tabsExecute: 'tabs:execute',
   tabsClose: 'tabs:close',
+  shellStart: 'shells:start',
+  shellCancel: 'shells:cancel',
+  shellSnapshot: 'shells:snapshot',
+  shellProgress: 'shells:progress',
   settingsGet: 'settings:get',
   settingsSave: 'settings:save',
   databaseToolsBrowse: 'database-tools:browse',
@@ -229,6 +234,10 @@ export interface TestConnectionResult {
 }
 
 export interface MongoExplorerApi {
+  startShell(tabId: string, script: string): Promise<void>;
+  cancelShell(tabId: string): Promise<void>;
+  shellSnapshot(tabId: string): Promise<ShellProgress>;
+  onShellProgress(callback: (progress: ShellProgress) => void): () => void;
   browseDatabaseTool(name: DatabaseToolName): Promise<string | null>;
   testDatabaseTools(paths: DatabaseToolsPaths): Promise<DatabaseToolsStatus>;
   detectDatabaseTools(): Promise<DatabaseToolsStatus>;

@@ -17,6 +17,9 @@ export function registerConnectionsIpc(deps: IpcDeps): void {
 
   ipcMain.handle(IPC.connectionsDelete, (_event, id: string) => {
     deleteConnection(deps.db(), id);
+    deps.shells.closeForConnection(id);
+    deps.transfers.closeForConnection(id);
+    deps.databaseTransfers.closeForConnection(id);
     deps.sessions.disconnect(id);
     deps.tabs.closeForConnection(id);
   });

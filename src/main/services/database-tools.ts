@@ -13,6 +13,7 @@ import { normalizeToolPath } from '../../shared/database-tools';
 export interface ToolProbeDeps {
   platform: NodeJS.Platform;
   env: NodeJS.ProcessEnv;
+  bundledDir?: string;
   probe(file: string, args: string[]): Promise<string>;
 }
 export function probeExecutable(file: string, args: string[]): Promise<string> {
@@ -34,6 +35,11 @@ export function probeExecutable(file: string, args: string[]): Promise<string> {
   });
 }
 export function parseToolVersion(name: DatabaseToolName, output: string): string {
+  if (name === 'mongosh') {
+    const match = output.trim().match(/^(?:mongosh\s+(?:version:\s*)?v?)?(\d+)\.(\d+)\.(\d+)\s*$/i);
+    if (!match || Number(match[1]) < 2) throw new Error('Mongosh 2.0.0 or later is required.');
+    return match.slice(1).join('.');
+  }
   const match = output.match(
     new RegExp(`(?:^|\\n)${name} version:\\s*(?:v)?(\\d+)\\.(\\d+)\\.(\\d+)`, 'i')
   );
@@ -63,10 +69,18 @@ export class DatabaseTools {
       for (const root of [this.deps.env.ProgramFiles, this.deps.env['ProgramFiles(x86)']].filter(
         (value): value is string => Boolean(value)
       )) {
+        if (name === 'mongosh') {
+          dirs.push(path.win32.join(root, 'mongosh'), path.win32.join(root, 'mongosh', 'bin'));
+          continue;
+        }
         const base = path.win32.join(root, 'MongoDB', 'Tools');
         const versions = await readdir(base).catch(() => []);
         versions.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
         dirs.push(...versions.map((version) => path.win32.join(base, version, 'bin')));
+      }
+      if (name === 'mongosh' && this.deps.env.LOCALAPPDATA) {
+        const base = path.win32.join(this.deps.env.LOCALAPPDATA, 'Programs', 'mongosh');
+        dirs.push(base, path.win32.join(base, 'bin'));
       }
     } else {
       dirs.push(
@@ -92,8 +106,13 @@ export class DatabaseTools {
         error: String(error instanceof Error ? error.message : error)
       };
     }
-    const candidates = selected ? [selected] : await this.candidates(name);
-    let lastError = `${name} was not found. Install MongoDB Database Tools or choose its executable in Preferences.`;
+    const bundled = this.deps.bundledDir
+      ? path.join(this.deps.bundledDir, name + (this.deps.platform === 'win32' ? '.exe' : ''))
+      : undefined;
+    const candidates = selected
+      ? [selected]
+      : [...(bundled ? [bundled] : []), ...(await this.candidates(name))];
+    let lastError = `${name} was not found. Install ${name === 'mongosh' ? 'MongoDB Shell' : 'MongoDB Database Tools'} or choose its executable in Preferences.`;
     const seen = new Set<string>();
     for (const candidate of candidates) {
       try {
@@ -107,24 +126,26 @@ export class DatabaseTools {
         const version = parseToolVersion(name, await this.deps.probe(executable, ['--version']));
         const help = await this.deps.probe(executable, ['--help']);
         const flags =
-          name === 'mongodump'
-            ? ['--config', '--archive', '--gzip', '--db']
-            : [
-                '--config',
-                '--archive',
-                '--gzip',
-                '--nsInclude',
-                '--nsFrom',
-                '--nsTo',
-                '--dryRun',
-                '--stopOnError',
-                '--drop'
-              ];
+          name === 'mongosh'
+            ? ['--nodb', '--norc', '--file', '--quiet']
+            : name === 'mongodump'
+              ? ['--config', '--archive', '--gzip', '--db']
+              : [
+                  '--config',
+                  '--archive',
+                  '--gzip',
+                  '--nsInclude',
+                  '--nsFrom',
+                  '--nsTo',
+                  '--dryRun',
+                  '--stopOnError',
+                  '--drop'
+                ];
         if (flags.some((flag) => !help.includes(flag)))
           throw new Error(`${name} does not support all required backup/restore options.`);
         return {
           name,
-          source: selected ? 'custom' : 'installed',
+          source: selected ? 'custom' : candidate === bundled ? 'bundled' : 'installed',
           path: executable,
           version,
           available: true
@@ -146,10 +167,11 @@ export class DatabaseTools {
     };
   }
   async test(paths: DatabaseToolsPaths): Promise<DatabaseToolsStatus> {
-    const [mongodump, mongorestore] = await Promise.all([
+    const [mongodump, mongorestore, mongosh] = await Promise.all([
       this.resolve('mongodump', paths.mongodumpPath),
-      this.resolve('mongorestore', paths.mongorestorePath)
+      this.resolve('mongorestore', paths.mongorestorePath),
+      this.resolve('mongosh', paths.mongoshPath)
     ]);
-    return { mongodump, mongorestore };
+    return { mongodump, mongorestore, mongosh };
   }
 }

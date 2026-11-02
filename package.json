@@ -10,6 +10,7 @@
   },
   "main": "out/main/index.js",
   "scripts": {
+    "tools:prepare": "node scripts/prepare-mongodb-tools.mjs",
     "build:utility": "tsc -p tsconfig.utility.json && node -e \"const {rmSync,globSync}=require('node:fs');for(const f of globSync('out/**/*.test.js'))rmSync(f)\"",
     "dev": "pnpm run build:utility && electron-vite dev",
     "build": "pnpm run build:utility && electron-vite build",

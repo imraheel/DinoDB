@@ -61,12 +61,13 @@ export default function DatabaseToolsSettings({
       <div>
         <h3 className="text-ui font-semibold text-label">MongoDB Database Tools</h3>
         <p className="mt-2 text-xs text-label-secondary">
-          Use installed tools automatically or select executables. Database Tools 100.3.0 or later
-          is required. Changes take effect after saving Preferences.
+          Use bundled tools automatically or select executables. Database Tools 100.3.0 or later and
+          Mongosh 2.0.0 or later are required. Installed tools are used when a bundled tool is
+          unavailable. Changes take effect after saving Preferences.
         </p>
       </div>
-      {(['mongodump', 'mongorestore'] as const).map((name) => {
-        const key = name === 'mongodump' ? 'mongodumpPath' : 'mongorestorePath';
+      {(['mongodump', 'mongorestore', 'mongosh'] as const).map((name) => {
+        const key = `${name}Path` as const;
         const result = status?.[name];
         return (
           <div key={name} className="space-y-2">
@@ -93,7 +94,7 @@ export default function DatabaseToolsSettings({
               <div className="break-all text-xs" aria-live="polite">
                 <p className={result.available ? 'text-success' : 'text-danger'}>
                   {result.available
-                    ? `${result.version} · ${result.source === 'custom' ? 'User selected' : 'Installed'}`
+                    ? `${result.version} · ${result.source === 'custom' ? 'User selected' : result.source === 'bundled' ? 'Bundled' : 'Installed'}`
                     : result.error}
                 </p>
                 {result.path ? <p className="mt-1 text-label-tertiary">{result.path}</p> : null}
@@ -107,7 +108,7 @@ export default function DatabaseToolsSettings({
       </Button>
       <p className="text-xs text-label-tertiary">
         Testing checks the executables and supported options without connecting to a database. No
-        tools are bundled or installed automatically.
+        tools are downloaded at runtime.
       </p>
       <div className="space-y-2">
         <p className="text-xs font-medium text-label">MongoDB Database Tools downloads</p>

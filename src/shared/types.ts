@@ -56,6 +56,7 @@ export interface AppSettings {
   defaultLimit: number;
   mongodumpPath: string;
   mongorestorePath: string;
+  mongoshPath: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -69,7 +70,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   maxTimeMs: 30000,
   defaultLimit: 50,
   mongodumpPath: '',
-  mongorestorePath: ''
+  mongorestorePath: '',
+  mongoshPath: ''
 };
 export const SCHEMA_SAMPLE_SIZE = 50;
 
@@ -87,6 +89,7 @@ export interface QueryInput {
 export type TabKind =
   | 'workspace'
   | 'indexes'
+  | 'shell'
   | 'import'
   | 'export'
   | 'database-backup'

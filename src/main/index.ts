@@ -1,4 +1,6 @@
 import { TransfersManager } from './services/transfers-manager';
+import { ShellsManager } from './services/shells-manager';
+import { probeExecutable } from './services/database-tools';
 import { DatabaseTools } from './services/database-tools';
 import { DatabaseTransfersManager } from './services/database-transfers-manager';
 import { app, BrowserWindow, nativeTheme } from 'electron';
@@ -27,7 +29,28 @@ app.whenReady().then(() => {
   const sessions = new SessionManager(utilityDeps, (id) => getConnection(db, id));
   const tabs = new TabManager(utilityDeps);
   const transfers = new TransfersManager();
-  const databaseTools = new DatabaseTools();
+  const databaseTools = new DatabaseTools({
+    platform: process.platform,
+    env: process.env,
+    probe: probeExecutable,
+    bundledDir: path.join(
+      app.isPackaged
+        ? process.resourcesPath
+        : path.join(
+            app.getAppPath(),
+            '.cache',
+            'mongodb-tools',
+            `${process.platform}-${process.arch}`
+          ),
+      'mongodb-tools',
+      'bin'
+    )
+  });
+  const shells = new ShellsManager(
+    databaseTools,
+    () => getSettings(db),
+    (id) => getConnection(db, id)
+  );
   const databaseTransfers = new DatabaseTransfersManager(
     databaseTools,
     () => getSettings(db),
@@ -39,6 +62,7 @@ app.whenReady().then(() => {
     sessions,
     tabs,
     transfers,
+    shells,
     databaseTools,
     databaseTransfers,
     utilityDeps
@@ -54,7 +78,7 @@ app.whenReady().then(() => {
     event.preventDefault();
     if (quitting) return;
     quitting = true;
-    void databaseTransfers.disposeAll().finally(() => {
+    void Promise.allSettled([databaseTransfers.disposeAll(), shells.disposeAll()]).finally(() => {
       shutdownReady = true;
       app.quit();
     });

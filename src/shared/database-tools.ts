@@ -1,11 +1,12 @@
-export type DatabaseToolName = 'mongodump' | 'mongorestore';
+export type DatabaseToolName = 'mongodump' | 'mongorestore' | 'mongosh';
 export interface DatabaseToolsPaths {
   mongodumpPath: string;
   mongorestorePath: string;
+  mongoshPath: string;
 }
 export interface DatabaseToolStatus {
   name: DatabaseToolName;
-  source: 'custom' | 'installed' | 'missing';
+  source: 'custom' | 'bundled' | 'installed' | 'missing';
   path: string | null;
   version: string | null;
   available: boolean;
@@ -13,7 +14,8 @@ export interface DatabaseToolStatus {
 }
 export type DatabaseToolsStatus = Record<DatabaseToolName, DatabaseToolStatus>;
 export function toolName(value: unknown): DatabaseToolName {
-  if (value !== 'mongodump' && value !== 'mongorestore') throw new Error('Unknown MongoDB tool.');
+  if (value !== 'mongodump' && value !== 'mongorestore' && value !== 'mongosh')
+    throw new Error('Unknown MongoDB tool.');
   return value;
 }
 export function normalizeToolPath(value: unknown): string {

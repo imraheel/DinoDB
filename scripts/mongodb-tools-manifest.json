@@ -1,0 +1,69 @@
+{
+  "sources": [
+    "https://downloads.mongodb.org/tools/db/full.json",
+    "https://api.github.com/repos/mongodb-js/mongosh/releases/tags/v2.14.1",
+    "https://api.github.com/repos/mongodb-js/mongosh/releases/tags/v2.5.10"
+  ],
+  "platforms": {
+    "darwin-x64": {
+      "databaseTools": {
+        "version": "100.20.0",
+        "url": "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-macos-x86_64-100.20.0.zip",
+        "sha256": "13b50cd12e85582412baf27942f6a661539df0d923e1929ecd1b3e432af468f0"
+      },
+      "mongosh": {
+        "version": "2.5.10",
+        "url": "https://github.com/mongodb-js/mongosh/releases/download/v2.5.10/mongosh-2.5.10-darwin-x64.zip",
+        "sha256": "5b2b5525e83623b9ae70b45c323da355eba0299d69b5e697141f2f86bc6c1c3b"
+      }
+    },
+    "darwin-arm64": {
+      "databaseTools": {
+        "version": "100.20.0",
+        "url": "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-macos-arm64-100.20.0.zip",
+        "sha256": "12d02963f6d17aa16de0919af61c8dd6dc30921439e665c432fb0afeeb8c8f23"
+      },
+      "mongosh": {
+        "version": "2.5.10",
+        "url": "https://github.com/mongodb-js/mongosh/releases/download/v2.5.10/mongosh-2.5.10-darwin-arm64.zip",
+        "sha256": "f27e367c5d5fa6a8c72cabaa9dabfb5eb29f719568aa44ca83104aa1699da64a"
+      }
+    },
+    "win32-x64": {
+      "databaseTools": {
+        "version": "100.20.0",
+        "url": "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-windows-x86_64-100.20.0.zip",
+        "sha256": "b65a32595db38cdf0f413d53cac440c4a6ddac0d224405b550e4100535bdd5ca"
+      },
+      "mongosh": {
+        "version": "2.14.1",
+        "url": "https://github.com/mongodb-js/mongosh/releases/download/v2.14.1/mongosh-2.14.1-win32-x64.zip",
+        "sha256": "be58d3c67a2bca990c790b359c99fa9b5da1b12bb5b01e8442bea5998b1a38e2"
+      }
+    },
+    "linux-x64": {
+      "databaseTools": {
+        "version": "100.20.0",
+        "url": "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.20.0.tgz",
+        "sha256": "99d667a89e298c5131180b664e081d995cd4f4fe8b22eba047733b428fb44d71"
+      },
+      "mongosh": {
+        "version": "2.14.1",
+        "url": "https://github.com/mongodb-js/mongosh/releases/download/v2.14.1/mongosh-2.14.1-linux-x64.tgz",
+        "sha256": "8d24940ebe3675959b518fd41ea16b4e2182d6a75c09777db09cfa64e18834a1"
+      }
+    },
+    "linux-arm64": {
+      "databaseTools": {
+        "version": "100.20.0",
+        "url": "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-arm64-100.20.0.tgz",
+        "sha256": "cb3fc5ec3cba9513de078fa65a02b79eb670a03e28541287cf0fe9e705ea7661"
+      },
+      "mongosh": {
+        "version": "2.14.1",
+        "url": "https://github.com/mongodb-js/mongosh/releases/download/v2.14.1/mongosh-2.14.1-linux-arm64.tgz",
+        "sha256": "cd7f1ae986baa400b021a2c0688aa3b64d6afcc3f7ab07833417a049e0cbf98b"
+      }
+    }
+  }
+}

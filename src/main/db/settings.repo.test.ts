@@ -93,7 +93,7 @@ describe('settings.repo', () => {
     saveSettings(db, { maxTimeMs: 15000 });
     expect(getSettings(db).maxTimeMs).toBe(15000);
     const row = db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM settings').get();
-    expect(row?.count).toBe(11);
+    expect(row?.count).toBe(12);
   });
 });
 
@@ -102,12 +102,14 @@ it('persists independent tool paths, preserves them during other saves and reset
   expect(getSettings(db)).toMatchObject({ mongodumpPath: '', mongorestorePath: '' });
   saveSettings(db, {
     mongodumpPath: ' /opt/Mongo Tools/mongodump ',
-    mongorestorePath: '/opt/tools/mongorestore'
+    mongorestorePath: '/opt/tools/mongorestore',
+    mongoshPath: '/opt/tools/mongosh'
   });
   saveSettings(db, { theme: 'dark' });
   expect(getSettings(db)).toMatchObject({
     mongodumpPath: '/opt/Mongo Tools/mongodump',
-    mongorestorePath: '/opt/tools/mongorestore'
+    mongorestorePath: '/opt/tools/mongorestore',
+    mongoshPath: '/opt/tools/mongosh'
   });
   saveSettings(db, { mongodumpPath: '' });
   expect(getSettings(db)).toMatchObject({
@@ -115,4 +117,5 @@ it('persists independent tool paths, preserves them during other saves and reset
     mongorestorePath: '/opt/tools/mongorestore'
   });
   expect(() => saveSettings(db, { mongodumpPath: 'relative/tool' })).toThrow();
+  expect(() => saveSettings(db, { mongoshPath: 'relative/mongosh' })).toThrow();
 });

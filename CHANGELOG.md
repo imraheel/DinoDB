@@ -4,6 +4,20 @@ All notable changes to DinoDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Open in Shell collection action with dedicated Mongosh script tabs, Monaco editor, console output, Run/Stop controls, elapsed status and execution timeouts
+- Independent shell processes with private connection bootstrap files, redacted/bounded console output, cancellation and cleanup on tab close, disconnect, connection removal or application quit
+- Platform-specific bundled `mongodump`, `mongorestore` and `mongosh` executables, verified against pinned SHA-256 hashes, with upstream license/third-party notices and installer architecture checks; optional proprietary encryption libraries are excluded
+- Mongosh executable selection and validation in Database Tools preferences, with custom-path, bundled and installed-tool discovery
+
+### Changed
+
+- Automatic MongoDB tool discovery prefers bundled executables before installed tools; explicit user overrides retain precedence
+- Mac tool bundles use Mongosh 2.5.10 for macOS 12 compatibility; Windows/Linux bundles use Mongosh 2.14.1
+
 ## [0.1.9-alpha] - 2026-10-29
 
 ### Added

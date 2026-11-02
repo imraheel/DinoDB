@@ -6,6 +6,7 @@ import TabBar from './components/TabBar';
 import TabIndexManager from './components/TabIndexManager';
 import TabTransfer from './components/TabTransfer';
 import TabDatabaseTransfer from './components/TabDatabaseTransfer';
+import TabShell from './components/TabShell';
 import TabWorkspace from './components/TabWorkspace';
 import Titlebar from './components/Titlebar';
 import WelcomeScreen from './components/WelcomeScreen';
@@ -126,7 +127,9 @@ export default function AppShell() {
             />
           ) : (
             state.tabs.map((tab) =>
-              tab.kind === 'database-backup' || tab.kind === 'database-restore' ? (
+              tab.kind === 'shell' ? (
+                <TabShell key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
+              ) : tab.kind === 'database-backup' || tab.kind === 'database-restore' ? (
                 <TabDatabaseTransfer key={tab.id} tab={tab} active={tab.id === state.activeTabId} />
               ) : tab.kind === 'import' || tab.kind === 'export' ? (
                 <TabTransfer key={tab.id} tab={tab} active={tab.id === state.activeTabId} />

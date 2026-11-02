@@ -1,4 +1,6 @@
 import type { TransfersManager } from '../services/transfers-manager';
+import type { ShellsManager } from '../services/shells-manager';
+import { registerShellsIpc } from './shells.ipc';
 import type { DatabaseTools } from '../services/database-tools';
 import type { DatabaseTransfersManager } from '../services/database-transfers-manager';
 import { registerDatabaseToolsIpc } from './database-tools.ipc';
@@ -18,6 +20,7 @@ export interface IpcDeps {
   sessions: SessionManager;
   tabs: TabManager;
   transfers: TransfersManager;
+  shells: ShellsManager;
   databaseTools: DatabaseTools;
   databaseTransfers: DatabaseTransfersManager;
   utilityDeps: UtilityClientDeps;
@@ -28,6 +31,7 @@ export function registerAllIpc(deps: IpcDeps): void {
   registerSessionsIpc(deps);
   registerTabsIpc(deps);
   registerTransfersIpc(deps);
+  registerShellsIpc(deps);
   registerDatabaseToolsIpc(deps);
   registerDatabaseTransfersIpc(deps);
   registerSettingsIpc(deps);

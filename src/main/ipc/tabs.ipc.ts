@@ -10,6 +10,8 @@ export function registerTabsIpc(deps: IpcDeps): void {
   ipcMain.handle(IPC.tabsCreate, (event, input: CreateTabInput) => {
     const connection = getConnection(deps.db(), input.connectionId);
     if (connection === null) throw new Error(`Connection not found: ${input.connectionId}`);
+    if (input.kind === 'shell')
+      return { tabId: deps.shells.create(input, event.sender), fields: [] };
     if (input.kind === 'import' || input.kind === 'export') {
       const tabId = deps.transfers.create({ ...input, direction: input.kind }, event.sender);
       return { tabId, fields: [] };
@@ -23,7 +25,8 @@ export function registerTabsIpc(deps: IpcDeps): void {
   });
 
   ipcMain.handle(IPC.tabsClose, (event, tabId: string) => {
-    if (deps.databaseTransfers.owns(tabId, event.sender)) deps.databaseTransfers.close(tabId);
+    if (deps.shells.owns(tabId, event.sender)) deps.shells.close(tabId);
+    else if (deps.databaseTransfers.owns(tabId, event.sender)) deps.databaseTransfers.close(tabId);
     else if (deps.transfers.owns(tabId, event.sender)) deps.transfers.close(tabId);
     else deps.tabs.close(tabId);
     return null;

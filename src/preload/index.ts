@@ -1,10 +1,20 @@
 import type { TransferProgress } from '../shared/transfer';
+import type { ShellProgress } from '../shared/shell';
 import type { DatabaseTransferProgress } from '../shared/database-transfer';
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC } from '../shared/ipc';
 import type { MenuAction, MongoExplorerApi, UtilityRequest } from '../shared/ipc';
 
 const api: MongoExplorerApi = {
+  startShell: (tabId, script) => ipcRenderer.invoke(IPC.shellStart, { tabId, script }),
+  cancelShell: (id) => ipcRenderer.invoke(IPC.shellCancel, id),
+  shellSnapshot: (id) => ipcRenderer.invoke(IPC.shellSnapshot, id),
+  onShellProgress: (callback) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: ShellProgress) =>
+      callback(progress);
+    ipcRenderer.on(IPC.shellProgress, handler);
+    return () => ipcRenderer.removeListener(IPC.shellProgress, handler);
+  },
   browseDatabaseTool: (name) => ipcRenderer.invoke(IPC.databaseToolsBrowse, name),
   testDatabaseTools: (paths) => ipcRenderer.invoke(IPC.databaseToolsTest, paths),
   detectDatabaseTools: () => ipcRenderer.invoke(IPC.databaseToolsDetect),

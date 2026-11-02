@@ -19,7 +19,8 @@ export function registerDatabaseToolsIpc(deps: IpcDeps): void {
     if (
       !paths ||
       typeof paths.mongodumpPath !== 'string' ||
-      typeof paths.mongorestorePath !== 'string'
+      typeof paths.mongorestorePath !== 'string' ||
+      typeof paths.mongoshPath !== 'string'
     )
       throw new Error('Invalid tool paths.');
     return deps.databaseTools.test(paths);

@@ -19,17 +19,28 @@ asarUnpack:
   - build/icon.png
   - build/icon.ico
 npmRebuild: false
+beforePack: scripts/bundle-mongodb-tools.cjs
+afterPack: scripts/verify-packaged-tools.cjs
 mac:
+  extraResources:
+    - from: .cache/mongodb-tools/darwin-${arch}/mongodb-tools
+      to: mongodb-tools
   icon: build/icon.icns
   target: [dmg, zip]
   category: public.app-category.developer-tools
   identity: null
 win:
+  extraResources:
+    - from: .cache/mongodb-tools/win32-${arch}/mongodb-tools
+      to: mongodb-tools
   icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
 linux:
+  extraResources:
+    - from: .cache/mongodb-tools/linux-${arch}/mongodb-tools
+      to: mongodb-tools
   icon: build/icon.png
   target: [AppImage, deb]
   category: Development

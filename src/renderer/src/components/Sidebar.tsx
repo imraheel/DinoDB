@@ -260,6 +260,37 @@ export default function Sidebar({
     }
   }
 
+  async function handleOpenShell(
+    connection: ConnectionConfig,
+    database: string,
+    collection: string
+  ) {
+    try {
+      const { tabId } = await window.api.createTab({
+        connectionId: connection.id,
+        database,
+        collection,
+        kind: 'shell'
+      });
+      dispatch({
+        type: 'tab/added',
+        fields: [],
+        tab: {
+          id: tabId,
+          connectionId: connection.id,
+          connectionName: connection.name,
+          database,
+          collection,
+          kind: 'shell',
+          title: `${database}.${collection} — Mongosh`
+        }
+      });
+      setError(null);
+    } catch (err) {
+      setError(messageOf(err));
+    }
+  }
+
   async function refreshCollections(connectionId: string, database: string) {
     try {
       const { collections } = await window.api.listCollections(connectionId, database);
@@ -809,6 +840,14 @@ export default function Sidebar({
                 }}
               >
                 Open
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  void handleOpenShell(menu.connection, menu.database, menu.collection);
+                  closeMenu();
+                }}
+              >
+                Open in Shell
               </MenuItem>
               <MenuItem
                 onClick={() => {

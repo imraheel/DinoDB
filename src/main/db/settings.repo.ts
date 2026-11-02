@@ -87,7 +87,8 @@ export function getSettings(db: DatabaseHandle): AppSettings {
     maxTimeMs,
     defaultLimit,
     mongodumpPath: typeof stored.mongodumpPath === 'string' ? stored.mongodumpPath : '',
-    mongorestorePath: typeof stored.mongorestorePath === 'string' ? stored.mongorestorePath : ''
+    mongorestorePath: typeof stored.mongorestorePath === 'string' ? stored.mongorestorePath : '',
+    mongoshPath: typeof stored.mongoshPath === 'string' ? stored.mongoshPath : ''
   };
 }
 
@@ -104,7 +105,8 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
     maxTimeMs: patch.maxTimeMs ?? current.maxTimeMs,
     defaultLimit: patch.defaultLimit ?? current.defaultLimit,
     mongodumpPath: normalizeToolPath(patch.mongodumpPath ?? current.mongodumpPath),
-    mongorestorePath: normalizeToolPath(patch.mongorestorePath ?? current.mongorestorePath)
+    mongorestorePath: normalizeToolPath(patch.mongorestorePath ?? current.mongorestorePath),
+    mongoshPath: normalizeToolPath(patch.mongoshPath ?? current.mongoshPath)
   };
   const upsert = db.prepare(
     'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
@@ -123,7 +125,8 @@ export function saveSettings(db: DatabaseHandle, patch: Partial<AppSettings>): A
     ['maxTimeMs', JSON.stringify(merged.maxTimeMs)],
     ['defaultLimit', JSON.stringify(merged.defaultLimit)],
     ['mongodumpPath', JSON.stringify(merged.mongodumpPath)],
-    ['mongorestorePath', JSON.stringify(merged.mongorestorePath)]
+    ['mongorestorePath', JSON.stringify(merged.mongorestorePath)],
+    ['mongoshPath', JSON.stringify(merged.mongoshPath)]
   ]);
   return getSettings(db);
 }
