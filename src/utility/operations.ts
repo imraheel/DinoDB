@@ -20,6 +20,24 @@ export function clampLimit(limit: number): number {
   return Math.min(1000, Math.max(1, limit));
 }
 
+const MAX_NESTED_READ_BYTES = 64 * 1024 * 1024;
+
+async function nestedReadValues(
+  source: Iterable<unknown> | AsyncIterable<unknown>
+): Promise<{ values: unknown[] }> {
+  const values: unknown[] = [];
+  let bytes = 2;
+  for await (const value of source) {
+    const wire = toWire(value);
+    bytes += Buffer.byteLength(JSON.stringify(wire)) + (values.length > 0 ? 1 : 0);
+    if (bytes > MAX_NESTED_READ_BYTES) {
+      throw new Error('Nested read result exceeds 64 MiB; narrow the inner query.');
+    }
+    values.push(wire);
+  }
+  return { values };
+}
+
 export function toIndexCount(value: unknown): number {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
   if (
@@ -211,6 +229,35 @@ export async function executeRequest(
         .collection(request.collection)
         .countDocuments(fromWire(request.filter) as Document, { maxTimeMS: maxTimeMs });
       return { count };
+    }
+    case 'nestedRead': {
+      const collection = ctx.client.db(request.database).collection(request.collection);
+      if (request.method === 'distinct') {
+        if (!request.field) throw new Error('distinct() requires a field name.');
+        const values = await collection.distinct(
+          request.field,
+          fromWire(request.filter ?? {}) as Document,
+          { maxTimeMS: maxTimeMs }
+        );
+        return nestedReadValues(values);
+      }
+      if (request.method === 'find') {
+        const options: FindOptions = { maxTimeMS: maxTimeMs };
+        if (request.projection !== undefined)
+          options.projection = fromWire(request.projection) as Document;
+        if (request.sort !== undefined)
+          options.sort = fromWire(request.sort) as NonNullable<FindOptions['sort']>;
+        if (request.skip !== undefined) options.skip = request.skip;
+        const cursor = collection.find(fromWire(request.filter ?? {}) as Document, options);
+        if (request.limit !== undefined && request.limit > 0) cursor.limit(request.limit);
+        return nestedReadValues(cursor);
+      }
+      if (!Array.isArray(request.pipeline))
+        throw new Error('aggregate() requires a pipeline array.');
+      if (hasOutputStage(request.pipeline))
+        throw new Error('Nested aggregate() must be read-only.');
+      const pipeline = request.pipeline.map((stage) => fromWire(stage) as Document);
+      return nestedReadValues(collection.aggregate(pipeline, { maxTimeMS: maxTimeMs }));
     }
     case 'aggregate': {
       const guarded = !hasOutputStage(request.pipeline);

@@ -104,7 +104,7 @@ function prevNonSpace(text: string, index: number): string | null {
   return p >= 0 ? text[p] : null;
 }
 
-function findMatchingParen(text: string, openIdx: number): number {
+export function findMatchingParen(text: string, openIdx: number): number {
   let depth = 0;
   let i = openIdx;
   while (i < text.length) {
@@ -131,7 +131,7 @@ function findMatchingParen(text: string, openIdx: number): number {
   return -1;
 }
 
-function splitTopLevel(text: string): string[] {
+export function splitTopLevel(text: string): string[] {
   const parts: string[] = [];
   let depth = 0;
   let start = 0;
@@ -219,6 +219,11 @@ function extractCollection(prefix: string): string | undefined {
   const dotted = trimmed.match(/^db\.([A-Za-z_$][\w$]*)$/);
   if (dotted !== null) return dotted[1];
   return undefined;
+}
+
+export function queryCollection(text: string): string | undefined {
+  const call = findMethodCall(text);
+  return call === null ? undefined : extractCollection(text.slice(0, call.identStart));
 }
 
 function findForeignCall(text: string): string | null {
@@ -359,6 +364,15 @@ function evaluate(expr: string): unknown {
     const short = src.length > 80 ? `${src.slice(0, 80)}…` : src;
     throw new Error(`Cannot evaluate \`${short}\`: ${messageOf(err)}`);
   }
+}
+
+export function parseShellValue(expr: string): unknown {
+  return toEjson(evaluate(expr));
+}
+
+export function queryArgumentRange(text: string): { start: number; end: number } | null {
+  const call = findMethodCall(text);
+  return call === null ? null : { start: call.openIdx + 1, end: call.closeIdx };
 }
 
 function toEjson(value: unknown): unknown {

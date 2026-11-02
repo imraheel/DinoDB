@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseShellQuery, queryAtOffset, splitQueries } from './shell-query';
+import { parseShellQuery, queryAtOffset, queryCollection, splitQueries } from './shell-query';
 
 function parseOk(text: string) {
   const result = parseShellQuery(text);
@@ -14,6 +14,13 @@ function parseErr(text: string): string {
 }
 
 describe('parseShellQuery', () => {
+  it('extracts the outer collection before a nested read is resolved', () => {
+    expect(
+      queryCollection(
+        'db.getCollection("crm_leads").find({ id: { $in: db.numbers.distinct("_id") } })'
+      )
+    ).toBe('crm_leads');
+  });
   it('treats empty text as a match-all find', () => {
     expect(parseOk('')).toEqual({ op: 'find', filter: {} });
     expect(parseOk('   \n  ')).toEqual({ op: 'find', filter: {} });

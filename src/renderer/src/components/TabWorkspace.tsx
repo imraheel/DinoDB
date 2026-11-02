@@ -4,7 +4,13 @@ import type { ResultCard as ResultCardData, TabMeta } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
 import { resolveTheme } from '../lib/theme';
-import { parseShellQuery, splitQueries, type ParsedQuery } from '../lib/shell-query';
+import {
+  parseShellQuery,
+  queryCollection,
+  splitQueries,
+  type ParsedQuery
+} from '../lib/shell-query';
+import { resolveNestedReads } from '../lib/nested-reads';
 import { parseShellJson, toShellJson } from '../lib/shell-json';
 import { lastPageSkip } from '../lib/pagination';
 import { exportRead, openTransfer } from '../lib/transfers';
@@ -69,6 +75,19 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   const [viewText, setViewText] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ targets: unknown[] } | null>(null);
   const ranRef = useRef<string | null>(null);
+
+  async function parseQuery(text: string) {
+    dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
+    try {
+      const resolved = await resolveNestedReads(text, tab.database, async (request) => {
+        const result = await window.api.executeTab<'nestedRead'>(tab.id, request);
+        return result.values;
+      });
+      return parseShellQuery(resolved);
+    } catch (err) {
+      return { ok: false as const, message: messageOf(err) };
+    }
+  }
 
   async function runParsed(
     parsed: ParsedQuery,
@@ -357,8 +376,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
   }
 
   async function explainQuery(text: string): Promise<boolean> {
-    const parsed = parseShellQuery(text);
+    const parsed = await parseQuery(text);
     if (!parsed.ok) {
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
       dispatch({
         type: 'tab/errored',
         tabId: tab.id,
@@ -371,8 +391,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   async function runQuery(text: string, skipOverride?: number): Promise<boolean> {
     if (!data) return false;
-    const parsed = parseShellQuery(text);
+    const parsed = await parseQuery(text);
     if (!parsed.ok) {
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
       dispatch({
         type: 'tab/errored',
         tabId: tab.id,
@@ -392,8 +413,9 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     let sawRead = false;
     for (const segment of segments) {
-      const parsed = parseShellQuery(segment.text);
+      const parsed = await parseQuery(segment.text);
       if (!parsed.ok) {
+        dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
         dispatch({
           type: 'tab/errored',
           tabId: tab.id,
@@ -410,8 +432,17 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   async function goToLastPage(text: string) {
     if (!data) return;
-    const parsed = parseShellQuery(text);
-    if (!parsed.ok || parsed.value.op !== 'find') return;
+    const parsed = await parseQuery(text);
+    if (!parsed.ok || parsed.value.op !== 'find') {
+      dispatch({ type: 'tab/loading', tabId: tab.id, loading: false });
+      if (!parsed.ok)
+        dispatch({
+          type: 'tab/errored',
+          tabId: tab.id,
+          error: `Query failed to parse: ${parsed.message}`
+        });
+      return;
+    }
     const pageSize = Math.min(1000, Math.max(1, Number(data.query.limit) || 50));
     dispatch({ type: 'tab/errorCleared', tabId: tab.id });
     dispatch({ type: 'tab/loading', tabId: tab.id, loading: true });
@@ -440,11 +471,8 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
         void runEntireScript(data.lastRead);
         return;
       }
-      const parsed = parseShellQuery(data.lastRead);
-      if (parsed.ok && isReadOp(parsed.value.op)) {
-        void runQuery(data.lastRead);
-        return;
-      }
+      void runQuery(data.lastRead);
+      return;
     }
     const parsed = parseShellQuery(data.query.text);
     if (parsed.ok && !isReadOp(parsed.value.op)) return;
@@ -453,8 +481,8 @@ export default function TabWorkspace({ tab, active }: TabWorkspaceProps) {
 
   function resultsCollection(): string {
     if (data !== undefined && data.lastRead !== undefined) {
-      const parsed = parseShellQuery(data.lastRead);
-      if (parsed.ok && parsed.value.collection !== undefined) return parsed.value.collection;
+      const collection = queryCollection(data.lastRead);
+      if (collection !== undefined) return collection;
     }
     return tab.collection;
   }

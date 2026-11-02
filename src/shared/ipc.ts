@@ -83,6 +83,7 @@ export interface UtilityResponses {
   updateOne: WriteResult;
   updateMany: WriteResult;
   countDocuments: { count: number };
+  nestedRead: { values: unknown[] };
   aggregate: FindResult;
   explainFind: { plan: unknown };
   explainAggregate: { plan: unknown };
@@ -166,6 +167,19 @@ export type UtilityRequest =
       upsert: boolean;
     }
   | { kind: 'countDocuments'; database: string; collection: string; filter: unknown }
+  | {
+      kind: 'nestedRead';
+      database: string;
+      collection: string;
+      method: 'distinct' | 'find' | 'aggregate';
+      field?: string;
+      filter?: unknown;
+      pipeline?: unknown[];
+      projection?: unknown;
+      sort?: unknown;
+      skip?: number;
+      limit?: number;
+    }
   | { kind: 'aggregate'; database: string; collection: string; pipeline: unknown[]; limit: number }
   | {
       kind: 'explainFind';
