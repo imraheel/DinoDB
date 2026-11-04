@@ -27,13 +27,9 @@ Collection tabs run in separate utility processes, so a slow query does not bloc
 
 ## Mongosh and bundled tools
 
-Right-click a collection and select **Open in Shell**. The tab starts in that collection's database and includes an editable example. Each **Run script** starts a fresh Mongosh process; variables remain available throughout that script, and are reset between runs. Use `print()` or `printjson()` to send results to the selectable console. Run with **⌘/Ctrl+Enter**, stop with **Stop**, and configure the execution timeout in Preferences → Advance Settings. Console output is bounded; earlier output is truncated when necessary. Shell scripts run locally with your OS permissions and can read files and perform database writes. Stopping a process does not roll back database writes or guarantee immediate cancellation of server-side work.
+Right-click a collection and choose **Open in Shell** to run full Mongosh scripts in a dedicated editor and console. The tab opens in the selected database. Use `print()` or `printjson()` to display results, **⌘/Ctrl+Enter** to run, and **Stop** to cancel. Each run starts a fresh shell session.
 
-Normal collection browsing, document editing, indexes and exports continue to use the MongoDB driver. Shell tabs run independently and are stopped when closed, disconnected, or when the app quits. Connection credentials are supplied through private temporary bootstrap files rather than process arguments, and sensitive saved connection values are redacted from console output.
-
-Installers include `mongodump`, `mongorestore` and `mongosh` for their target platform and architecture. Preferences → Database Tools supports independent **Browse**, **Test tools**, and **Reset to automatic** controls for all three. Automatic selection tries bundled executables before PATH/common installation locations; an explicit custom path takes precedence and is reported as invalid without silently substituting another tool. No tools are downloaded by the running application.
-
-Database Tools are pinned to **100.20.0**. Mongosh is pinned to **2.5.10 on macOS** to retain macOS 12 compatibility, and **2.14.1 on Windows/Linux**. Newer Mongosh builds can require a newer OS runtime; compatible custom executables may also be selected. Upstream license and third-party notices are shipped under the installed `mongodb-tools/licenses` directory. The optional, separately licensed `mongosh_crypt_v1` encryption library is excluded; features requiring that library are not provided by the bundle.
+Installers include `mongosh`, `mongodump`, and `mongorestore`, so no separate tool installation is needed. Open **Preferences → Database Tools** to test the tools or select custom executable paths. Custom paths take precedence over bundled tools; installed tools are used when a bundled tool is unavailable.
 
 ## Supported platforms
 
@@ -61,19 +57,9 @@ pnpm dev
 
 To create a production build, run `pnpm build`. To package the app, run `pnpm package:mac` on macOS or `pnpm package:win` on Windows. Packages are written to `dist/`.
 
-`pnpm tools:prepare` downloads the pinned native tool archives, verifies SHA-256 hashes, and stages executables and notices in the ignored `.cache/mongodb-tools` directory. To prepare another target, use e.g. `pnpm tools:prepare darwin arm64` or `pnpm tools:prepare win32 x64`. The installer build hook performs this step automatically for each target, including the existing release workflow. Initial preparation requires network access and `curl`, plus `unzip` on macOS or `tar` on Windows/Linux. Cached archives are rechecked before reuse. The build verifies executable architecture and refuses missing licenses, checksums or unexpected bundled binaries. macOS x64 and arm64 installers are built separately; a universal installer is not supported by this tool bundle. Linux tool preparation targets Ubuntu 22.04-compatible systems; Linux app releases remain planned.
+`pnpm tools:prepare` downloads and verifies the tools for your system. Initial preparation requires network access and `curl`, plus `unzip` on macOS or `tar` on Windows/Linux. Installer builds prepare the tools automatically for each target platform.
 
-Tool versions, official source URLs and pinned hashes are recorded in [the tool manifest](./scripts/mongodb-tools-manifest.json). Updating a bundled release requires updating and validating its hash, binary compatibility and license notices together.
-
-Local macOS Intel DMG measurements for the bundling experiment (2026-11-03, same application build, unsigned):
-
-| Installer | Size |
-| --- | ---: |
-| Without tools | 147.9 MiB |
-| With all three tools | 213.2 MiB |
-| Increase | 65.3 MiB (44.2%) |
-
-These measurements apply to the macOS x64 DMG; other architectures, formats and tool versions will differ.
+Tool versions and download checksums are listed in [the tool manifest](./scripts/mongodb-tools-manifest.json).
 
 ## How to contribute
 
@@ -82,6 +68,8 @@ Bug reports, ideas, documentation, and code contributions are welcome. Search [e
 ## License
 
 DinoDB is licensed under the [GNU General Public License v3.0](./LICENSE) (`GPL-3.0-only`).
+
+Bundled tools retain their upstream licenses and include third-party notices in the installer.
 
 ## DMCA notice
 

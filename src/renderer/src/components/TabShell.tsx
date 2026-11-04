@@ -64,7 +64,7 @@ export default function TabShell({ tab, active }: { tab: TabMeta; active: boolea
   useEffect(() => {
     if (!container.current) return;
     const instance = monaco.editor.create(container.current, {
-      value: `// Full Mongosh JavaScript. Use print() or printjson() for output.\nconst collection = db.getCollection(${JSON.stringify(tab.collection)});\nprintjson(collection.find({}).limit(20).toArray());\n`,
+      value: `// Full Mongosh JavaScript. Use print() or printjson() for output.\nconst result = db.getCollection(${JSON.stringify(tab.collection)}).find({\n  \n}).limit(20).toArray();\nprintjson(result);\n`,
       language: 'mongodb',
       fontSize: state.settings.editorFontSize,
       fontFamily: codeFontStack(state.settings.codeFont),
