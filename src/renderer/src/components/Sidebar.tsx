@@ -25,6 +25,7 @@ type SidebarSelection =
   | { kind: 'collection'; connectionId: string; database: string; collection: string };
 
 type SidebarMenu =
+  | { kind: 'connection'; x: number; y: number; connection: ConnectionConfig }
   | { kind: 'database'; x: number; y: number; connection: ConnectionConfig; database: string }
   | {
       kind: 'collection';
@@ -42,7 +43,9 @@ type SidebarPrompt = {
   label: string;
   initial: string;
   confirmLabel: string;
-  confirm(value: string): void | Promise<void>;
+  secondLabel?: string;
+  secondInitial?: string;
+  confirm(value: string, second: string): void | Promise<void>;
 };
 
 type SidebarConfirm = {
@@ -69,6 +72,7 @@ export default function Sidebar({
   const [prompt, setPrompt] = useState<SidebarPrompt | null>(null);
   const [confirm, setConfirm] = useState<SidebarConfirm | null>(null);
   const [filterText, setFilterText] = useState('');
+  const [collapsedConnections, setCollapsedConnections] = useState<Record<string, boolean>>({});
   const prefetchingRef = useRef<Set<string>>(new Set());
   const filter = filterText.trim().toLowerCase();
 
@@ -186,6 +190,57 @@ export default function Sidebar({
     } finally {
       dispatch({ type: 'session/disconnected', connectionId: connection.id });
     }
+  }
+
+  function toggleConnection(connectionId: string) {
+    setCollapsedConnections((previous) => ({
+      ...previous,
+      [connectionId]: !(previous[connectionId] ?? false)
+    }));
+  }
+
+  async function refreshDatabases(connectionId: string) {
+    const { databases } = await window.api.connectSession(connectionId);
+    dispatch({ type: 'session/connected', connectionId, databases });
+    const session = state.sessions[connectionId] ?? emptySession();
+    await Promise.all(
+      databases
+        .filter((database) => session.expanded[database] ?? false)
+        .map((database) => refreshCollections(connectionId, database))
+    );
+  }
+
+  function promptAddDatabase(connection: ConnectionConfig) {
+    setPrompt({
+      title: 'Add database',
+      label: 'Database name',
+      initial: '',
+      secondLabel: 'First collection',
+      secondInitial: '',
+      confirmLabel: 'Create',
+      confirm: async (database, collection) => {
+        try {
+          // MongoDB only persists a database once it contains a collection.
+          await window.api.adminSession(connection.id, {
+            kind: 'createCollection',
+            database,
+            name: collection
+          });
+          const { databases } = await window.api.connectSession(connection.id);
+          dispatch({ type: 'session/connected', connectionId: connection.id, databases });
+          setCollapsedConnections((previous) => ({ ...previous, [connection.id]: false }));
+          const session = state.sessions[connection.id] ?? emptySession();
+          if (!(session.expanded[database] ?? false)) {
+            dispatch({ type: 'session/expand', connectionId: connection.id, database });
+          }
+          await refreshCollections(connection.id, database);
+          setSelection({ kind: 'database', connectionId: connection.id, database });
+          setError(null);
+        } catch (err) {
+          setError(messageOf(err));
+        }
+      }
+    });
   }
 
   async function handleToggle(connectionId: string, database: string, session: SessionState) {
@@ -454,6 +509,13 @@ export default function Sidebar({
     });
   }
 
+  function openConnectionMenu(event: ReactMouseEvent, connection: ConnectionConfig) {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelection(null);
+    setMenu({ kind: 'connection', x: event.clientX, y: event.clientY, connection });
+  }
+
   function openDatabaseMenu(
     event: ReactMouseEvent,
     connection: ConnectionConfig,
@@ -588,36 +650,66 @@ export default function Sidebar({
             databaseRows.some(({ matchedCollections }) => matchedCollections.length > 0)
           );
           const blocks = connectionBlocks
-            .filter(({ databaseRows }) => databaseRows.length > 0)
+            .filter(({ databaseRows }) => filter === '' || databaseRows.length > 0)
             .map(({ connection, session, databaseRows }) => {
+              const connectionExpanded =
+                filter !== '' || !(collapsedConnections[connection.id] ?? false);
               return (
                 <div key={connection.id} className="group px-2 py-1 hover:bg-sidebar-hover">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                        session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
-                      }`}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-ui text-label">
-                      {connection.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="min-w-0 flex-1 truncate pl-[13px] text-caption text-label-tertiary">
-                      {connection.host}:{connection.port}
-                    </span>
-                    {session.status === 'connected' ? (
-                      <Button
-                        variant="quiet"
-                        size="sm"
-                        onClick={() => void handleDisconnect(connection)}
-                        aria-label={`Disconnect ${connection.name}`}
+                  <div
+                    className="group/connection"
+                    onContextMenu={(event) => openConnectionMenu(event, connection)}
+                  >
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleConnection(connection.id)}
+                        className="flex h-4 w-4 shrink-0 items-center justify-center text-label-tertiary"
+                        aria-label={
+                          connectionExpanded
+                            ? `Collapse ${connection.name}`
+                            : `Expand ${connection.name}`
+                        }
+                        aria-expanded={connectionExpanded}
                       >
-                        Disconnect
-                      </Button>
-                    ) : null}
+                        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+                          {connectionExpanded ? (
+                            <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
+                          ) : (
+                            <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
+                          )}
+                        </svg>
+                      </button>
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                          session.status === 'connected' ? 'bg-success' : 'bg-label-tertiary/40'
+                        }`}
+                      />
+                      <span
+                        className="min-w-0 flex-1 cursor-default truncate pl-0.5 text-ui text-label"
+                        onDoubleClick={() => toggleConnection(connection.id)}
+                      >
+                        {connection.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate pl-[32px] text-caption text-label-tertiary">
+                        {connection.host}:{connection.port}
+                      </span>
+                      {session.status === 'connected' ? (
+                        <Button
+                          variant="quiet"
+                          size="sm"
+                          className="opacity-0 group-hover/connection:opacity-100 focus-visible:opacity-100"
+                          onClick={() => void handleDisconnect(connection)}
+                          aria-label={`Disconnect ${connection.name}`}
+                        >
+                          Disconnect
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  {session.status === 'connected' ? (
+                  {session.status === 'connected' && connectionExpanded ? (
                     <div className="mt-0.5">
                       {databaseRows.map(({ database, matchedCollections, collections }) => {
                         const expanded =
@@ -755,7 +847,61 @@ export default function Sidebar({
       </div>
       {menu !== null ? (
         <Menu x={menu.x} y={menu.y} onClose={closeMenu}>
-          {menu.kind === 'database' ? (
+          {menu.kind === 'connection' ? (
+            <>
+              <MenuItem
+                onClick={() => {
+                  toggleConnection(menu.connection.id);
+                  closeMenu();
+                }}
+              >
+                {(collapsedConnections[menu.connection.id] ?? false) ? 'Expand' : 'Collapse'}
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  void refreshDatabases(menu.connection.id).catch((err: unknown) =>
+                    setError(messageOf(err))
+                  );
+                  closeMenu();
+                }}
+              >
+                Refresh
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  copyName(menu.connection.name);
+                  closeMenu();
+                }}
+              >
+                Copy name
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  promptAddDatabase(menu.connection);
+                  closeMenu();
+                }}
+              >
+                Add database…
+              </MenuItem>
+              <MenuSeparator />
+              <MenuItem
+                onClick={() => {
+                  onEdit(menu.connection);
+                  closeMenu();
+                }}
+              >
+                Edit connection…
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleDisconnect(menu.connection);
+                  closeMenu();
+                }}
+              >
+                Disconnect
+              </MenuItem>
+            </>
+          ) : menu.kind === 'database' ? (
             <>
               <MenuItem
                 onClick={() => {
@@ -945,8 +1091,10 @@ export default function Sidebar({
         label={prompt?.label ?? ''}
         initial={prompt?.initial ?? ''}
         confirmLabel={prompt?.confirmLabel ?? 'OK'}
-        onConfirm={(value) => {
-          void prompt?.confirm(value);
+        secondLabel={prompt?.secondLabel}
+        secondInitial={prompt?.secondInitial}
+        onConfirm={(value, second) => {
+          void prompt?.confirm(value, second);
         }}
         onClose={() => setPrompt(null)}
       />

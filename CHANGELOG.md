@@ -15,6 +15,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 - File menu Close Tab command (`Cmd+W` on macOS, `Ctrl+W` on Windows/Linux)
 - `Cmd+Shift+/` / `Ctrl+Shift+/` toggles a block comment in the query and Mongosh script editors
 - Toggle sidebar (`Cmd+B` / `Ctrl+B`) and Close window shortcuts listed in the Keymap preferences
+- Collapsible connections in the sidebar, using the expand arrow or a double-click on the connection name
+- Connection context menu with Expand/Collapse, Refresh, Copy name, Add database, Edit connection and Disconnect
+- Add database dialog that creates the database together with its first collection
 
 ### Changed
 
@@ -22,6 +25,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 - Mac tool bundles use Mongosh 2.5.10 for macOS 12 compatibility; Windows/Linux bundles use Mongosh 2.14.1
 - Keymap preferences show shortcuts for the current platform: macOS symbols (`⌘ ⇧ C`) on Mac and `Ctrl+Shift+C` style labels on Windows/Linux, including platform-specific developer tools and delete-document keys
 - Close window moved to `Cmd+Shift+W` / `Ctrl+Shift+W`
+- The sidebar Disconnect button appears only while hovering over or keyboard-focusing the connection header
+- Connections without databases stay visible in the sidebar when no search filter is active
 - The development setup downloads the Electron binary in a `postinstall` step, since Electron 43 no longer does this during install
 
 ### Fixed

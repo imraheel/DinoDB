@@ -9,7 +9,10 @@ interface PromptDialogProps {
   label: string;
   initial?: string;
   confirmLabel?: string;
-  onConfirm(value: string): void;
+  /** Optional second required field, e.g. the first collection of a new database. */
+  secondLabel?: string;
+  secondInitial?: string;
+  onConfirm(value: string, second: string): void;
   onClose(): void;
 }
 
@@ -19,19 +22,26 @@ export default function PromptDialog({
   label,
   initial = '',
   confirmLabel = 'OK',
+  secondLabel,
+  secondInitial = '',
   onConfirm,
   onClose
 }: PromptDialogProps) {
   const [value, setValue] = useState(initial);
+  const [second, setSecond] = useState(secondInitial);
+  const hasSecond = secondLabel !== undefined;
+  const incomplete = value.trim() === '' || (hasSecond && second.trim() === '');
 
   useEffect(() => {
-    if (open) setValue(initial);
-  }, [open, initial]);
+    if (!open) return;
+    setValue(initial);
+    setSecond(secondInitial);
+  }, [open, initial, secondInitial]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (value.trim() === '') return;
-    onConfirm(value.trim());
+    if (incomplete) return;
+    onConfirm(value.trim(), second.trim());
     onClose();
   }
 
@@ -54,6 +64,17 @@ export default function PromptDialog({
             className="w-full"
           />
         </label>
+        {hasSecond ? (
+          <label className="flex flex-col gap-1">
+            <span className={LABEL_CLASS}>{secondLabel}</span>
+            <TextInput
+              value={second}
+              onChange={(event) => setSecond(event.target.value)}
+              onFocus={(event) => event.target.select()}
+              className="w-full"
+            />
+          </label>
+        ) : null}
         <div className="mt-1 flex gap-2">
           <Button size="md" className="flex-1" onClick={onClose}>
             Cancel
@@ -62,7 +83,7 @@ export default function PromptDialog({
             type="submit"
             variant="primary"
             size="md"
-            disabled={value.trim() === ''}
+            disabled={incomplete}
             className="flex-1"
           >
             {confirmLabel}
