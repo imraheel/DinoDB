@@ -3,6 +3,7 @@ import { formatCell, getColumns } from '../lib/format';
 import type { SchemaField } from '../../../shared/types';
 import Button from './ui/Button';
 import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
+import { IS_MAC, hasPrimaryModifier } from '../lib/shortcuts';
 
 interface DataTableProps {
   fields: SchemaField[];
@@ -80,7 +81,6 @@ function cellColorClass(value: unknown): string {
   return '';
 }
 
-const IS_MAC = /Mac/i.test(navigator.userAgent);
 const MOD_KEY = IS_MAC ? '⌘' : 'Ctrl';
 
 function shortcutLabel(...parts: string[]): string {
@@ -88,7 +88,7 @@ function shortcutLabel(...parts: string[]): string {
 }
 
 function hasModifier(event: MouseEvent | ReactMouseEvent): boolean {
-  return IS_MAC ? event.metaKey : event.ctrlKey;
+  return hasPrimaryModifier(event);
 }
 
 export default function DataTable({
@@ -199,7 +199,7 @@ export default function DataTable({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (isEditableTarget(event.target)) return;
-      const modifier = /Mac/i.test(navigator.userAgent) ? event.metaKey : event.ctrlKey;
+      const modifier = hasPrimaryModifier(event);
       const key = event.key.toLowerCase();
 
       if (modifier && !event.shiftKey && !event.altKey && key === 'r') {

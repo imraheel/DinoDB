@@ -12,11 +12,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 - Independent shell processes with private connection bootstrap files, redacted/bounded console output, cancellation and cleanup on tab close, disconnect, connection removal or application quit
 - Platform-specific bundled `mongodump`, `mongorestore` and `mongosh` executables, verified against pinned SHA-256 hashes, with upstream license/third-party notices and installer architecture checks; optional proprietary encryption libraries are excluded
 - Mongosh executable selection and validation in Database Tools preferences, with custom-path, bundled and installed-tool discovery
+- File menu Close Tab command (`Cmd+W` on macOS, `Ctrl+W` on Windows/Linux)
+- `Cmd+Shift+/` / `Ctrl+Shift+/` toggles a block comment in the query and Mongosh script editors
+- Toggle sidebar (`Cmd+B` / `Ctrl+B`) and Close window shortcuts listed in the Keymap preferences
 
 ### Changed
 
 - Automatic MongoDB tool discovery prefers bundled executables before installed tools; explicit user overrides retain precedence
 - Mac tool bundles use Mongosh 2.5.10 for macOS 12 compatibility; Windows/Linux bundles use Mongosh 2.14.1
+- Keymap preferences show shortcuts for the current platform: macOS symbols (`⌘ ⇧ C`) on Mac and `Ctrl+Shift+C` style labels on Windows/Linux, including platform-specific developer tools and delete-document keys
+- Close window moved to `Cmd+Shift+W` / `Ctrl+Shift+W`
+- The development setup downloads the Electron binary in a `postinstall` step, since Electron 43 no longer does this during install
+
+### Fixed
+
+- `Cmd+W` / `Ctrl+W` closed the whole window instead of the active tab
+- Zoom in did not respond to `Cmd+=` / `Ctrl+=` without Shift
+- Quit had no keyboard shortcut on Windows/Linux; it now uses `Ctrl+Q`
+- Toggle sidebar on macOS also responded to `Ctrl+B`; it now uses only `Cmd+B`
+- `pnpm dev` failed with "Electron uninstall" after a fresh install
 
 ## [0.1.9-alpha] - 2026-10-29
 

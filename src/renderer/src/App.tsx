@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ConnectionModal from './components/ConnectionModal';
 import SettingsModal from './components/SettingsModal';
 import Sidebar from './components/Sidebar';
@@ -14,6 +14,7 @@ import { useApp } from './context/AppState';
 import { setMonacoAccent, setMonacoTheme } from './lib/monaco';
 import { applyAppearance } from './lib/appearance';
 import { applyTheme, resolveTheme } from './lib/theme';
+import { hasPrimaryModifier } from './lib/shortcuts';
 import type { ConnectionConfig } from '../../shared/types';
 
 const IS_MACOS = /Macintosh|Mac OS X/.test(navigator.userAgent);
@@ -47,18 +48,32 @@ export default function AppShell() {
     };
   }, [dispatch]);
 
+  const activeTabIdRef = useRef(state.activeTabId);
+  activeTabIdRef.current = state.activeTabId;
+
   useEffect(() => {
     const unsubscribe = window.api.onMenuAction((action) => {
       if (action === 'open-preferences') setSettingsOpen(true);
       else if (action === 'open-connections') setConnectionsOpen(true);
       else if (action === 'new-connection') setModal({ open: true, editing: null });
+      else if (action === 'close-tab') {
+        const tabId = activeTabIdRef.current;
+        if (tabId === null) return;
+        dispatch({ type: 'tab/removed', tabId });
+        void window.api.closeTab(tabId).catch(() => {});
+      }
     });
     return unsubscribe;
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+      if (
+        hasPrimaryModifier(event) &&
+        !event.shiftKey &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'b'
+      ) {
         event.preventDefault();
         setSidebarCollapsed((previous) => !previous);
       }

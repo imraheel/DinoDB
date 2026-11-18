@@ -43,7 +43,7 @@ export const IPC = {
   menuAction: 'menu:action'
 } as const;
 
-export type MenuAction = 'open-preferences' | 'open-connections' | 'new-connection';
+export type MenuAction = 'open-preferences' | 'open-connections' | 'new-connection' | 'close-tab';
 
 export interface InitMessage {
   role: 'session' | 'tab';

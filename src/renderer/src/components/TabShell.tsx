@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as monaco from 'monaco-editor';
 import type { TabMeta } from '../context/reducer';
 import { useApp } from '../context/AppState';
-import { isMonacoDark } from '../lib/monaco';
+import { addEditorShortcuts, isMonacoDark } from '../lib/monaco';
 import { codeFontStack } from '../lib/appearance';
 import { messageOf } from '../lib/errors';
 import { shellActive, type ShellProgress } from '../../../shared/shell';
@@ -83,8 +83,10 @@ export default function TabShell({ tab, active }: { tab: TabMeta; active: boolea
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => runRef.current()
     });
+    const shortcuts = addEditorShortcuts(instance);
     return () => {
       action.dispose();
+      shortcuts.dispose();
       instance.getModel()?.dispose();
       instance.dispose();
       editor.current = null;

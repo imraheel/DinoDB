@@ -11,6 +11,7 @@ import DatabaseToolsSettings from './DatabaseToolsSettings';
 import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
 import SegmentedControl from './ui/SegmentedControl';
 import { BASE_INPUT_CLASS, TextInput } from './ui/Input';
+import { IS_MAC, formatShortcut, type ShortcutKey } from '../lib/shortcuts';
 
 interface SettingsModalProps {
   open: boolean;
@@ -53,48 +54,70 @@ const UI_SIZE_OPTIONS = [12, 13, 14, 15];
 const TABLE_SIZE_OPTIONS = [10, 11, 12, 13, 14];
 const EDITOR_SIZE_OPTIONS = [11, 12, 13, 14, 15, 16, 17, 18];
 
+interface ShortcutItem {
+  /** Keys on every platform, unless overridden for macOS or Windows/Linux below. */
+  keys: ShortcutKey[];
+  mac?: ShortcutKey[];
+  other?: ShortcutKey[];
+  action: string;
+}
+
 interface ShortcutGroup {
   title: string;
-  items: Array<{ keys: string; action: string }>;
+  items: ShortcutItem[];
 }
 
 const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: 'Query',
     items: [
-      { keys: '⌘ ⏎', action: 'Run query at cursor' },
-      { keys: '⌘ /', action: 'Toggle line comment' },
-      { keys: '⌘ ⇧ /', action: 'Toggle block comment' },
-      { keys: '⌥ ⇧ A', action: 'Toggle block comment (editor default)' }
+      { keys: ['Mod', 'Enter'], action: 'Run query at cursor' },
+      { keys: ['Mod', '/'], action: 'Toggle line comment' },
+      { keys: ['Mod', 'Shift', '/'], action: 'Toggle block comment' },
+      { keys: ['Alt', 'Shift', 'A'], action: 'Toggle block comment (editor default)' }
     ]
   },
   {
     title: 'Documents',
     items: [
-      { keys: '⌘ R', action: 'Refresh results' },
-      { keys: '⌘ D', action: 'Insert document' },
-      { keys: 'F3', action: 'View selected document' },
-      { keys: '⌘ J', action: 'Edit selected document' },
-      { keys: '⇧ ⌫', action: 'Delete selected document' },
-      { keys: '⌘ ⇧ C', action: 'Copy document JSON' },
-      { keys: '⌘ C', action: 'Copy cell value / row' }
+      { keys: ['Mod', 'R'], action: 'Refresh results' },
+      { keys: ['Mod', 'D'], action: 'Insert document' },
+      { keys: ['F3'], action: 'View selected document' },
+      { keys: ['Mod', 'J'], action: 'Edit selected document' },
+      {
+        keys: ['Shift', 'Delete'],
+        mac: ['Shift', 'Backspace'],
+        action: 'Delete selected document'
+      },
+      { keys: ['Mod', 'Shift', 'C'], action: 'Copy document JSON' },
+      { keys: ['Mod', 'C'], action: 'Copy cell value / row' }
     ]
   },
   {
     title: 'Application',
     items: [
-      { keys: '⌘ N', action: 'New connection' },
-      { keys: '⌘ O', action: 'Connect…' },
-      { keys: '⌘ ,', action: 'Open settings' },
-      { keys: '⌘ W', action: 'Close tab' },
-      { keys: '⌘ Q', action: 'Quit' },
-      { keys: '⌘ ⌥ I', action: 'Toggle developer tools' },
-      { keys: '⌘ 0', action: 'Reset zoom' },
-      { keys: '⌘ +', action: 'Zoom in' },
-      { keys: '⌘ -', action: 'Zoom out' }
+      { keys: ['Mod', 'N'], action: 'New connection' },
+      { keys: ['Mod', 'O'], action: 'Connect…' },
+      { keys: ['Mod', ','], action: 'Open settings' },
+      { keys: ['Mod', 'B'], action: 'Toggle sidebar' },
+      { keys: ['Mod', 'W'], action: 'Close tab' },
+      { keys: ['Mod', 'Shift', 'W'], action: 'Close window' },
+      { keys: ['Mod', 'Q'], action: 'Quit' },
+      {
+        keys: ['Mod', 'Shift', 'I'],
+        mac: ['Mod', 'Alt', 'I'],
+        action: 'Toggle developer tools'
+      },
+      { keys: ['Mod', '0'], action: 'Reset zoom' },
+      { keys: ['Mod', '+'], action: 'Zoom in' },
+      { keys: ['Mod', '-'], action: 'Zoom out' }
     ]
   }
 ];
+
+function shortcutKeys(item: ShortcutItem): string {
+  return formatShortcut((IS_MAC ? item.mac : item.other) ?? item.keys);
+}
 
 function AppearanceIcon() {
   return (
@@ -425,14 +448,14 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                     <div className="overflow-hidden rounded-field border border-border">
                       {group.items.map((item, index) => (
                         <div
-                          key={item.keys + item.action}
+                          key={item.action}
                           className={`flex items-center justify-between gap-4 px-3 py-1.5 ${
                             index > 0 ? 'border-t border-border' : ''
                           } ${index % 2 === 1 ? 'bg-well/40' : ''}`}
                         >
                           <span className="min-w-0 truncate text-xs text-label">{item.action}</span>
                           <kbd className="shrink-0 rounded-[4px] border border-border bg-surface px-1.5 py-0.5 font-mono text-micro text-label-secondary">
-                            {item.keys}
+                            {shortcutKeys(item)}
                           </kbd>
                         </div>
                       ))}

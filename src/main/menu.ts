@@ -56,9 +56,18 @@ export function createApplicationMenu(): void {
           click: (_menuItem, browserWindow) => sendMenuAction(browserWindow, 'open-preferences')
         },
         { type: 'separator' },
+        {
+          label: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          click: (_menuItem, browserWindow) => sendMenuAction(browserWindow, 'close-tab')
+        },
+        { role: 'close', accelerator: 'CmdOrCtrl+Shift+W' },
         ...(isMac
-          ? ([{ role: 'close' }] as MenuItemConstructorOptions[])
-          : ([{ role: 'quit' }] as MenuItemConstructorOptions[]))
+          ? []
+          : ([
+              { type: 'separator' },
+              { role: 'quit', accelerator: 'Ctrl+Q' }
+            ] as MenuItemConstructorOptions[]))
       ]
     },
     { role: 'editMenu' },
@@ -69,10 +78,19 @@ export function createApplicationMenu(): void {
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },
+        // "CmdOrCtrl+Plus" needs Shift on most layouts; also accept the unshifted "=" key.
+        { role: 'zoomIn', accelerator: 'CmdOrCtrl+=', visible: false },
         { role: 'zoomOut' }
       ]
     },
-    { role: 'windowMenu' },
+    {
+      // Explicit submenu: the default Windows "Window" menu binds Ctrl+W to closing the
+      // window, which would shadow "Close Tab".
+      label: 'Window',
+      submenu: isMac
+        ? [{ role: 'minimize' }, { role: 'zoom' }, { type: 'separator' }, { role: 'front' }]
+        : [{ role: 'minimize' }]
+    },
     {
       role: 'help',
       submenu: [

@@ -367,3 +367,19 @@ export function setMonacoTheme(dark: boolean): void {
 export function isMonacoDark(): boolean {
   return monacoDark;
 }
+
+/**
+ * Adds the app's extra editor shortcuts on top of Monaco's defaults (⌘/ / Ctrl+/ line
+ * comment and ⌥⇧A / Shift+Alt+A block comment are built in): ⌘⇧/ / Ctrl+Shift+/ toggles
+ * a block comment.
+ */
+export function addEditorShortcuts(
+  editor: monaco.editor.IStandaloneCodeEditor
+): monaco.IDisposable {
+  return editor.addAction({
+    id: 'dinodb-block-comment',
+    label: 'Toggle Block Comment',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Slash],
+    run: (instance) => instance.trigger('keyboard', 'editor.action.blockComment', null)
+  });
+}

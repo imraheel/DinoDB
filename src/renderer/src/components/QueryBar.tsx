@@ -9,7 +9,8 @@ import * as monaco from 'monaco-editor';
 import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
 import type { QueryInput } from '../../../shared/types';
-import { isMonacoDark } from '../lib/monaco';
+import { addEditorShortcuts, isMonacoDark } from '../lib/monaco';
+import { hasPrimaryModifier } from '../lib/shortcuts';
 import { codeFontStack } from '../lib/appearance';
 import { pageSkip } from '../lib/pagination';
 import { queryAtOffset } from '../lib/shell-query';
@@ -189,7 +190,7 @@ export default function QueryBar({
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.defaultPrevented) return;
-    const modifier = /Mac/i.test(navigator.userAgent) ? event.metaKey : event.ctrlKey;
+    const modifier = hasPrimaryModifier(event);
     if (modifier && !event.shiftKey && event.key === 'Enter') {
       event.preventDefault();
       onRun(activeQueryText());
@@ -214,6 +215,7 @@ export default function QueryBar({
       theme: isMonacoDark() ? 'dinodb-dark' : 'dinodb-light'
     });
     editorRef.current = editor;
+    const shortcuts = addEditorShortcuts(editor);
     const subscription = editor.onDidChangeModelContent(() => {
       changeRef.current(editor.getValue());
     });
@@ -227,6 +229,7 @@ export default function QueryBar({
     return () => {
       subscription.dispose();
       runSubscription.dispose();
+      shortcuts.dispose();
       editorRef.current = null;
       editor.dispose();
     };
