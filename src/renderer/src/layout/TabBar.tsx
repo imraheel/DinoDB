@@ -7,8 +7,8 @@ import {
 } from 'react';
 import { useApp } from '../context/AppState';
 import type { TabMeta } from '../context/reducer';
-import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
-import PromptDialog from './PromptDialog';
+import Menu, { MenuItem, MenuSeparator } from '../components/ui/Menu';
+import PromptDialog from '../components/dialogs/PromptDialog';
 
 interface IconProps {
   size?: number;

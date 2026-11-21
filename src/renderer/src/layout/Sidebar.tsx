@@ -5,12 +5,12 @@ import { openDatabaseTransfer } from '../lib/database-transfers';
 import { emptySession, type SessionState } from '../context/reducer';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
-import Banner from './ui/Banner';
-import Button from './ui/Button';
-import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
-import ConfirmDialog from './ConfirmDialog';
-import ManageConnectionsPopup from './ManageConnectionsPopup';
-import PromptDialog from './PromptDialog';
+import Banner from '../components/ui/Banner';
+import Button from '../components/ui/Button';
+import Menu, { MenuItem, MenuSeparator } from '../components/ui/Menu';
+import ConfirmDialog from '../components/dialogs/ConfirmDialog';
+import ManageConnectionsPopup from '../components/connections/ManageConnectionsPopup';
+import PromptDialog from '../components/dialogs/PromptDialog';
 
 interface SidebarProps {
   collapsed: boolean;

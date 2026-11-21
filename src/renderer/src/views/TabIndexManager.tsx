@@ -4,11 +4,11 @@ import { messageOf } from '../lib/errors';
 import { formatIndexSize, indexProperties, indexTypeLabel, indexUsageLabel } from '../lib/indexes';
 import { toShellJson, parseShellJson } from '../lib/shell-json';
 import type { CollectionIndexInfo } from '../../../shared/ipc';
-import Banner from './ui/Banner';
-import Button from './ui/Button';
-import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
-import ConfirmDialog from './ConfirmDialog';
-import DocumentModal from './DocumentModal';
+import Banner from '../components/ui/Banner';
+import Button from '../components/ui/Button';
+import Menu, { MenuItem, MenuSeparator } from '../components/ui/Menu';
+import ConfirmDialog from '../components/dialogs/ConfirmDialog';
+import DocumentModal from '../components/dialogs/DocumentModal';
 
 interface TabIndexManagerProps {
   tab: TabMeta;

@@ -1,24 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { useApp } from '../context/AppState';
-import type { ResultCard as ResultCardData, TabMeta } from '../context/reducer';
-import { messageOf } from '../lib/errors';
-import { setCompletionFields, setMonacoTheme } from '../lib/monaco';
-import { resolveTheme } from '../lib/theme';
+import { useApp } from '../../context/AppState';
+import type { ResultCard as ResultCardData, TabMeta } from '../../context/reducer';
+import { messageOf } from '../../lib/errors';
+import { setCompletionFields, setMonacoTheme } from '../../lib/monaco';
+import { resolveTheme } from '../../lib/theme';
 import {
   parseShellQuery,
   queryCollection,
   splitQueries,
   type ParsedQuery
-} from '../lib/shell-query';
-import { resolveNestedReads } from '../lib/nested-reads';
-import { parseShellJson, toShellJson } from '../lib/shell-json';
-import { lastPageSkip } from '../lib/pagination';
-import { exportRead, openTransfer } from '../lib/transfers';
-import type { WriteResult } from '../../../shared/ipc';
+} from '../../lib/shell-query';
+import { resolveNestedReads } from '../../lib/nested-reads';
+import { parseShellJson, toShellJson } from '../../lib/shell-json';
+import { lastPageSkip } from '../../lib/pagination';
+import { exportRead, openTransfer } from '../../lib/transfers';
+import type { WriteResult } from '../../../../shared/ipc';
 import DataTable from './DataTable';
-import Banner from './ui/Banner';
-import ConfirmDialog from './ConfirmDialog';
-import DocumentModal from './DocumentModal';
+import Banner from '../../components/ui/Banner';
+import ConfirmDialog from '../../components/dialogs/ConfirmDialog';
+import DocumentModal from '../../components/dialogs/DocumentModal';
 import QueryBar from './QueryBar';
 import ResultCard from './ResultCard';
 

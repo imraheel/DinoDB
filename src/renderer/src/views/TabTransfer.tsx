@@ -3,8 +3,8 @@ import type { TabMeta } from '../context/reducer';
 import type { TransferFormat, TransferProgress } from '../../../shared/transfer';
 import { transferActive } from '../../../shared/transfer';
 import { messageOf } from '../lib/errors';
-import Banner from './ui/Banner';
-import Button from './ui/Button';
+import Banner from '../components/ui/Banner';
+import Button from '../components/ui/Button';
 
 function bytesText(bytes: number): string {
   if (bytes < 1024) return `${bytes.toLocaleString()} B`;

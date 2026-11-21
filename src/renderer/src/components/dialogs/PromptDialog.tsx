@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import Modal from './ui/Modal';
-import Button from './ui/Button';
-import { TextInput, LABEL_CLASS } from './ui/Input';
+import Modal from '../ui/Modal';
+import Button from '../ui/Button';
+import { TextInput, LABEL_CLASS } from '../ui/Input';
 
 interface PromptDialogProps {
   open: boolean;

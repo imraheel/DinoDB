@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useApp } from '../context/AppState';
 import { messageOf } from '../lib/errors';
 import type { ConnectionConfig } from '../../../shared/types';
-import Button from './ui/Button';
-import Banner from './ui/Banner';
+import Button from '../components/ui/Button';
+import Banner from '../components/ui/Banner';
 
 interface WelcomeScreenProps {
   onOpenManager(): void;

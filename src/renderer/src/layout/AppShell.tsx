@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import ConnectionModal from './components/ConnectionModal';
-import SettingsModal from './components/SettingsModal';
-import Sidebar from './components/Sidebar';
-import TabBar from './components/TabBar';
-import TabIndexManager from './components/TabIndexManager';
-import TabTransfer from './components/TabTransfer';
-import TabDatabaseTransfer from './components/TabDatabaseTransfer';
-import TabShell from './components/TabShell';
-import TabWorkspace from './components/TabWorkspace';
-import Titlebar from './components/Titlebar';
-import WelcomeScreen from './components/WelcomeScreen';
-import { useApp } from './context/AppState';
-import { setMonacoAccent, setMonacoTheme } from './lib/monaco';
-import { applyAppearance } from './lib/appearance';
-import { applyTheme, resolveTheme } from './lib/theme';
-import { hasPrimaryModifier } from './lib/shortcuts';
-import type { ConnectionConfig } from '../../shared/types';
+import ConnectionModal from '../components/connections/ConnectionModal';
+import SettingsModal from '../components/settings/SettingsModal';
+import Sidebar from './Sidebar';
+import TabBar from './TabBar';
+import TabIndexManager from '../views/TabIndexManager';
+import TabTransfer from '../views/TabTransfer';
+import TabDatabaseTransfer from '../views/TabDatabaseTransfer';
+import TabShell from '../views/TabShell';
+import TabWorkspace from '../views/workspace/TabWorkspace';
+import Titlebar from './Titlebar';
+import WelcomeScreen from '../views/WelcomeScreen';
+import { useApp } from '../context/AppState';
+import { setMonacoAccent, setMonacoTheme } from '../lib/monaco';
+import { applyAppearance } from '../lib/appearance';
+import { applyTheme, resolveTheme } from '../lib/theme';
+import { hasPrimaryModifier } from '../lib/shortcuts';
+import type { ConnectionConfig } from '../../../shared/types';
 
 const IS_MACOS = /Macintosh|Mac OS X/.test(navigator.userAgent);
 

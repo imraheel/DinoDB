@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { formatCell, getColumns } from '../lib/format';
-import type { SchemaField } from '../../../shared/types';
-import Button from './ui/Button';
-import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
-import { IS_MAC, hasPrimaryModifier } from '../lib/shortcuts';
+import { formatCell, getColumns } from '../../lib/format';
+import type { SchemaField } from '../../../../shared/types';
+import Button from '../../components/ui/Button';
+import Menu, { MenuItem, MenuSeparator } from '../../components/ui/Menu';
+import { IS_MAC, hasPrimaryModifier } from '../../lib/shortcuts';
 
 interface DataTableProps {
   fields: SchemaField[];

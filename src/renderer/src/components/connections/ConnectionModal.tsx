@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useApp } from '../context/AppState';
-import { messageOf } from '../lib/errors';
-import { validateConnection } from '../../../shared/validate';
-import type { AuthMechanism, ConnectionConfig, ConnectionInput } from '../../../shared/types';
-import Button from './ui/Button';
-import Modal, { ModalBody, ModalFooter, ModalHeader } from './ui/Modal';
-import { BASE_INPUT_CLASS, LABEL_CLASS } from './ui/Input';
+import { useApp } from '../../context/AppState';
+import { messageOf } from '../../lib/errors';
+import { validateConnection } from '../../../../shared/validate';
+import type { AuthMechanism, ConnectionConfig, ConnectionInput } from '../../../../shared/types';
+import Button from '../ui/Button';
+import Modal, { ModalBody, ModalFooter, ModalHeader } from '../ui/Modal';
+import { BASE_INPUT_CLASS, LABEL_CLASS } from '../ui/Input';
 
 interface ConnectionModalProps {
   open: boolean;

@@ -1,13 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import AppShell from './layout/AppShell';
 import { AppProvider } from './context/AppState';
 import './styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AppProvider>
-      <App />
+      <AppShell />
     </AppProvider>
   </React.StrictMode>
 );

@@ -6,8 +6,8 @@ import { addEditorShortcuts, isMonacoDark } from '../lib/monaco';
 import { codeFontStack } from '../lib/appearance';
 import { messageOf } from '../lib/errors';
 import { shellActive, type ShellProgress } from '../../../shared/shell';
-import Button from './ui/Button';
-import Banner from './ui/Banner';
+import Button from '../components/ui/Button';
+import Banner from '../components/ui/Banner';
 
 export default function TabShell({ tab, active }: { tab: TabMeta; active: boolean }) {
   const { state } = useApp();

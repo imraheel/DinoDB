@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import * as monaco from 'monaco-editor';
-import { messageOf } from '../lib/errors';
-import { isMonacoDark } from '../lib/monaco';
-import { parseShellJson } from '../lib/shell-json';
-import Button from './ui/Button';
-import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
-import { FRAME_CLASS } from './ui/Input';
+import { messageOf } from '../../lib/errors';
+import { isMonacoDark } from '../../lib/monaco';
+import { parseShellJson } from '../../lib/shell-json';
+import Button from '../ui/Button';
+import Modal, { ModalFooter, ModalHeader } from '../ui/Modal';
+import { FRAME_CLASS } from '../ui/Input';
 
 interface DocumentModalProps {
   title: string;

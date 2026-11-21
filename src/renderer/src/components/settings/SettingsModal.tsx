@@ -1,17 +1,17 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { useApp } from '../context/AppState';
+import { useApp } from '../../context/AppState';
 import type {
   AccentSetting,
   AppSettings,
   CodeFontSetting,
   UiFontSetting
-} from '../../../shared/types';
-import Button from './ui/Button';
+} from '../../../../shared/types';
+import Button from '../ui/Button';
 import DatabaseToolsSettings from './DatabaseToolsSettings';
-import Modal, { ModalFooter, ModalHeader } from './ui/Modal';
-import SegmentedControl from './ui/SegmentedControl';
-import { BASE_INPUT_CLASS, TextInput } from './ui/Input';
-import { IS_MAC, formatShortcut, type ShortcutKey } from '../lib/shortcuts';
+import Modal, { ModalFooter, ModalHeader } from '../ui/Modal';
+import SegmentedControl from '../ui/SegmentedControl';
+import { BASE_INPUT_CLASS, TextInput } from '../ui/Input';
+import { IS_MAC, formatShortcut, type ShortcutKey } from '../../lib/shortcuts';
 
 interface SettingsModalProps {
   open: boolean;

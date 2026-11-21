@@ -6,16 +6,16 @@ import {
   type MouseEvent as ReactMouseEvent
 } from 'react';
 import * as monaco from 'monaco-editor';
-import { useApp } from '../context/AppState';
-import type { TabMeta } from '../context/reducer';
-import type { QueryInput } from '../../../shared/types';
-import { addEditorShortcuts, isMonacoDark } from '../lib/monaco';
-import { hasPrimaryModifier } from '../lib/shortcuts';
-import { codeFontStack } from '../lib/appearance';
-import { pageSkip } from '../lib/pagination';
-import { queryAtOffset } from '../lib/shell-query';
-import Button from './ui/Button';
-import { BASE_INPUT_CLASS, FRAME_CLASS } from './ui/Input';
+import { useApp } from '../../context/AppState';
+import type { TabMeta } from '../../context/reducer';
+import type { QueryInput } from '../../../../shared/types';
+import { addEditorShortcuts, isMonacoDark } from '../../lib/monaco';
+import { hasPrimaryModifier } from '../../lib/shortcuts';
+import { codeFontStack } from '../../lib/appearance';
+import { pageSkip } from '../../lib/pagination';
+import { queryAtOffset } from '../../lib/shell-query';
+import Button from '../../components/ui/Button';
+import { BASE_INPUT_CLASS, FRAME_CLASS } from '../../components/ui/Input';
 
 interface QueryBarProps {
   tab: TabMeta;

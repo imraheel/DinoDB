@@ -1,13 +1,13 @@
 import { useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { useApp } from '../context/AppState';
-import { emptySession } from '../context/reducer';
-import { messageOf } from '../lib/errors';
-import type { ConnectionConfig } from '../../../shared/types';
-import Banner from './ui/Banner';
-import Button from './ui/Button';
-import Menu, { MenuItem, MenuSeparator } from './ui/Menu';
-import Modal, { ModalBody, ModalFooter, ModalHeader } from './ui/Modal';
-import ConfirmDialog from './ConfirmDialog';
+import { useApp } from '../../context/AppState';
+import { emptySession } from '../../context/reducer';
+import { messageOf } from '../../lib/errors';
+import type { ConnectionConfig } from '../../../../shared/types';
+import Banner from '../ui/Banner';
+import Button from '../ui/Button';
+import Menu, { MenuItem, MenuSeparator } from '../ui/Menu';
+import Modal, { ModalBody, ModalFooter, ModalHeader } from '../ui/Modal';
+import ConfirmDialog from '../dialogs/ConfirmDialog';
 
 interface ManageConnectionsPopupProps {
   open: boolean;

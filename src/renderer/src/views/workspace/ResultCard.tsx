@@ -1,6 +1,6 @@
-import type { ResultCard as ResultCardData } from '../context/reducer';
-import Button from './ui/Button';
-import JsonTree from './ui/JsonTree';
+import type { ResultCard as ResultCardData } from '../../context/reducer';
+import Button from '../../components/ui/Button';
+import JsonTree from '../../components/ui/JsonTree';
 
 interface ResultCardProps {
   card: ResultCardData;

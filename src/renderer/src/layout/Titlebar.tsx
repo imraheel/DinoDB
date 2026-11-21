@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppState';
-import Button from './ui/Button';
+import Button from '../components/ui/Button';
 
 interface TitlebarProps {
   collapsed: boolean;

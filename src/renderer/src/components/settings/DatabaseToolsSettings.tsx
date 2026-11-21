@@ -3,10 +3,10 @@ import type {
   DatabaseToolName,
   DatabaseToolsPaths,
   DatabaseToolsStatus
-} from '../../../shared/database-tools';
-import { messageOf } from '../lib/errors';
-import { TextInput } from './ui/Input';
-import Button from './ui/Button';
+} from '../../../../shared/database-tools';
+import { messageOf } from '../../lib/errors';
+import { TextInput } from '../ui/Input';
+import Button from '../ui/Button';
 
 const DATABASE_TOOLS_URL = 'https://www.mongodb.com/try/download/database-tools';
 

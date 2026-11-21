@@ -9,9 +9,9 @@ import type {
 import { databaseTransferActive } from '../../../shared/database-transfer';
 import type { DatabaseToolStatus } from '../../../shared/database-tools';
 import { messageOf } from '../lib/errors';
-import { BASE_INPUT_CLASS, TextInput } from './ui/Input';
-import Button from './ui/Button';
-import Banner from './ui/Banner';
+import { BASE_INPUT_CLASS, TextInput } from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import Banner from '../components/ui/Banner';
 
 export default function TabDatabaseTransfer({ tab, active }: { tab: TabMeta; active: boolean }) {
   const { dispatch } = useApp();
