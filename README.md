@@ -31,6 +31,8 @@ Right-click a collection and choose **Open in Shell** to run full Mongosh script
 
 Installers include `mongosh`, `mongodump`, and `mongorestore`, so no separate tool installation is needed. Open **Preferences → Database Tools** to test the tools or select custom executable paths. Custom paths take precedence over bundled tools; installed tools are used when a bundled tool is unavailable.
 
+**DinoDB Lite** installers (`DinoDB-Lite-…`) leave out these tools for a smaller download. Lite uses `mongosh`, `mongodump`, and `mongorestore` installed on your system, or the executables you select in **Preferences → Database Tools**.
+
 ## Supported platforms
 
 | Platform                            | Release format   |
@@ -55,7 +57,7 @@ pnpm tools:prepare
 pnpm dev
 ```
 
-To create a production build, run `pnpm build`. To package the app, run `pnpm package:mac` on macOS or `pnpm package:win` on Windows. Packages are written to `dist/`.
+To create a production build, run `pnpm build`. To package the app, run `pnpm package:mac` on macOS or `pnpm package:win` on Windows. Add `:lite` (for example `pnpm package:mac:lite`) to package DinoDB Lite without the bundled MongoDB tools. Packages are written to `dist/`.
 
 `pnpm tools:prepare` downloads and verifies the tools for your system. Initial preparation requires network access and `curl`, plus `unzip` on macOS or `tar` on Windows/Linux. Installer builds prepare the tools automatically for each target platform.
 

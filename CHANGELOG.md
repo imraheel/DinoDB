@@ -4,7 +4,7 @@ All notable changes to DinoDB are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.10-alpha] - 2026-11-22
 
 ### Added
 
@@ -18,6 +18,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 - Collapsible connections in the sidebar, using the expand arrow or a double-click on the connection name
 - Connection context menu with Expand/Collapse, Refresh, Copy name, Add database, Edit connection and Disconnect
 - Add database dialog that creates the database together with its first collection
+- DinoDB Lite installers without bundled MongoDB tools, built with `pnpm package:lite` (plus `:mac`, `:win` and `:all` variants) and published alongside the full installers in releases
 
 ### Changed
 
@@ -27,6 +28,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versio
 - Close window moved to `Cmd+Shift+W` / `Ctrl+Shift+W`
 - The sidebar Disconnect button appears only while hovering over or keyboard-focusing the connection header
 - Connections without databases stay visible in the sidebar when no search filter is active
+- electron-builder configuration moved from `electron-builder.yml` to `electron-builder.cjs`, with `electron-builder.lite.cjs` for Lite builds
+- The project pins pnpm 11 through the `packageManager` field, and the release workflow uses it instead of pnpm 10
 - The development setup downloads the Electron binary in a `postinstall` step, since Electron 43 no longer does this during install
 
 ### Fixed

@@ -14,21 +14,24 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            build: pnpm build && npx electron-builder --mac --x64 --arm64 --publish never
+            targets: --mac --x64 --arm64
           - os: windows-latest
-            build: pnpm build && npx electron-builder --win --x64 --publish never
+            targets: --win --x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
+      # Uses the pnpm version from package.json's "packageManager" field.
       - uses: pnpm/action-setup@v6
-        with:
-          version: 10
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: ${{ matrix.build }}
+      - run: pnpm build
+      - name: Package with bundled MongoDB tools
+        run: pnpm exec electron-builder ${{ matrix.targets }} --publish never
+      - name: Package Lite (without bundled tools)
+        run: pnpm exec electron-builder ${{ matrix.targets }} --config electron-builder.lite.cjs --publish never
       - uses: softprops/action-gh-release@v3
         with:
           files: |

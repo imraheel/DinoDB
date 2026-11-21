@@ -4,6 +4,7 @@
   "private": true,
   "description": "DinoDB — a fast MongoDB client",
   "license": "GPL-3.0-only",
+  "packageManager": "pnpm@11.24.0",
   "author": {
     "name": "Raheel Khan",
     "url": "https://github.com/imraheel"
@@ -23,10 +24,14 @@
     "test": "node scripts/run-tests.mjs",
     "clean": "rm -rf dist out",
     "package": "pnpm build && electron-builder --publish never",
+    "package:lite": "pnpm build && electron-builder --config electron-builder.lite.cjs --publish never",
     "package:dir": "pnpm build && electron-builder --dir --publish never",
     "package:mac": "pnpm build && electron-builder --mac --publish never",
+    "package:mac:lite": "pnpm build && electron-builder --config electron-builder.lite.cjs --mac --publish never",
     "package:win": "pnpm build && electron-builder --win --publish never",
-    "package:all": "pnpm build && electron-builder --mac --win --publish never"
+    "package:win:lite": "pnpm build && electron-builder --config electron-builder.lite.cjs --win --publish never",
+    "package:all": "pnpm build && electron-builder --mac --win --publish never",
+    "package:all:lite": "pnpm build && electron-builder --config electron-builder.lite.cjs --mac --win --publish never"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
@@ -52,11 +57,5 @@
     "typescript": "^5.9.3",
     "vite": "^7.1.14",
     "vitest": "^5.0.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "electron"
-    ]
   }
 }
