@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   type ReactNode
 } from 'react';
+import { XIcon } from 'lucide-react';
 
 interface ModalProps {
   open: boolean;
@@ -106,15 +107,7 @@ export function ModalCloseButton({ onClick }: { onClick(): void }) {
       aria-label="Close"
       className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-label-tertiary transition-colors duration-100 hover:bg-well hover:text-label-secondary"
     >
-      <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-        <path
-          d="M1.5 1.5l7 7M8.5 1.5l-7 7"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          fill="none"
-        />
-      </svg>
+      <XIcon size={14} strokeWidth={2.5} />
     </button>
   );
 }

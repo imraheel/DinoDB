@@ -12,6 +12,13 @@ import Modal, { ModalFooter, ModalHeader } from '../ui/Modal';
 import SegmentedControl from '../ui/SegmentedControl';
 import { BASE_INPUT_CLASS, TextInput } from '../ui/Input';
 import { IS_MAC, formatShortcut, type ShortcutKey } from '../../lib/shortcuts';
+import {
+  CheckIcon,
+  ContrastIcon,
+  DatabaseBackupIcon,
+  KeyboardIcon,
+  SlidersHorizontalIcon
+} from 'lucide-react';
 
 interface SettingsModalProps {
   open: boolean;
@@ -119,87 +126,11 @@ function shortcutKeys(item: ShortcutItem): string {
   return formatShortcut((IS_MAC ? item.mac : item.other) ?? item.keys);
 }
 
-function AppearanceIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      aria-hidden="true"
-    >
-      <circle cx="8" cy="8" r="5.5" />
-      <path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-function KeymapIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      aria-hidden="true"
-    >
-      <rect x="1.5" y="4" width="13" height="8" rx="1.5" />
-      <path d="M4 7h.01M6.5 7h.01M9 7h.01M11.5 7h.01M5 9.5h6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DatabaseToolsIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-      <path d="M3 12a9 3 0 0 0 5 2.69" />
-      <path d="M21 9.3V5" />
-      <path d="M3 5v14a9 3 0 0 0 6.47 2.88" />
-      <path d="M12 12v4h4" />
-      <path d="M13 20a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L12 16" />
-    </svg>
-  );
-}
-
-function AdvancedIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      aria-hidden="true"
-    >
-      <path d="M2 4.5h12M2 8h12M2 11.5h12" strokeLinecap="round" />
-      <circle cx="5.5" cy="4.5" r="1.4" fill="var(--color-surface-raised)" />
-      <circle cx="10" cy="8" r="1.4" fill="var(--color-surface-raised)" />
-      <circle cx="6.5" cy="11.5" r="1.4" fill="var(--color-surface-raised)" />
-    </svg>
-  );
-}
-
 const SECTIONS: { id: SectionId; label: string; icon: ReactNode }[] = [
-  { id: 'appearance', label: 'Appearance', icon: <AppearanceIcon /> },
-  { id: 'keymap', label: 'Keymap', icon: <KeymapIcon /> },
-  { id: 'database-tools', label: 'Database Tools', icon: <DatabaseToolsIcon /> },
-  { id: 'advanced', label: 'Advance Settings', icon: <AdvancedIcon /> }
+  { id: 'appearance', label: 'Appearance', icon: <ContrastIcon size={16} /> },
+  { id: 'keymap', label: 'Keymap', icon: <KeyboardIcon size={16} /> },
+  { id: 'database-tools', label: 'Database Tools', icon: <DatabaseBackupIcon size={16} /> },
+  { id: 'advanced', label: 'Advance Settings', icon: <SlidersHorizontalIcon size={16} /> }
 ];
 
 function PaneTitle({ children }: { children: ReactNode }) {
@@ -377,19 +308,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
                           style={{ backgroundColor: option.hex }}
                         >
                           {selected ? (
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 10 10"
-                              fill="none"
-                              stroke="#ffffff"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M1.5 5.5l2.5 2.5 4.5-5" />
-                            </svg>
+                            <CheckIcon size={12} strokeWidth={3} color="#ffffff" />
                           ) : null}
                         </button>
                       );

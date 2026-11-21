@@ -11,6 +11,7 @@ import Menu, { MenuItem, MenuSeparator } from '../components/ui/Menu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import ManageConnectionsPopup from '../components/connections/ManageConnectionsPopup';
 import PromptDialog from '../components/dialogs/PromptDialog';
+import { ChevronDownIcon, ChevronRightIcon, SearchIcon, XIcon } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -568,19 +569,11 @@ export default function Sidebar({
       )}
       <div className="flex h-9 shrink-0 items-center border-b border-border px-2">
         <div className="relative w-full">
-          <svg
+          <SearchIcon
             className="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-label-tertiary"
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            aria-hidden="true"
-          >
-            <circle cx="5" cy="5" r="3.5" />
-            <path d="M7.5 7.5L10.5 10.5" strokeLinecap="round" />
-          </svg>
+            size={12}
+            strokeWidth={2.25}
+          />
           <input
             type="text"
             value={filterText}
@@ -599,15 +592,7 @@ export default function Sidebar({
               aria-label="Clear search"
               className="absolute top-1/2 right-1.5 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full text-label-tertiary hover:bg-well hover:text-label-secondary"
             >
-              <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true">
-                <path
-                  d="M1.5 1.5l7 7M8.5 1.5l-7 7"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </svg>
+              <XIcon size={11} strokeWidth={2.5} />
             </button>
           ) : null}
         </div>
@@ -672,13 +657,11 @@ export default function Sidebar({
                         }
                         aria-expanded={connectionExpanded}
                       >
-                        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
-                          {connectionExpanded ? (
-                            <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
-                          ) : (
-                            <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
-                          )}
-                        </svg>
+                        {connectionExpanded ? (
+                          <ChevronDownIcon size={12} strokeWidth={2.5} />
+                        ) : (
+                          <ChevronRightIcon size={12} strokeWidth={2.5} />
+                        )}
                       </button>
                       <span
                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${
@@ -738,13 +721,11 @@ export default function Sidebar({
                                   expanded ? `Collapse ${database}` : `Expand ${database}`
                                 }
                               >
-                                <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
-                                  {expanded ? (
-                                    <polygon points="1.5,2.5 8.5,2.5 5,8" fill="currentColor" />
-                                  ) : (
-                                    <polygon points="2.5,1.5 8,5 2.5,8.5" fill="currentColor" />
-                                  )}
-                                </svg>
+                                {expanded ? (
+                                  <ChevronDownIcon size={12} strokeWidth={2.5} />
+                                ) : (
+                                  <ChevronRightIcon size={12} strokeWidth={2.5} />
+                                )}
                               </button>
                               <button
                                 type="button"

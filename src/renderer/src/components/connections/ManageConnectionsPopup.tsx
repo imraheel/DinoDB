@@ -8,6 +8,14 @@ import Button from '../ui/Button';
 import Menu, { MenuItem, MenuSeparator } from '../ui/Menu';
 import Modal, { ModalBody, ModalFooter, ModalHeader } from '../ui/Modal';
 import ConfirmDialog from '../dialogs/ConfirmDialog';
+import {
+  CopyIcon,
+  DatabaseCheckIcon,
+  DatabasePlusIcon,
+  DatabaseXIcon,
+  PencilIcon,
+  TrashIcon
+} from 'lucide-react';
 
 interface ManageConnectionsPopupProps {
   open: boolean;
@@ -26,139 +34,6 @@ interface RowMenuState {
 const ICON_BUTTON_CLASS =
   'flex flex-col items-center gap-1 rounded-control px-3 py-2 text-label-secondary transition-colors duration-100 hover:bg-well disabled:cursor-not-allowed disabled:opacity-40';
 const ICON_LABEL_CLASS = 'text-caption font-medium';
-
-interface IconProps {
-  size?: number;
-}
-
-function PlusIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 16v6" />
-      <path d="M21 12.536V5" />
-      <path d="M22 19h-6" />
-      <path d="M3 12A9 3 0 0 0 15.1824 14.8061" />
-      <path d="M3 5V19A9 3 0 0 0 13.318 21.968" />
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-    </svg>
-  );
-}
-
-function DatabaseCheckIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m16 19 2 2 4-4" />
-      <path d="M21 13.127V5" />
-      <path d="M3 12A9 3 0 0 0 21 12" />
-      <path d="M3 5V19A9 3 0 0 0 13.318 21.968" />
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-    </svg>
-  );
-}
-
-function DatabaseXIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m17 17 5 5" />
-      <path d="M19.323 13.744A9 3 0 0 0 21 12" />
-      <path d="M21 13.127V5" />
-      <path d="m22 17-5 5" />
-      <path d="M3 12A9 3 0 0 0 13.563 14.954" />
-      <path d="M3 5V19A9 3 0 0 0 13 21.981" />
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-    </svg>
-  );
-}
-
-function PencilIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-      <path d="m15 5 4 4" />
-    </svg>
-  );
-}
-
-function DuplicateIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
-}
-
-function TrashIcon({ size = 20 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      <path d="M3 6h18" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
 
 export default function ManageConnectionsPopup({
   open,
@@ -305,7 +180,7 @@ export default function ManageConnectionsPopup({
             className={ICON_BUTTON_CLASS}
             aria-label="New connection"
           >
-            <PlusIcon />
+            <DatabasePlusIcon size={20} />
             <span className={ICON_LABEL_CLASS}>New</span>
           </button>
           <button
@@ -317,7 +192,7 @@ export default function ManageConnectionsPopup({
             className={ICON_BUTTON_CLASS}
             aria-label="Edit connection"
           >
-            <PencilIcon />
+            <PencilIcon size={20} />
             <span className={ICON_LABEL_CLASS}>Edit</span>
           </button>
           <button
@@ -329,7 +204,7 @@ export default function ManageConnectionsPopup({
             className={ICON_BUTTON_CLASS}
             aria-label="Duplicate connection"
           >
-            <DuplicateIcon />
+            <CopyIcon size={20} />
             <span className={ICON_LABEL_CLASS}>Duplicate</span>
           </button>
           <button
@@ -341,7 +216,7 @@ export default function ManageConnectionsPopup({
             className={ICON_BUTTON_CLASS}
             aria-label="Delete connection"
           >
-            <TrashIcon />
+            <TrashIcon size={20} />
             <span className={ICON_LABEL_CLASS}>Delete</span>
           </button>
         </div>
@@ -461,7 +336,7 @@ export default function ManageConnectionsPopup({
             Edit
           </MenuItem>
           <MenuItem
-            icon={<DuplicateIcon size={14} />}
+            icon={<CopyIcon size={14} />}
             onClick={handleMenuItem(() => void handleDuplicate(rowMenu.connection))}
           >
             Duplicate

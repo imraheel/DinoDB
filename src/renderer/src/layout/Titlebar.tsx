@@ -1,49 +1,12 @@
 import { useApp } from '../context/AppState';
 import Button from '../components/ui/Button';
+import { PanelLeftIcon, SettingsIcon } from 'lucide-react';
 
 interface TitlebarProps {
   collapsed: boolean;
   onToggleSidebar(): void;
   onConnect(): void;
   onOpenSettings(): void;
-}
-
-function PanelLeftIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect width="18" height="18" x="3" y="3" rx="2" />
-      <path d="M9 3v18" />
-    </svg>
-  );
-}
-
-function SettingsIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
 }
 
 export default function Titlebar({
@@ -81,7 +44,7 @@ export default function Titlebar({
           onClick={onToggleSidebar}
           className="w-8 px-0"
         >
-          <PanelLeftIcon />
+          <PanelLeftIcon size={16} />
         </Button>
         <Button
           variant="quiet"
@@ -91,7 +54,7 @@ export default function Titlebar({
           onClick={onOpenSettings}
           className="w-8 px-0"
         >
-          <SettingsIcon />
+          <SettingsIcon size={16} />
         </Button>
       </div>
     </div>

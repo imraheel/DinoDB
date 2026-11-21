@@ -9,35 +9,11 @@ import Button from '../components/ui/Button';
 import Menu, { MenuItem, MenuSeparator } from '../components/ui/Menu';
 import ConfirmDialog from '../components/dialogs/ConfirmDialog';
 import DocumentModal from '../components/dialogs/DocumentModal';
+import { RefreshCcwIcon } from 'lucide-react';
 
 interface TabIndexManagerProps {
   tab: TabMeta;
   active: boolean;
-}
-
-interface IconProps {
-  size?: number;
-}
-
-function RefreshCcwIcon({ size = 16 }: IconProps) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-      <path d="M16 16h5v5" />
-    </svg>
-  );
 }
 
 interface IndexDraft {
@@ -254,7 +230,7 @@ export default function TabIndexManager({ tab, active }: TabIndexManagerProps) {
             onClick={() => void refresh()}
             className="w-8 px-0"
           >
-            <RefreshCcwIcon />
+            <RefreshCcwIcon size={16} />
           </Button>
           <Button variant="accentOutline" size="sm" onClick={openAdd}>
             Add Index
